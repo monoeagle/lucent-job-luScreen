@@ -94,8 +94,13 @@ Jede Agent-Datei hat:
 |---|---|---|
 | `PSScriptAnalyzerSettings.psd1` | aus BM-Template | Projekt-spezifische Excludes |
 | `tools/Invoke-PSSA.ps1` | aus BM (`tools/Invoke-PSSA.ps1`) | Lint-Runner, schreibt nach `reports/pssa/` |
-| `tools/Install-PSScriptAnalyzer-Offline.ps1` | aus CSC | Offline-Bundle nach `_deps/PSScriptAnalyzer/<ver>/` |
-| `tools/Install-Pester-Offline.ps1` | LucentScreen | Offline-Bundle nach `_deps/Pester/<ver>/` (3 Modi: Save-Module / -Source / -Url) |
+| `tools/Install-PSScriptAnalyzer-Offline.ps1` | LucentScreen | Offline-Bundle nach `_deps/PSScriptAnalyzer/<ver>/` (3 Modi: Save-Module / `-Source` / `-Url`) |
+| `tools/Install-Pester-Offline.ps1` | LucentScreen | Offline-Bundle nach `_deps/Pester/<ver>/` (3 Modi: Save-Module / `-Source` / `-Url`) |
+
+**Ohne NuGet:** beide Installer haben einen `-Url`-Modus, der `Invoke-WebRequest` auf die PSGallery-nupkg-API verwendet. Damit funktioniert die Bundle-Erstellung auch auf Maschinen ohne NuGet-Provider und ohne `Install-Module`-Zugriff. Wichtige Hinweise:
+- TLS 1.2 wird explizit gesetzt (`SecurityProtocol = Tls12`), sonst scheitert die HTTPS-Verbindung auf alten Hosts.
+- nupkg muss als `.zip` gespeichert werden, weil PS-5.1-`Expand-Archive` die `.nupkg`-Extension nicht akzeptiert.
+- Nach dem Entpacken werden NuGet-Metadaten (`_rels/`, `package/`, `[Content_Types].xml`) entfernt.
 
 ### Settings-Template
 
@@ -157,19 +162,14 @@ reports/
 
 ## 4a. PowerShell-Version-Target
 
-`lucent-job-*`-Projekte haben **Windows PowerShell 5.1 als Pflicht-Target**. Enterprise-Hosts (User-PCs nach MSI-Install) haben oft kein PS 7.
-
-Dev und Test darf 7+ nutzen, aber die Runtime-Artefakte (`src/`, embedded Add-Type, P/Invoke) müssen 5.1-kompatibel bleiben.
+`lucent-job-*`-Projekte haben **Windows PowerShell 5.1 als einziges Target** (`powershell.exe`). PS 7 wird nicht unterstützt — auf Enterprise-Ziel-Hosts nicht garantiert vorhanden, doppelter Support kostet nur Boilerplate. Wird neu bewertet, sobald `pwsh.exe` flächendeckend ausgerollt ist.
 
 **Konsequenzen:**
 
-- `#Requires -Version 5.1` (NICHT 7.0)
+- `#Requires -Version 5.1`
 - Keine Ternary `? :`, kein `?.`, kein `??`, kein `&&`/`||` in Pipeline-Chains
-- `$IsWindows` nicht verwenden
-- Shell-Detection in jedem `Start-Process`/`& <shell>`-Aufruf:
-  ```powershell
-  $shell = if (Get-Command pwsh -EA SilentlyContinue) { 'pwsh' } else { 'powershell.exe' }
-  ```
+- `$IsWindows` nicht verwenden (existiert nicht in 5.1)
+- `Start-Process`/`& <shell>`-Aufrufe direkt mit `powershell.exe`, ohne Detection-Boilerplate
 - App-Runtime: **keine externen PowerShell-Module** (keine PSGallery-Abhängigkeiten zur Laufzeit). Nur OS-eingebaute Assemblies.
 - Dev-Tools (PSSA, Pester): über `_deps/<Modul>/<Version>/` Offline-Bundles laden.
 

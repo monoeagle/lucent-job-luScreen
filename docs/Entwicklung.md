@@ -23,10 +23,13 @@ Wenn die Dev-Maschine kein PSGallery/NuGet hat:
 3. Auf der Air-Gapped-Maschine direkt nutzen — `tools/Invoke-PSSA.ps1` und
    `run.ps1` finden die Module automatisch in `_deps/`.
 
-Alternativ direkter Download via nupkg-URL (ohne NuGet-Provider):
+Alternativ direkter Download via nupkg-URL (ohne NuGet-Provider, ohne PSGallery-Anmeldung):
 ```powershell
-./tools/Install-Pester-Offline.ps1 -Url 'https://www.powershellgallery.com/api/v2/package/Pester/5.7.1'
+./tools/Install-PSScriptAnalyzer-Offline.ps1 -Url 'https://www.powershellgallery.com/api/v2/package/PSScriptAnalyzer/1.25.0'
+./tools/Install-Pester-Offline.ps1          -Url 'https://www.powershellgallery.com/api/v2/package/Pester/5.7.1'
 ```
+
+Beide Skripte erzwingen TLS 1.2, laden das nupkg als ZIP, entpacken nach `_deps/<Modul>/<Version>/` und bereinigen NuGet-Metadaten (`_rels`, `package`, `[Content_Types].xml`).
 
 **Die Runtime der App selbst hat keine externen Modul-Abhängigkeiten** — sie
 nutzt nur Windows-eingebaute Assemblies (WPF, GDI+, WinForms, Win32 P/Invoke).
@@ -89,6 +92,12 @@ git commit (keine Claude-Marker)
 4. `CHANGELOG.md` aktualisieren
 5. `LucentScreen.docs.html` mit `doc-writer`-Agent synchronisieren
 6. `packaging-specialist`-Agent → Transfer-Bundle
+
+## PowerShell-Version
+
+**Target ist Windows PowerShell 5.1 (`powershell.exe`).** PS 7 wird nicht unterstützt — auf Enterprise-Ziel-Hosts nicht garantiert vorhanden, doppelter Support kostet nur Boilerplate. Wird neu bewertet, sobald `pwsh.exe` flächendeckend ausgerollt ist.
+
+Konsequenzen für den Code: keine Ternary `? :`, kein Null-Conditional `?.`/`??`, keine Pipeline-Chains `&&`/`||`, kein `$IsWindows`. Details in [`../CLAUDE.md`](../CLAUDE.md#ps-51-tabus).
 
 ## Agent-Routing-Faustregel
 

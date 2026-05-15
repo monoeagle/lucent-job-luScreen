@@ -30,14 +30,11 @@ param(
 # 1) STA-Apartment sicherstellen
 # ---------------------------------------------------------------
 if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
-    # Self-Relaunch mit -STA und den gleichen Parametern.
-    # PowerShell 7 (pwsh) ist nicht garantiert vorhanden auf Enterprise-
-    # Hosts -- wir fallen auf Windows PowerShell 5.1 (powershell.exe)
-    # zurueck. Beide unterstuetzen -STA und WPF auf Windows.
+    # Self-Relaunch mit -STA. Windows PowerShell 5.1 (powershell.exe) ist
+    # einziges Target -- garantiert auf jedem Windows-Enterprise-Host.
     $relaunchArgs = @('-NoProfile', '-STA', '-File', $PSCommandPath)
     if ($DebugMode) { $relaunchArgs += '-DebugMode' }
-    $shell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } else { 'powershell.exe' }
-    Start-Process $shell -ArgumentList $relaunchArgs | Out-Null
+    Start-Process powershell.exe -ArgumentList $relaunchArgs | Out-Null
     exit 0
 }
 

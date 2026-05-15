@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>PSScriptAnalyzer</id>
+    <version>1.25.0</version>
+    <authors>Microsoft Corporation</authors>
+    <owners>Microsoft Corporation</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <licenseUrl>https://github.com/PowerShell/PSScriptAnalyzer/blob/main/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/PowerShell/PSScriptAnalyzer</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/powershell/psscriptanalyzer/main/logo.png</iconUrl>
+    <description>PSScriptAnalyzer provides script analysis and checks for potential code defects in the scripts by applying a group of built-in or customized rules on the scripts being analyzed.</description>
+    <releaseNotes></releaseNotes>
+    <copyright>(c) Microsoft Corporation 2025. All rights reserved.</copyright>
+    <tags>lint bestpractice PSModule PSIncludes_Cmdlet PSCmdlet_Get-ScriptAnalyzerRule PSCmdlet_Invoke-ScriptAnalyzer PSCmdlet_Invoke-Formatter PSCommand_Get-ScriptAnalyzerRule PSCommand_Invoke-ScriptAnalyzer PSCommand_Invoke-Formatter</tags>
+  </metadata>
+</package>

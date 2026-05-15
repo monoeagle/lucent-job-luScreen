@@ -21,9 +21,6 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 
-# Shell-Pfad: bevorzugt pwsh (7+), Fallback Windows PowerShell 5.1
-$script:PSShell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } else { 'powershell.exe' }
-
 # -----------------------------------------------------------------
 # Pfade
 # -----------------------------------------------------------------
@@ -44,14 +41,13 @@ function Action-Prereqs {
     Write-Host "Pruefe Voraussetzungen..." -ForegroundColor Cyan
     $ok = $true
 
-    # PowerShell-Version (5.1 oder 7+)
+    # PowerShell-Version (Pflicht: Windows PowerShell 5.1)
     $psVer = $PSVersionTable.PSVersion
     if ($psVer.Major -lt 5 -or ($psVer.Major -eq 5 -and $psVer.Minor -lt 1)) {
-        Write-Host "  [FEHLT] PowerShell 5.1 oder 7+ (gefunden: $psVer)" -ForegroundColor Red
+        Write-Host "  [FEHLT] Windows PowerShell 5.1 (gefunden: $psVer)" -ForegroundColor Red
         $ok = $false
     } else {
-        $edition = if ($PSVersionTable.PSEdition) { $PSVersionTable.PSEdition } else { 'Desktop' }
-        Write-Host "  [OK]   PowerShell $psVer ($edition, Shell: $script:PSShell)" -ForegroundColor Green
+        Write-Host "  [OK]   Windows PowerShell $psVer" -ForegroundColor Green
     }
 
     # STA-Apartment (nur warnen, run.ps1 selbst muss kein STA sein)
@@ -142,7 +138,7 @@ function Action-PSSA {
     $pArgs = @()
     if ($OnlyChanged) { $pArgs += '-OnlyChangedSinceMain' }
     if ($FailOnError) { $pArgs += '-FailOnError' }
-    & $script:PSShell -NoProfile -File $pssaTool @pArgs
+    & powershell.exe -NoProfile -File $pssaTool @pArgs
     $report = Join-Path $reportsDir 'pssa/pssa-report.md'
     if (Test-Path -LiteralPath $report) {
         Write-Host ""
@@ -239,7 +235,7 @@ function Action-AppStart {
     }
     Write-Host "Starte LucentScreen (-STA) ..." -ForegroundColor Cyan
     $null = New-Item -ItemType Directory -Force -Path (Split-Path $appPidFile -Parent)
-    $proc = Start-Process $script:PSShell -ArgumentList '-STA', '-NoProfile', '-File', $entryScript -PassThru -WindowStyle Hidden
+    $proc = Start-Process powershell.exe -ArgumentList '-STA', '-NoProfile', '-File', $entryScript -PassThru -WindowStyle Hidden
     $proc.Id | Set-Content -LiteralPath $appPidFile -Encoding UTF8
     Write-Host "  PID: $($proc.Id)" -ForegroundColor Green
 }
@@ -259,7 +255,7 @@ function Action-DocsBuild {
         return
     }
     Write-Host "Baue Zensical-Site (managed venv) ..." -ForegroundColor Cyan
-    & $script:PSShell -NoProfile -File $docsRun build
+    & powershell.exe -NoProfile -File $docsRun build
     $exit = $LASTEXITCODE
 
     if ($exit -ne 0) {
@@ -282,7 +278,7 @@ function Action-DocsServe {
         return
     }
     Write-Host "Starte Doku-Live-Server (Ctrl+C zum Beenden) ..." -ForegroundColor Cyan
-    & $script:PSShell -NoProfile -File $docsRun serve
+    & powershell.exe -NoProfile -File $docsRun serve
 }
 
 function Action-HtmlDoc {
@@ -299,12 +295,12 @@ function Action-HtmlDoc {
 }
 
 function Action-InstallPssa {
-    & $script:PSShell -NoProfile -File $pssaInstall
+    & powershell.exe -NoProfile -File $pssaInstall
 }
 
 function Action-InstallPester {
     $script = Join-Path $root 'tools/Install-Pester-Offline.ps1'
-    & $script:PSShell -NoProfile -File $script
+    & powershell.exe -NoProfile -File $script
 }
 
 function Action-CleanReports {
@@ -320,7 +316,7 @@ function Action-ConfigDialog {
         return
     }
     Write-Host "Oeffne Konfig-Dialog (-STA) ..." -ForegroundColor Cyan
-    & $script:PSShell -NoProfile -STA -File $script
+    & powershell.exe -NoProfile -STA -File $script
 }
 
 # -----------------------------------------------------------------

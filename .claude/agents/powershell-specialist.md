@@ -51,20 +51,21 @@ return @{ Success = $false; Status = 'Error'; Message = '…'; Path = $null }
 
 ## PowerShell-Version-Target
 
-**LucentScreen läuft auf Windows PowerShell 5.1** (Pflicht-Target) UND PowerShell 7+. Keine PS-7-only-Sprachfeatures verwenden:
+**LucentScreen läuft ausschließlich auf Windows PowerShell 5.1** (`powershell.exe`). PS 7 ist nicht supported. Diese Liste hilft, kein 7-only-Feature versehentlich zu verwenden:
 
-| ❌ PS 7 only | ✅ PS 5.1-kompatibel |
+| ❌ Nicht nutzen | ✅ 5.1-Lösung |
 |---|---|
-| `$cond ? 'a' : 'b'` (Ternary) | `if ($cond) { 'a' } else { 'b' }` |
-| `$x?.Property` (Null-Conditional) | `if ($null -ne $x) { $x.Property }` |
+| `$cond ? 'a' : 'b'` | `if ($cond) { 'a' } else { 'b' }` |
+| `$x?.Property` | `if ($null -ne $x) { $x.Property }` |
 | `$val ?? 'default'` | `if ($null -eq $val) { 'default' } else { $val }` |
-| `cmd1 \|\| cmd2` (Chain-Operator) | `if (-not $?) { … }` oder `$LASTEXITCODE`-Check |
-| `$IsWindows` (read-only ab PS 6) | nicht referenzieren — in 5.1 nicht vorhanden |
+| `cmd1 \|\| cmd2` | `if (-not $?) { … }` oder `$LASTEXITCODE`-Check |
+| `$IsWindows` | nicht referenzieren |
 | `Invoke-RestMethod -SkipCertificateCheck` | `[ServicePointManager]::ServerCertificateValidationCallback` |
+| `ConvertFrom-Json -AsHashtable` | manuelle Konvertierung (siehe `core/config.psm1::_ConvertTo-HashtableDeep`) |
 
 Erlaubt und empfohlen:
 
-- `[Type]::new(args)` — funktioniert in 5.1 und 7+
+- `[Type]::new(args)`
 - `$null -eq $x` (links!) — strict-mode-safe
 - `Set-StrictMode -Version Latest`
 - `using namespace` (5.0+)
@@ -101,9 +102,15 @@ Code muss `./tools/Invoke-PSSA.ps1` ohne Errors überstehen. Verbreitete Stolper
 ## Test Runner
 
 ```powershell
-pwsh -NoProfile -Command "Invoke-Pester ./tests/ -Output Detailed"
-pwsh -NoProfile -Command "Invoke-Pester ./tests/core.config.Tests.ps1 -Output Detailed"
+# bevorzugt via run.ps1 (laedt Pester aus _deps/ falls vorhanden)
+./run.ps1 t
+./run.ps1 T   # einzelne Datei
+
+# direkt unter Windows PowerShell 5.1
+powershell.exe -NoProfile -Command "Invoke-Pester ./tests/ -Output Detailed"
 ```
+
+**Pester-Bundle:** `_deps/Pester/<version>/Pester.psd1`. Wird offline-fähig verteilt — kein PSGallery-Zugriff zur Test-Zeit nötig.
 
 ## Commit Convention
 

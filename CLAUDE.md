@@ -1,10 +1,10 @@
 # LucentScreen — Projekt-Kontext für Claude
 
-Windows-Screenshot-Tool als **WPF-Anwendung in Windows PowerShell 5.1** (PS 7 wird auch unterstützt) mit Tray-Integration, globalen Hotkeys, Editor und Verlauf. Verteilung als signiertes Paket → MSI durch das Softwareverteilteam.
+Windows-Screenshot-Tool als **WPF-Anwendung in Windows PowerShell 5.1** mit Tray-Integration, globalen Hotkeys, Editor und Verlauf. Verteilung als signiertes Paket → MSI durch das Softwareverteilteam.
 
-> **PS 5.1 ist Pflicht-Target** — Enterprise-Hosts haben oft nur Windows PowerShell 5.1 (`powershell.exe`).
+> **PS 5.1 ist einziges Target.** PowerShell 7 wird nicht unterstützt (Enterprise-Hosts haben es nicht garantiert; doppelter Support kostet nur Boilerplate). Erwägen wir später erneut, wenn `pwsh.exe` flächendeckend ausgerollt ist.
 > Kein PS-7-Sprachfeature nutzen: keine Ternary `? :`, keine Null-Conditional `?.`/`??`, kein `&&`/`||` in der Pipeline.
-> `$IsWindows` existiert in 5.1 nicht (in 7 zudem read-only) — nie überschreiben.
+> `$IsWindows` existiert in 5.1 nicht — nie referenzieren.
 
 > Lies vor jeder Implementierung `todo.md` (offene Arbeitspakete) und `docs/Architektur.md` (Module + Datenfluss).
 > Was bereits erledigt ist, steht in `luscreen-docs/docs/entwicklung/erledigt.md` (inkl. Commit-Log).
@@ -28,11 +28,9 @@ Regel: **`main.ps1` ist der einzige Ort, der core und ui zusammensteckt.** Modul
 ## STA + Single-Instance (Pflicht)
 
 ```powershell
-# 1. STA prüfen -- WPF und Clipboard funktionieren sonst nicht. Shell-Fallback
-#    auf powershell.exe (5.1) wenn pwsh (7+) fehlt.
+# 1. STA prüfen -- WPF und Clipboard funktionieren sonst nicht.
 if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
-    $shell = if (Get-Command pwsh -EA SilentlyContinue) { 'pwsh' } else { 'powershell.exe' }
-    Start-Process $shell -ArgumentList '-STA','-File',$PSCommandPath
+    Start-Process powershell.exe -ArgumentList '-STA','-File',$PSCommandPath
     exit
 }
 
@@ -154,3 +152,9 @@ Siehe `.claude/agents/*.md`. Routing-Faustregel:
 - Multi-Monitor/Bereichs-Capture → `capture-engine-specialist` (sonnet)
 - MSI/Transfer-Bundle/Signing → `packaging-specialist` (sonnet)
 - DE-User-Doku → `doc-writer` (haiku)
+
+---
+
+## Future-Erwägungen
+
+- **PS 7-Support neu evaluieren**, sobald `pwsh.exe` Standard auf den Ziel-Hosts ist (z.B. via MSI/MDM ausgerollt). Dann lassen sich Ternary/Null-Conditional/`&&`-Chains aktivieren, was Code etwas kürzer und besser lesbar macht. Bis dahin: 5.1 only, kein doppelter Support.

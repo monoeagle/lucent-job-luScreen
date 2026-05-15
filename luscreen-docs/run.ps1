@@ -37,7 +37,7 @@ $ErrorActionPreference = 'Stop'
 # Pfade
 $script:Root         = $PSScriptRoot
 $script:VenvDir      = Join-Path $Root '.venv-docs'
-$script:VenvPython   = if ($IsLinux -or $IsMacOS) { Join-Path $script:VenvDir 'bin/python' } else { Join-Path $script:VenvDir 'Scripts/python.exe' }
+$script:VenvPython   = Join-Path $script:VenvDir 'Scripts/python.exe'
 $script:BuildScript  = Join-Path $Root 'build_docs.py'
 $script:DocsDir      = Join-Path $Root 'docs'
 $script:SiteDir      = Join-Path $Root 'site'
@@ -54,18 +54,13 @@ $script:MinMinor = 10
 function _Find-PythonAtLeast {
     param([int]$Major, [int]$Minor)
 
-    # Reihenfolge: explizite Versionen (Win py-Launcher), dann generisches python.
+    # Windows-only: py-Launcher mit absteigender Mindestversion, dann generisches python.
     $candidates = @(
         @('py', '-3.13'),
         @('py', '-3.12'),
         @('py', '-3.11'),
         @('py', '-3.10'),
-        @('python3.13', $null),
-        @('python3.12', $null),
-        @('python3.11', $null),
-        @('python3.10', $null),
-        @('python', $null),
-        @('python3', $null)
+        @('python', $null)
     )
 
     foreach ($c in $candidates) {

@@ -78,7 +78,9 @@ if ($Source) {
 elseif ($Url) {
     $tmp = New-Item -ItemType Directory -Force -Path (Join-Path $env:TEMP "lucentscreen-pester-$([guid]::NewGuid().ToString('N'))")
     try {
-        $nupkg = Join-Path $tmp.FullName 'Pester.nupkg'
+        # PS 5.1's Expand-Archive akzeptiert nur .zip -- nupkg ist ein ZIP,
+        # also direkt mit .zip-Extension speichern.
+        $nupkg = Join-Path $tmp.FullName 'Pester.zip'
         Write-Host "Lade $Url ..." -ForegroundColor Cyan
         Invoke-WebRequest -Uri $Url -OutFile $nupkg -UseBasicParsing
 

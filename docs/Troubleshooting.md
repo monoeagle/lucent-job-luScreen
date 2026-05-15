@@ -40,6 +40,15 @@
 - Settings-Datei `PSScriptAnalyzerSettings.psd1` fehlt → `./run.ps1 l` lädt sie automatisch
 - Bundle in `_deps/PSScriptAnalyzer/` ist alt → `./run.ps1 i` aktualisieren
 
+## Tray-Icon nach Start nicht sichtbar
+
+Windows versteckt unbekannte Tray-Icons standardmäßig in der Overflow-Area neben der Uhr (kleines `^`-Symbol).
+
+- Klick auf `^` in der Taskleiste → das LucentScreen-Icon sollte dort liegen
+- Optional fixieren: Rechtsklick Taskleiste → „Taskleisten-Einstellungen" → „Andere Symbole im Infobereich auswählen, die in der Taskleiste angezeigt werden" → LucentScreen auf „Ein"
+
+Ein Bestätigung, dass die App läuft, geht auch ohne sichtbares Icon: `Ctrl+Shift+3` löst einen Monitor-Capture aus.
+
 ## NotifyIcon bleibt nach Beenden sichtbar bis User darüber hovert
 
 - Klassischer Windows-Bug, kein `NotifyIcon.Dispose()` aufgerufen

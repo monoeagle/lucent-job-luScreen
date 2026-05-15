@@ -10,6 +10,40 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 ## Arbeitspakete
 
+### AP 8 — Verlaufsfenster — abgeschlossen `20260515-1810`
+
+- [x] WPF-Fenster mit `ListBox` (`WrapPanel`-ItemsPanel, VirtualizingPanel-Recycling) und `DataTemplate` für Thumbnail + Name + Zeit/Größe
+- [x] Thumbnails via `BitmapFrame.Create` + `TransformedBitmap`-Downscale (auf 200 px), mit `BitmapCacheOption.OnLoad` (Datei wird nicht gelockt) und `IgnoreColorProfile`
+- [x] Thumbnails werden synchron im `refresh` geladen — Latenz pro Bild < 50 ms mit Downscale, bei typischen Verlaufs-Größen (< einige hundert Bilder) ohne spürbares UI-Blockieren
+- [x] Sortierung neueste zuerst (`LastWriteTime` desc)
+- [x] Live-Update via `DispatcherTimer`-Polling alle 2 s (Snapshot-Signatur aus Anzahl + neueste `LastWriteTime`) — `FileSystemWatcher` lief auf Worker-Thread und killte den Prozess silent
+- [x] Tastatur-Navigation (ListBox-Default für Pfeile/Pos1/Ende) — sowie zusätzlich `Strg+C`, `Entf`, `Enter`/`Return`, `F5`, `Esc` als Window-PreviewKeyDown
+- [x] Maus-Auswahl + Mehrfachauswahl (`SelectionMode=Extended`)
+- [x] `Strg+C` kopiert das selektierte Bild in die Zwischenablage (über `Set-ClipboardImage` aus `core/clipboard.psm1`, gemeinsamer Codepfad mit der Capture-Engine)
+- [x] Doppelklick / Enter öffnet die Datei aktuell mit der Default-App (`Start-Process`); Editor-Hook folgt mit AP 9
+- [x] Kontextmenü pro Eintrag: Öffnen, Im Ordner zeigen, In Zwischenablage kopieren, In Papierkorb verschieben — „Editieren" verschiebt sich zu AP 9
+- [x] Statuszeile: Anzahl der Bilder + Anzahl ausgewählter; Ordner-Pfad steht oben in der Toolbar; Dateigröße + Zeit pro Eintrag
+- [x] Fenstergröße 1110×1080 (Workarea-clamped) — passt 5 Spalten × 5 Zeilen sichtbar auf Standard-Monitoren
+- [x] Tray-Menü „Verlauf öffnen" ruft `Show-HistoryWindow -OutputDir $Config.OutputDir` (vorher Placeholder-MessageBox)
+
+**Artefakte:**
+- `src/core/history.psm1` — `Format-FileSize`, `New-HistoryItem`, `Get-HistoryFiles`, `Get-HistoryItems`, `Open-HistoryFile`, `Show-HistoryInFolder`, `Remove-HistoryItem` (Default in Papierkorb via `Microsoft.VisualBasic.FileIO.FileSystem`, `-Permanent` für endgültiges Löschen), `Copy-HistoryFileToClipboard`
+- `src/views/history-window.xaml` — 1110×1080 Wunschgröße, ListBox + WrapPanel + DataTemplate, ContextMenu, Toolbar mit 5 Aktionen, Statusbar
+- `src/ui/history-window.psm1` — `Show-HistoryWindow -OutputDir [-Owner]`, Add-Type `LucentScreen.HistoryEntry` (INPC für `Thumbnail`-Property), `ObservableCollection<HistoryEntry>`, Polling-Loader, Workarea-Clamp
+- `tests/core.history.Tests.ps1` — 14 Pester-Tests (Format-FileSize, Get-HistoryFiles-Sortierung/-Filter/-Missing-Folder, New-HistoryItem-Mapping, Get-HistoryItems-Reihenfolge, Remove-HistoryItem-NotFound/-Permanent, NotFound-Guards für Open/Reveal/Copy)
+- `src/LucentScreen.ps1` — neue Module-Imports, `History`-Callback ersetzt durch echten Aufruf, `DispatcherUnhandledException`-Handler um Stack-Trace + InnerException-Chain erweitert
+
+**Implementierungs-Detail (Hard-Won Knowledge):**
+- **INPC-Klasse statt Hashtables:** WPF-Binding kann keine `[hashtable]`-Keys auflösen. Lösung: via `Add-Type` einmalig eine `LucentScreen.HistoryEntry`-Klasse mit `INotifyPropertyChanged` auf dem `Thumbnail`-Property kompilieren. Damit aktualisiert die ListBox einzelne Items, sobald das Thumbnail zugewiesen wird.
+- **BitmapImage+DecodePixelWidth → leere Tiles:** Die kanonische Empfehlung „`BitmapImage` mit `DecodePixelWidth=N` + `OnLoad`" lieferte bei unseren PNGs aus `Bitmap.Save()` zuverlässig **weiße** Vorschauen — das eigentliche Bild war im Decoder, aber der UriSource-Pfad rendered nicht. `BitmapFrame.Create(uri, IgnoreColorProfile, OnLoad)` + `TransformedBitmap` für Downscale ist robust und ohne Sichtbarkeits-Artefakte.
+- **Private Modul-Funktionen werden aus `.GetNewClosure()`-ScriptBlocks nicht zuverlässig aufgelöst:** Helper wie `_New-HistoryEntry` und `_Load-Thumbnail` als Modul-Funktionen mit Underscore-Präfix führten zu Laufzeitfehlern (`Die Benennung … wurde nicht erkannt`), sobald sie aus einem `Add_Click`-Handler aufgerufen wurden. Lösung: Helper als ScriptBlock-Variablen direkt in `Show-HistoryWindow` definieren, sie werden via Closure-Capture sauber an alle Event-Handler weitergereicht.
+- **FileSystemWatcher in PowerShell killt den Prozess silent:** Direkter `add_Created({…})`-Handler läuft auf einem Worker-Thread; sobald in einem solchen Handler eine PowerShell-Operation eine Exception wirft (auch über `Dispatcher.BeginInvoke` marshalled), kann der Prozess ohne Dispatcher- oder AppDomain-Exception-Eintrag sterben. Stattdessen `DispatcherTimer`-Polling (2 s, Snapshot-Vergleich `Anzahl + neueste LastWriteTime`) — komplett im UI-Thread, robust, Latenz akzeptabel.
+- **`run.ps1`-`switch` ohne `-CaseSensitive`:** PowerShell-`switch` ist standardmäßig case-insensitive; bei den Tasten-Paaren `s`/`S`, `l`/`L`, `d`/`D`, `t`/`T` feuerten beide Branches in derselben Aktion (Start *und* Stop in einem Aufruf, PSSA full *und* changed, …). Fix: `switch -CaseSensitive ($Code)` in `Invoke-Action`.
+- **Recycle-Bin-Löschung:** `Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile` mit `RecycleOption.SendToRecycleBin`. Assembly muss in PS 5.1 explizit per `Add-Type -AssemblyName Microsoft.VisualBasic` nachgeladen werden.
+- **Selektions-Erhalt nach Refresh:** Vor `Items.Clear()` werden die `FullName`-Pfade der aktuell selektierten Items gemerkt und nach dem Neuaufbau in `LstItems.SelectedItems` wiederhergestellt, soweit die Dateien noch existieren.
+
+**Quality-Stand:** Parse 59/59 clean · PSSA 0 Findings · Pester 90/90 grün (1 skipped — STA-Guard für Set-ClipboardImage).
+
 ### AP 0 — Projekt-Setup & Grundgerüst — abgeschlossen `20260515-1349`
 
 - [x] Ordnerstruktur anlegen (`src/`, `src/views/` für XAML, `assets/` für Icons, `config/`, `docs/`, `packaging/`)
@@ -64,7 +98,7 @@ User-Wunsch nach AP 5: kurzer Visual-Hinweis oben rechts nach erfolgreichem Capt
 - [x] Helper „Bitmap → Clipboard" via `Clipboard.SetImage(BitmapSource)` mit STA-Guard
 - [x] Nach jedem Capture: aktuelles Bild in die Zwischenablage
 - [x] Robust gegen Clipboard-Locks (Retry mit exponentiellem Backoff: 50/100/200/400/800ms, max. 5 Versuche)
-- [ ] „STRG+C im Verlaufsfenster" — verschoben zu AP 8 (Verlauf existiert noch nicht)
+- [x] „STRG+C im Verlaufsfenster" — mit AP 8 erledigt (Window-PreviewKeyDown ruft `Copy-HistoryFileToClipboard` → `Set-ClipboardImage`)
 
 **Artefakte:**
 - `src/core/clipboard.psm1` — `Convert-BitmapToBitmapSource` (PNG-Roundtrip via MemoryStream, liefert Frozen-Source), `Set-ClipboardImage` mit STA-Check + Retry-Backoff
@@ -287,6 +321,8 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 23 | `20260515-1624` | `_pending_` | — | AP 7 | Zwischenablage: `src/core/clipboard.psm1` mit `Convert-BitmapToBitmapSource` (PNG-Roundtrip + Frozen) und `Set-ClipboardImage` (STA-Guard, Retry-Backoff 50→100→200→400→800ms, max 5 Versuche). 3 Tests (1 skipped wegen MTA). `LucentScreen.ps1` kopiert das Bild nach jedem Capture in die Zwischenablage. Verlaufsfenster-Hook bleibt als einziger Sub-Punkt offen und wandert zu AP 8. |
 | 24 | `20260515-1632` | `_pending_` | — | AP 5 | Countdown-Overlay: `src/views/countdown-overlay.xaml` + `src/ui/countdown-overlay.psm1` mit `Show-CountdownOverlay`. Click-through über `SetWindowLong(GWL_EXSTYLE)` mit `WS_EX_TRANSPARENT \| WS_EX_NOACTIVATE \| WS_EX_TOOLWINDOW`. Modale Schleife via `DispatcherFrame` (statt `ShowDialog`, weil `NoActivate` Fokus-Probleme macht). `native.psm1` erweitert um WindowLong-P/Invoke. In `$invokeCapture` vor `Invoke-Capture` eingehängt; Delay wird im Overlay statt im Capture verbraten, ESC bricht ab. Smoke mit DelaySeconds=3 zeigt 3-Sekunden-Latenz und sauberes Verschwinden des Overlays vor Screenshot. |
 | 25 | `20260515-1650` | `_pending_` | — | polish | Capture-Toast: `src/views/capture-toast.xaml` + `src/ui/capture-toast.psm1` mit `Show-CaptureToast` (non-blocking, Kamera-Glyph, FadeIn 150ms + FadeOut 800ms, Click-Through, NoActivate). `$script:CurrentToast` cancelt vorherigen Toast vor Anzeige des neuen. In `$invokeCapture` nach erfolgreichem Save aufgerufen. FadeOut-Dauer auf User-Wunsch von 250ms auf 800ms verlängert. |
+| 26 | `20260515-1810` | `_pending_` | — | AP 8 | Verlaufsfenster: `src/core/history.psm1` (Get-HistoryItems, Open/Reveal/Remove via Microsoft.VisualBasic-Recycle-Bin, Copy-HistoryFileToClipboard wiederverwendet `Set-ClipboardImage`). `src/views/history-window.xaml` + `src/ui/history-window.psm1` mit `Show-HistoryWindow`. INPC-Klasse `LucentScreen.HistoryEntry` via Add-Type fuer Thumbnail-Binding. ListBox+WrapPanel+VirtualizingPanel-Recycling, DataTemplate mit `BitmapFrame.Create`+`TransformedBitmap` (Downscale auf 200 px) — `BitmapImage`+`DecodePixelWidth` lieferte leere Tiles. Live-Update via `DispatcherTimer`-Polling (2 s, Snapshot-Signatur) — `FileSystemWatcher` mit PS-ScriptBlock-Handlern killte den Prozess silent vom Worker-Thread aus. Fenster 1110×1080 (Workarea-clamped, 5×5-Layout). Toolbar + Kontextmenü + Statusbar; PreviewKeyDown fuer Strg+C/Entf/Enter/F5/Esc. Selektions-Erhalt nach Refresh ueber FullName-Set. Helper als ScriptBlock-Variablen (Modul-private Underscore-Funktionen wurden aus `GetNewClosure`-Bloecken nicht aufgeloest). 14 neue Pester-Tests. `LucentScreen.ps1` History-Callback ruft `Show-HistoryWindow`; `DispatcherUnhandledException` jetzt mit Stack-Trace + InnerException-Chain. |
+| 27 | `20260515-1810` | `_pending_` | — | fix | `run.ps1` Switch case-sensitiv (`switch -CaseSensitive ($Code)`) — vorher feuerten `s`/`S`, `l`/`L`, `d`/`D`, `t`/`T` beide Branches in einem Aufruf (App startete und stoppte sofort, PSSA lief zweimal, Docs Build und Serve gleichzeitig). |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

@@ -360,7 +360,10 @@ function Show-Menu {
 
 function Invoke-Action {
     param([string]$Code)
-    switch ($Code) {
+    # -CaseSensitive: in PowerShell ist switch sonst case-insensitive --
+    # 's' und 'S' (Start/Stop), 'l' und 'L' (PSSA all/changed), 'd' und 'D'
+    # (Docs-Build/Serve) wuerden sonst beide feuern.
+    switch -CaseSensitive ($Code) {
         'p' { Action-ParseCheck }
         'l' { Action-PSSA }
         'L' { Action-PSSA -OnlyChanged }

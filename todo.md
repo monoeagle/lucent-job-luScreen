@@ -12,28 +12,9 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 
 
 
-## AP 7 — Zwischenablage (Rest)
-
-> Bitmap→Clipboard-Helper + automatisches Kopieren nach Capture + Retry-Backoff sind durch AP 7 fertig. Offen ist nur noch der Verlaufsfenster-Hook (gehört eigentlich zu AP 8).
-
-- [ ] Im Verlaufsfenster: STRG+C kopiert selektiertes Bild in Clipboard (folgt mit AP 8)
-
-## AP 8 — Verlaufsfenster (Bildliste)
-
-- [ ] WPF-Fenster mit `ListBox` (oder `ItemsControl` + `WrapPanel`) und `DataTemplate` für Thumbnail+Name
-- [ ] Thumbnails über `BitmapImage` mit `DecodePixelWidth` (spart RAM massiv) und `BitmapCacheOption.OnLoad` (Datei nicht gelockt halten)
-- [ ] Thumbnails async in Background-Thread laden, per `Dispatcher` ins ViewModel zurück
-- [ ] Sortierung neueste zuerst
-- [ ] `FileSystemWatcher` für Live-Update bei neuen/gelöschten Dateien (Events auf UI-Thread marshalln)
-- [ ] Tastatur-Navigation (Pfeiltasten via ListBox-Default, Pos1/Ende)
-- [ ] Maus-Auswahl + optionale Mehrfachauswahl
-- [ ] STRG+C → Clipboard (KeyBinding im XAML)
-- [ ] Doppelklick / Enter → Editor öffnen
-- [ ] Kontextmenü pro Eintrag (Öffnen, Editieren, Im Ordner zeigen, Löschen, In Clipboard kopieren)
-- [ ] Statuszeile (Anzahl, Pfad, Dateigröße)
-
 ## AP 9 — Mini-Editor
 
+- [ ] Hook aus Verlaufsfenster: Doppelklick / Enter / Kontextmenü „Editieren" öffnet den Editor (statt der Default-App wie aktuell)
 - [ ] Eigenes WPF-Fenster mit `Canvas` über `Image` (Background-Bitmap)
 - [ ] Zoom (Maus-Rad mit `ScaleTransform`, Fit-to-Window)
 - [ ] Tool-Palette (XAML-Toolbar oder Side-Panel)

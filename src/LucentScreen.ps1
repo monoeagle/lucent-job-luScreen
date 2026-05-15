@@ -127,7 +127,19 @@ $app.ShutdownMode = [System.Windows.ShutdownMode]::OnExplicitShutdown
 $app.add_DispatcherUnhandledException({
         param($src, $e)
         try {
-            Write-LsLog -Level Error -Source 'dispatcher' -Message ("Unhandled: " + $e.Exception.Message)
+            $ex = $e.Exception
+            Write-LsLog -Level Error -Source 'dispatcher' -Message ("Unhandled: " + $ex.GetType().FullName + ": " + $ex.Message)
+            # Bei PowerShell-ScriptBlock-Fehlern landet die Quelle als
+            # InnerException -- die hat oft den interessanten Origin.
+            $inner = $ex
+            $depth = 0
+            while ($null -ne $inner -and $depth -lt 5) {
+                if ($inner.StackTrace) {
+                    Write-LsLog -Level Error -Source 'dispatcher' -Message ("Stack[$depth]: " + ($inner.StackTrace -replace "`r?`n", ' | '))
+                }
+                $inner = $inner.InnerException
+                $depth++
+            }
             $e.Handled = $true  # App nicht crashen lassen
         } catch {
             $null = $_
@@ -158,6 +170,8 @@ Import-Module (Join-Path $uiDir 'config-dialog.psm1') -Force
 Import-Module (Join-Path $uiDir 'region-overlay.psm1') -Force
 Import-Module (Join-Path $uiDir 'countdown-overlay.psm1') -Force
 Import-Module (Join-Path $uiDir 'capture-toast.psm1') -Force
+Import-Module (Join-Path $coreDir 'history.psm1') -Force
+Import-Module (Join-Path $uiDir 'history-window.psm1') -Force
 Import-Module (Join-Path $uiDir 'tray.psm1') -Force
 
 $assetsDir = Join-Path $rootDir '..\assets'
@@ -236,12 +250,12 @@ $callbacks = @{
     AllMonitors  = { $invokeCapture.Invoke('AllMonitors') }.GetNewClosure()
 
     History = {
-        Write-LsLog -Level Info -Source 'tray' -Message 'Verlauf angefordert (AP 8 -- noch nicht implementiert)'
-        [System.Windows.MessageBox]::Show(
-            'Verlauf folgt mit AP 8.',
-            'LucentScreen',
-            [System.Windows.MessageBoxButton]::OK,
-            [System.Windows.MessageBoxImage]::Information) | Out-Null
+        Write-LsLog -Level Info -Source 'tray' -Message 'Verlauf geoeffnet'
+        try {
+            Show-HistoryWindow -OutputDir $script:Config.OutputDir
+        } catch {
+            Write-LsLog -Level Error -Source 'tray' -Message ("Verlauf fehlgeschlagen: " + $_.Exception.Message)
+        }
     }.GetNewClosure()
 
     Config = {

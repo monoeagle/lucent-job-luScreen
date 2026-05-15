@@ -242,6 +242,7 @@ Tabelle pro Commit/Push — wird vor jedem Push manuell ergänzt. Reihenfolge is
 | 2 | 2026-05-15 13:31 | `3704a64` | ✓ | scaffold | Bootstrap LucentScreen scaffolding (Ordner, Agenten, PSSA, Reports, Doku, HTML-Single-Page, Hooks, Ecosystem-Playbook) |
 | 3 | 2026-05-15 13:49 | `5e69a08` | ✓ | AP 0 | Projekt-Setup und Grundgerüst — `src/LucentScreen.ps1`, `src/core/{native,logging,xaml-loader}.psm1`, Pester-Tests (10/10), PSSA 0 Findings |
 | 4 | 2026-05-15 14:12 | `9c375a7` | ✓ | compat | PS 5.1-Kompatibilität, Shell-Detection, Pester-Offline-Bundle (`tools/Install-Pester-Offline.ps1`), No-NuGet-Runtime-Doku |
+| 5 | 2026-05-15 14:12 | `28313f5` | ✓ | chore | Commit-Log-Eintrag 4 mit finalem Hash nachgetragen |
 
 **Regeln:**
 - Eintrag VOR `git commit` ergänzen (Hash und Datum nach erfolgreichem Commit nachtragen)

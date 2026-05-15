@@ -1,0 +1,17 @@
+/* LucentScreen Doc-Site Theming
+   Akzentfarbe: gleich wie BoundaryManager (Lucent-Hub-Pattern) */
+
+:root {
+  --md-primary-fg-color:        #00b7eb;
+  --md-primary-fg-color--light: #4ed1f3;
+  --md-primary-fg-color--dark:  #006b8f;
+  --md-accent-fg-color:         #00b7eb;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        #00b7eb;
+  --md-accent-fg-color:         #4ed1f3;
+}
+
+.md-typeset h1 { font-weight: 600; }
+.md-typeset code { font-size: 0.85em; }

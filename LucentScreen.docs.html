@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LucentScreen v0.1.0 – Dokumentation</title>
+<style>
+  /* Default = Dark, identische Brushes wie BoundaryManager (Lucent-Hub-Pattern) */
+  :root {
+    --bg:        #12141a;
+    --bg-panel:  #1a1d26;
+    --bg-card:   #262a38;
+    --bg-input:  #0f1118;
+    --accent:    #00b7eb;
+    --accent-dim:#006b8f;
+    --success:   #4ade80;
+    --warning:   #fbbf24;
+    --danger:    #f87171;
+    --text-pri:  #e8ecf2;
+    --text-sec:  #a8b0c2;
+    --border:    #3a4055;
+    --radius:    6px;
+    --font:      'Segoe UI', system-ui, sans-serif;
+    --mono:      Consolas, 'Cascadia Mono', 'Courier New', monospace;
+    --accent-tint:   rgba(0,183,235,.15);
+    --accent-subtle: rgba(0,183,235,.08);
+    --warning-tint:  rgba(251,191,36,.15);
+    --success-tint:  rgba(74,222,128,.15);
+    --danger-tint:   rgba(248,113,113,.15);
+    --row-hover:     rgba(255,255,255,.03);
+  }
+  :root[data-theme="light"] {
+    --bg:        #f1f3f5;
+    --bg-panel:  #ffffff;
+    --bg-card:   #f9fafb;
+    --bg-input:  #ffffff;
+    --accent:    #0b7b9f;
+    --accent-dim:#08506b;
+    --success:   #16a34a;
+    --warning:   #b45309;
+    --danger:    #dc2626;
+    --text-pri:  #1f2937;
+    --text-sec:  #5a6478;
+    --border:    #d1d5db;
+    --accent-tint:   rgba(11,123,159,.10);
+    --accent-subtle: rgba(11,123,159,.05);
+    --warning-tint:  rgba(180,83,9,.10);
+    --success-tint:  rgba(22,163,74,.10);
+    --danger-tint:   rgba(220,38,38,.10);
+    --row-hover:     rgba(0,0,0,.03);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text-pri);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .layout { display: flex; min-height: 100vh; }
+  nav {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  nav h1 {
+    font-size: 16px;
+    color: var(--accent);
+    padding: 0 22px 4px;
+    letter-spacing: .02em;
+  }
+  nav .ver {
+    color: var(--text-sec);
+    font-size: 12px;
+    padding: 0 22px 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+  nav ol {
+    list-style: none;
+    padding: 0;
+    counter-reset: nav-counter;
+  }
+  nav ol li a {
+    display: block;
+    padding: 7px 22px;
+    color: var(--text-pri);
+    text-decoration: none;
+    font-size: 13px;
+    border-left: 3px solid transparent;
+    transition: all .12s;
+    counter-increment: nav-counter;
+  }
+  nav ol li a::before {
+    content: counter(nav-counter) ". ";
+    color: var(--text-sec);
+    margin-right: 4px;
+  }
+  nav ol li a:hover {
+    background: var(--row-hover);
+    border-left-color: var(--accent);
+    color: var(--accent);
+  }
+  .theme-toggle {
+    position: absolute;
+    bottom: 18px;
+    left: 22px;
+    background: var(--bg-card);
+    color: var(--text-pri);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: var(--font);
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  main {
+    flex: 1;
+    padding: 40px 56px 80px;
+    max-width: 1080px;
+  }
+  h2 {
+    color: var(--accent);
+    font-size: 22px;
+    font-weight: 600;
+    padding-top: 32px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  h2:first-child { padding-top: 0; }
+  h3 {
+    color: var(--text-pri);
+    font-size: 17px;
+    font-weight: 600;
+    margin: 24px 0 10px;
+  }
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 18px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-sec);
+  }
+  p { margin-bottom: 12px; }
+  ul, ol { padding-left: 22px; margin-bottom: 14px; }
+  ul li, ol li { margin-bottom: 4px; }
+  code {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--bg-input);
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+  pre {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    overflow-x: auto;
+    margin: 12px 0 16px;
+  }
+  pre code {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--text-pri);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 18px;
+    font-size: 14px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    color: var(--text-sec);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  tr:hover td { background: var(--row-hover); }
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-subtle);
+    padding: 10px 16px;
+    margin: 12px 0;
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+  .warn {
+    border-left: 3px solid var(--warning);
+    background: var(--warning-tint);
+    padding: 10px 16px;
+    margin: 12px 0;
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+  .stub {
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    color: var(--text-sec);
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    margin: 14px 0;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav>
+    <h1>LucentScreen</h1>
+    <div class="ver">v0.1.0 (Scaffolding)</div>
+    <ol>
+      <li><a href="#ueberblick">Überblick</a></li>
+      <li><a href="#installation">Installation</a></li>
+      <li><a href="#schnellstart">Schnellstart</a></li>
+      <li><a href="#tray">Tray-Icon</a></li>
+      <li><a href="#hotkeys">Hotkeys</a></li>
+      <li><a href="#capture">Capture-Modi</a></li>
+      <li><a href="#editor">Editor</a></li>
+      <li><a href="#verlauf">Verlauf</a></li>
+      <li><a href="#konfiguration">Konfiguration</a></li>
+      <li><a href="#architektur">Architektur</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+      <li><a href="#changelog">Changelog</a></li>
+    </ol>
+    <button class="theme-toggle" onclick="toggleTheme()">Theme wechseln</button>
+  </nav>
+
+  <main>
+    <h2 id="ueberblick">Überblick</h2>
+    <p>LucentScreen ist ein leichtgewichtiges Windows-Screenshot-Tool mit Tray-Integration, globalen Hotkeys, Annotations-Editor und Verlauf. Es läuft als WPF-Anwendung in PowerShell&nbsp;7+.</p>
+    <p>Verteilung erfolgt als signiertes Bundle, das vom Softwareverteilteam in einen MSI-Installer verpackt wird.</p>
+
+    <h2 id="installation">Installation</h2>
+    <div class="stub">Wird mit AP 9 (Packaging) gefüllt. Quelle: <code>luscreen-docs/docs/grundlagen/installation.md</code>.</div>
+
+    <h2 id="schnellstart">Schnellstart</h2>
+    <div class="stub">Wird mit AP 2/3 (Tray + Hotkeys) gefüllt.</div>
+
+    <h2 id="tray">Tray-Icon</h2>
+    <div class="stub">Wird mit AP 2 (Tray-Icon &amp; Kontextmenü) gefüllt.</div>
+
+    <h2 id="hotkeys">Hotkeys</h2>
+    <h4>Default-Hotkeys</h4>
+    <table>
+      <thead><tr><th>Tastenkombination</th><th>Aktion</th></tr></thead>
+      <tbody>
+        <tr><td><code>Ctrl+Shift+1</code></td><td>Bereich aufnehmen</td></tr>
+        <tr><td><code>Ctrl+Shift+2</code></td><td>Aktives Fenster</td></tr>
+        <tr><td><code>Ctrl+Shift+3</code></td><td>Monitor unter Maus</td></tr>
+        <tr><td><code>Ctrl+Shift+4</code></td><td>Alle Monitore</td></tr>
+        <tr><td><code>Ctrl+Shift+0</code></td><td>Tray-Menü anzeigen</td></tr>
+      </tbody>
+    </table>
+    <div class="note">Hotkeys sind im Konfigurationsdialog anpassbar. Bei Konflikten zeigt LucentScreen einen Vorschlag für eine freie Kombination.</div>
+
+    <h2 id="capture">Capture-Modi</h2>
+    <h4>Bereich</h4>
+    <p>Ein Vollbild-Overlay erscheint über allen Monitoren. Mit gedrückter Maustaste ziehen Sie ein Rechteck. <kbd>ESC</kbd> bricht ab.</p>
+    <h4>Aktives Fenster</h4>
+    <p>Das aktuell aktive Fenster wird inklusive Frame, aber ohne Schlagschatten, aufgenommen.</p>
+    <h4>Monitor unter Maus</h4>
+    <p>Der Monitor, auf dem sich der Cursor befindet, wird vollständig aufgenommen.</p>
+    <h4>Alle Monitore</h4>
+    <p>Der virtuelle Gesamtbildschirm aller verbundenen Monitore.</p>
+
+    <h2 id="editor">Editor</h2>
+    <div class="stub">Wird mit AP 6 (Editor) gefüllt.</div>
+
+    <h2 id="verlauf">Verlauf</h2>
+    <div class="stub">Wird mit AP 7 (Verlauf) gefüllt.</div>
+
+    <h2 id="konfiguration">Konfiguration</h2>
+    <p>Die Konfigurationsdatei liegt unter <code>%APPDATA%\LucentScreen\config.json</code> und wird beim ersten Start aus <code>config.default.json</code> erzeugt.</p>
+    <div class="stub">Vollständiges Schema wird mit AP 1 (Konfiguration) dokumentiert.</div>
+
+    <h2 id="architektur">Architektur</h2>
+    <p>LucentScreen ist in drei Layer aufgebaut:</p>
+    <ul>
+      <li><strong>core</strong> — Domain-Logik, GDI+, P/Invoke. Keine WPF-Abhängigkeit.</li>
+      <li><strong>ui</strong> — XAML, WPF-Fenster, NotifyIcon, HwndSource-Hotkey-Hook.</li>
+      <li><strong>entry</strong> — <code>LucentScreen.ps1</code>: STA-Check, Single-Instance, DPI-Awareness, Application-Loop.</li>
+    </ul>
+    <p>Details: <code>docs/Architektur.md</code> im Quellrepository.</p>
+
+    <h2 id="troubleshooting">Troubleshooting</h2>
+    <div class="warn"><strong>Tray-Icon bleibt nach Beenden sichtbar:</strong> Windows-Glitch. Über das Icon mit der Maus fahren, dann verschwindet es.</div>
+    <div class="warn"><strong>Hotkey funktioniert nicht:</strong> Andere Anwendung hat die Kombination bereits registriert. In der Konfiguration auf eine alternative Kombination wechseln.</div>
+    <div class="warn"><strong>Screenshot auf zweitem Monitor ist verschoben:</strong> DPI-Skalierungs-Mismatch — Windows-Display-Einstellungen prüfen, evtl. App neu starten.</div>
+
+    <h2 id="changelog">Changelog</h2>
+    <p>Vollständige Historie: <code>CHANGELOG.md</code>.</p>
+    <h4>v0.1.0 (geplant)</h4>
+    <ul>
+      <li>Projekt-Scaffolding (Ordner, Agenten, PSSA-Setup, Doku-Gerüst)</li>
+      <li>App-Implementierung folgt nach <code>todo.md</code></li>
+    </ul>
+  </main>
+</div>
+
+<script>
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('luscreen-doc-theme', t);
+  }
+  function toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  }
+  (function init() {
+    const saved = localStorage.getItem('luscreen-doc-theme') || 'dark';
+    applyTheme(saved);
+  })();
+</script>
+</body>
+</html>

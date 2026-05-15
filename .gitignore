@@ -1,0 +1,35 @@
+# Build / venv
+luscreen-docs/.venv-docs/
+luscreen-docs/site/
+__pycache__/
+*.pyc
+
+# PSSA-Bundle (wird per Install-Skript geladen, NICHT committen wenn groß)
+# _deps/PSScriptAnalyzer/
+
+# Reports werden lokal generiert
+reports/*/pssa-report.*
+reports/*/pester-report.*
+reports/*/pester-results.xml
+reports/*/coverage.xml
+reports/*/parse-report.*
+reports/audit/audit-*.md
+!reports/*/history/
+
+# Pakete
+packaging/transfer/*.zip
+packaging/transfer/LucentScreen_v*/
+
+# Runtime
+*.log
+*.tmp
+
+# Editor / OS
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+*.suo
+*.user
+Thumbs.db
+desktop.ini

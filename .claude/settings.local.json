@@ -1,0 +1,62 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(gh auth *)",
+      "Bash(gh repo *)",
+      "Bash(gh issue *)",
+      "Bash(gh pr *)",
+      "Bash(gh api *)",
+      "Bash(pwsh *)",
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Get-Item *)",
+      "PowerShell(Resolve-Path *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Invoke-Pester *)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "PowerShell(.\\\\run.ps1 *)",
+      "PowerShell(./run.ps1 *)",
+      "PowerShell(C:\\\\_Projects\\\\lucent-job-luScreen\\\\run.ps1 *)",
+      "PowerShell(pwsh -NoProfile -File .\\\\tools\\\\*)",
+      "PowerShell($errs=$null; [void][System.Management.Automation.Language.Parser]::ParseFile *)"
+    ],
+    "deny": []
+  },
+
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -Command \"$f = $env:CLAUDE_TOOL_FILE_PATH; if ($f -and ($f -like '*.ps1' -or $f -like '*.psm1')) { $errs=$null; [void][System.Management.Automation.Language.Parser]::ParseFile($f, [ref]$null, [ref]$errs); if ($errs.Count -gt 0) { Write-Host ('[parse-check] ' + (Split-Path -Leaf $f) + ': ' + $errs.Count + ' Fehler') -ForegroundColor Red; $errs | Select-Object -First 5 | ForEach-Object { Write-Host ('  L' + $_.Extent.StartLineNumber + ': ' + $_.Message) -ForegroundColor DarkRed } } }\""
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -Command \"$f = $env:CLAUDE_TOOL_FILE_PATH; if ($f -and ($f -like '*.ps1' -or $f -like '*.psm1') -and (Get-Module -ListAvailable PSScriptAnalyzer)) { $settings = Join-Path (Resolve-Path '.') 'PSScriptAnalyzerSettings.psd1'; $a = @{ Path = $f }; if (Test-Path $settings) { $a.Settings = $settings }; $r = Invoke-ScriptAnalyzer @a -EA SilentlyContinue; if ($r) { Write-Host ('[pssa] ' + (Split-Path -Leaf $f) + ': ' + $r.Count + ' Findings') -ForegroundColor Yellow; $r | Select-Object -First 5 | ForEach-Object { Write-Host ('  L' + $_.Line + ' ' + $_.Severity + ' ' + $_.RuleName + ': ' + $_.Message) -ForegroundColor DarkYellow } } }\""
+          }
+        ]
+      }
+    ],
+
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -Command \"Write-Host '--- LucentScreen Session ---' -ForegroundColor Cyan; Write-Host ('Apartment: ' + [Threading.Thread]::CurrentThread.GetApartmentState() + ' (App benoetigt STA, run.ps1 startet pwsh -STA)') -ForegroundColor DarkGray; $h = Join-Path (Resolve-Path '.') 'LucentScreen.docs.html'; $d = Join-Path (Resolve-Path '.') 'luscreen-docs/docs'; if ((Test-Path $h) -and (Test-Path $d)) { $hT = (Get-Item $h).LastWriteTime; $n = (Get-ChildItem $d -Recurse -File -Filter *.md | Sort-Object LastWriteTime -Descending | Select-Object -First 1).LastWriteTime; if ($n -gt $hT) { Write-Host '[doc-sync] LucentScreen.docs.html ist aelter als Markdown-Quellen -- via doc-writer-Agent synchronisieren' -ForegroundColor Yellow } }\""
+          }
+        ]
+      }
+    ]
+  }
+}

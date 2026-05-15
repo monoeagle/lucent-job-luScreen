@@ -1,0 +1,43 @@
+[project]
+site_name        = "LucentScreen"
+site_description = "Windows-Screenshot-Tool mit Tray, Hotkeys und Editor · PowerShell + WPF · v0.1.0"
+site_author      = "LucentScreen"
+copyright        = "Copyright &copy; 2026"
+
+docs_dir = "docs"
+site_dir = "site"
+
+extra_css        = ["stylesheets/extra.css"]
+extra_javascript = []
+
+nav = [
+  { "Überblick" = "index.md" },
+  { "Grundlagen" = [
+    { "Installation"   = "grundlagen/installation.md" },
+    { "Schnellstart"   = "grundlagen/schnellstart.md" },
+    { "Plattformen"    = "grundlagen/plattformen.md" },
+  ]},
+  { "Anleitungen" = [
+    { "Tray-Icon"        = "anleitung/tray.md" },
+    { "Hotkeys"          = "anleitung/hotkeys.md" },
+    { "Bereich-Capture"  = "anleitung/bereich-capture.md" },
+    { "Editor"           = "anleitung/editor.md" },
+    { "Verlauf"          = "anleitung/verlauf.md" },
+  ]},
+  { "Referenz" = [
+    { "Architektur"     = "referenz/architektur.md" },
+    { "Konfiguration"   = "referenz/konfiguration.md" },
+    { "Hotkey-System"   = "referenz/hotkey-system.md" },
+    { "Capture-Modi"    = "referenz/capture-modi.md" },
+    { "Packaging"       = "referenz/packaging.md" },
+  ]},
+  { "Entwicklung" = [
+    { "Projektstruktur" = "entwicklung/projektstruktur.md" },
+    { "Testing"         = "entwicklung/testing.md" },
+    { "Stolpersteine"   = "entwicklung/stolpersteine.md" },
+    { "Changelog"       = "entwicklung/changelog.md" },
+  ]},
+]
+
+[project.theme]
+language = "de"

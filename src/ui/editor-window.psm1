@@ -82,6 +82,37 @@ function Show-EditorWindow {
     $c.ShapeLayer.Width = $bitmap.PixelWidth
     $c.ShapeLayer.Height = $bitmap.PixelHeight
 
+    # --- Debug-Logger (Crop-Diagnose) ---------------------------------------
+    # Gesteuert ueber $env:LUSCREEN_EDITOR_DEBUG. Setze auf '1' fuer Logfile,
+    # '2' fuer zusaetzliche Sonden (rotes Test-Rect, ImgBitmap.HitTest=$false).
+    # Logfile: %LOCALAPPDATA%\LucentScreen\logs\editor-debug.log
+    $dbgLevel = 0
+    try { $dbgLevel = [int]($env:LUSCREEN_EDITOR_DEBUG) } catch { $dbgLevel = 0 }
+    $dbgLogPath = Join-Path $env:LOCALAPPDATA 'LucentScreen\logs\editor-debug.log'
+    if ($dbgLevel -gt 0) {
+        try {
+            $dbgDir = [System.IO.Path]::GetDirectoryName($dbgLogPath)
+            if (-not (Test-Path -LiteralPath $dbgDir)) {
+                New-Item -ItemType Directory -Path $dbgDir -Force | Out-Null
+            }
+        } catch { $null = $_ }
+    }
+    $dbg = {
+        param([string]$Msg)
+        if ($dbgLevel -le 0) { return }
+        try {
+            $ts = (Get-Date).ToString('yyyyMMdd-HHmmss.fff')
+            Add-Content -LiteralPath $dbgLogPath -Value ("[{0}] {1}" -f $ts, $Msg) -Encoding UTF8
+        } catch { $null = $_ }
+    }.GetNewClosure()
+
+    & $dbg ("=== Editor opened: {0} ({1}x{2}) dbgLevel={3} ===" -f $ImagePath, $bitmap.PixelWidth, $bitmap.PixelHeight, $dbgLevel)
+
+    # ImgBitmap als HitTest-blind: alle Maus-Events sollen am ShapeLayer ankommen,
+    # nicht am darunterliegenden Image. Ohne dies fing das Image die Crop-Drag-
+    # Events ab und der Crop-Tool-Branch in ShapeLayer.MouseDown wurde nie erreicht.
+    $c.ImgBitmap.IsHitTestVisible = $false
+
     $state = @{
         ImagePath  = $ImagePath
         Bitmap     = $bitmap
@@ -91,8 +122,12 @@ function Show-EditorWindow {
         Tool       = 'Select'         # Select|Rectangle|Line|Arrow|Bar|Marker|Crop
         Color      = [System.Windows.Media.Colors]::Red
         Stroke     = 3.0
-        UndoStack  = New-Object System.Collections.Generic.Stack[System.Windows.UIElement]
-        RedoStack  = New-Object System.Collections.Generic.Stack[System.Windows.UIElement]
+        # Undo/Redo speichern Hashtables mit dispatch-Key 'Kind'='Shape'|'Crop'.
+        # Shape-Eintrag:  @{ Kind='Shape'; Element=<UIElement> }
+        # Crop-Eintrag:   @{ Kind='Crop'; OldBitmap=<bm>; OldWidth; OldHeight;
+        #                                 NewBitmap; NewWidth; NewHeight; Dx; Dy }
+        UndoStack  = New-Object System.Collections.Generic.Stack[hashtable]
+        RedoStack  = New-Object System.Collections.Generic.Stack[hashtable]
         Dragging   = $false
         StartPoint = $null
         Preview    = $null
@@ -103,7 +138,11 @@ function Show-EditorWindow {
             DragStart = $null    # Point bei MouseDown
             StartRect = $null    # CropRect bei MouseDown (fuer Move/Resize)
         }
-        RebuildCrop = $null      # Slot fuer $cropRebuildOverlay (gefuellt nach Definition)
+        # Slots fuer Closures, die spaeter definiert werden -- Forward-Refs in
+        # ScriptBlocks via $state, weil .GetNewClosure() die Variable beim Erstellen
+        # einfriert und sonst $null sehen wuerde (Closure-Hoisting-Falle).
+        RebuildCrop = $null
+        FitToWindow = $null
     }
 
     $updateZoomLabel = {
@@ -207,9 +246,48 @@ function Show-EditorWindow {
         }
     }.GetNewClosure()
 
+    # Verschiebt alle Shapes in der ShapeLayer um (Dx, Dy). Wird bei Crop-Apply,
+    # Crop-Undo und Crop-Redo aufgerufen -- gleicher Translations-Code, nur mit
+    # umgekehrten Vorzeichen fuer Undo.
+    $translateShapes = {
+        param([double]$Dx, [double]$Dy)
+        foreach ($child in @($c.ShapeLayer.Children)) {
+            if ($child -is [System.Windows.Shapes.Line]) {
+                $child.X1 += $Dx; $child.Y1 += $Dy
+                $child.X2 += $Dx; $child.Y2 += $Dy
+            } elseif ($child -is [System.Windows.Shapes.Polyline]) {
+                $newPts = New-Object System.Windows.Media.PointCollection
+                foreach ($p in $child.Points) {
+                    $newPts.Add((New-Object System.Windows.Point (($p.X + $Dx), ($p.Y + $Dy))))
+                }
+                $child.Points = $newPts
+            } elseif ($child -is [System.Windows.Shapes.Rectangle]) {
+                $oldX = [System.Windows.Controls.Canvas]::GetLeft($child)
+                $oldY = [System.Windows.Controls.Canvas]::GetTop($child)
+                if ([double]::IsNaN($oldX)) { $oldX = 0 }
+                if ([double]::IsNaN($oldY)) { $oldY = 0 }
+                [System.Windows.Controls.Canvas]::SetLeft($child, $oldX + $Dx)
+                [System.Windows.Controls.Canvas]::SetTop($child, $oldY + $Dy)
+            }
+        }
+    }.GetNewClosure()
+
+    # Wendet die Bitmap-Seite eines Crop-Eintrags an: setzt Bitmap + ImgBitmap +
+    # ShapeLayer-Masse. Wird bei cropApply (vorwaerts), Crop-Undo (rueckwaerts)
+    # und Crop-Redo (vorwaerts) genutzt -- jeweils mit der passenden Bitmap.
+    $applyCropBitmap = {
+        param($Bitmap, [double]$W, [double]$H)
+        $state.Bitmap = $Bitmap
+        $c.ImgBitmap.Source = $Bitmap
+        $c.ImgBitmap.Width = $W
+        $c.ImgBitmap.Height = $H
+        $c.ShapeLayer.Width = $W
+        $c.ShapeLayer.Height = $H
+    }.GetNewClosure()
+
     $pushUndo = {
-        param($Shape)
-        $state.UndoStack.Push($Shape) | Out-Null
+        param([hashtable]$Entry)
+        $state.UndoStack.Push($Entry) | Out-Null
         $state.RedoStack.Clear()
         & $updateUndoButtons
     }.GetNewClosure()
@@ -217,7 +295,19 @@ function Show-EditorWindow {
     $doUndo = {
         if ($state.UndoStack.Count -le 0) { return }
         $top = $state.UndoStack.Pop()
-        $c.ShapeLayer.Children.Remove($top)
+        switch ($top.Kind) {
+            'Shape' {
+                $c.ShapeLayer.Children.Remove($top.Element)
+            }
+            'Crop' {
+                # Rueckwaerts: Shapes zurueck-translatieren, alte Bitmap+Masse wiederherstellen
+                $undoDx = 0.0 - [double]$top.Dx
+                $undoDy = 0.0 - [double]$top.Dy
+                & $translateShapes $undoDx $undoDy
+                & $applyCropBitmap $top.OldBitmap $top.OldWidth $top.OldHeight
+                $c.TxtStatus.Text = "Bild: " + [System.IO.Path]::GetFileName($state.ImagePath) + ("  ({0}x{1})" -f [int]$top.OldWidth, [int]$top.OldHeight)
+            }
+        }
         $state.RedoStack.Push($top) | Out-Null
         & $updateUndoButtons
     }.GetNewClosure()
@@ -225,7 +315,17 @@ function Show-EditorWindow {
     $doRedo = {
         if ($state.RedoStack.Count -le 0) { return }
         $top = $state.RedoStack.Pop()
-        [void]$c.ShapeLayer.Children.Add($top)
+        switch ($top.Kind) {
+            'Shape' {
+                [void]$c.ShapeLayer.Children.Add($top.Element)
+            }
+            'Crop' {
+                # Vorwaerts: Shapes wieder verschieben, neue Bitmap+Masse setzen
+                & $translateShapes ([double]$top.Dx) ([double]$top.Dy)
+                & $applyCropBitmap $top.NewBitmap $top.NewWidth $top.NewHeight
+                $c.TxtStatus.Text = "Bild: " + [System.IO.Path]::GetFileName($state.ImagePath) + ("  ({0}x{1})" -f [int]$top.NewWidth, [int]$top.NewHeight) + " (zugeschnitten)"
+            }
+        }
         $state.UndoStack.Push($top) | Out-Null
         & $updateUndoButtons
     }.GetNewClosure()
@@ -247,19 +347,23 @@ function Show-EditorWindow {
         $r = $state.Crop.Rect
         if ($null -eq $r -or $r.W -le 0 -or $r.H -le 0) { return 'New' }
         $tol = 10.0 / [math]::Max(0.05, $state.Zoom)
+        # Hashtables statt nested Arrays: PS 5.1 + Strict-Mode parst @(@(..),@(..))
+        # mit Komma-Trennung und Operatoren wie '+'/'/' inkonsistent und versucht
+        # arithmetik auf [Object[]] (op_Addition/op_Division) -- Hashtables im
+        # aeusseren @() sind eindeutig.
         $hits = @(
-            @('NW', $r.X, $r.Y),
-            @('NE', $r.X + $r.W, $r.Y),
-            @('SW', $r.X, $r.Y + $r.H),
-            @('SE', $r.X + $r.W, $r.Y + $r.H),
-            @('N', $r.X + $r.W / 2, $r.Y),
-            @('E', $r.X + $r.W, $r.Y + $r.H / 2),
-            @('S', $r.X + $r.W / 2, $r.Y + $r.H),
-            @('W', $r.X, $r.Y + $r.H / 2)
+            @{ Name = 'NW'; X = $r.X; Y = $r.Y },
+            @{ Name = 'NE'; X = $r.X + $r.W; Y = $r.Y },
+            @{ Name = 'SW'; X = $r.X; Y = $r.Y + $r.H },
+            @{ Name = 'SE'; X = $r.X + $r.W; Y = $r.Y + $r.H },
+            @{ Name = 'N'; X = $r.X + $r.W / 2; Y = $r.Y },
+            @{ Name = 'E'; X = $r.X + $r.W; Y = $r.Y + $r.H / 2 },
+            @{ Name = 'S'; X = $r.X + $r.W / 2; Y = $r.Y + $r.H },
+            @{ Name = 'W'; X = $r.X; Y = $r.Y + $r.H / 2 }
         )
         foreach ($h in $hits) {
-            if ([math]::Abs($Pt.X - $h[1]) -le $tol -and [math]::Abs($Pt.Y - $h[2]) -le $tol) {
-                return $h[0]
+            if ([math]::Abs($Pt.X - $h.X) -le $tol -and [math]::Abs($Pt.Y - $h.Y) -le $tol) {
+                return $h.Name
             }
         }
         if ($Pt.X -gt $r.X -and $Pt.X -lt $r.X + $r.W -and $Pt.Y -gt $r.Y -and $Pt.Y -lt $r.Y + $r.H) {
@@ -318,6 +422,7 @@ function Show-EditorWindow {
             & $cropUpdateApplyButtons
             return
         }
+        & $dbg ("cropRebuildOverlay: Rect X={0:N1} Y={1:N1} W={2:N1} H={3:N1} Zoom={4:N3} ShapeLayer={5:N0}x{6:N0}" -f $r.X, $r.Y, $r.W, $r.H, $state.Zoom, $c.ShapeLayer.Width, $c.ShapeLayer.Height)
         $w = [double]$c.ShapeLayer.Width
         $h = [double]$c.ShapeLayer.Height
         # Zoom-Inversion: Handles und Border-Strichstaerke werden in DIP gemessen,
@@ -374,16 +479,17 @@ function Show-EditorWindow {
         [System.Windows.Controls.Canvas]::SetTop($borderWhite, $r.Y)
         [void]$canvas.Children.Add($borderWhite)
 
-        # 8 Handles (zoom-invariant, knallig blau mit weissem Rand)
+        # 8 Handles (zoom-invariant, knallig blau mit weissem Rand).
+        # Hashtables statt nested Arrays -- siehe Kommentar in cropHitTest.
         $handles = @(
-            @($r.X, $r.Y),
-            @($r.X + $r.W, $r.Y),
-            @($r.X, $r.Y + $r.H),
-            @($r.X + $r.W, $r.Y + $r.H),
-            @($r.X + $r.W / 2, $r.Y),
-            @($r.X + $r.W, $r.Y + $r.H / 2),
-            @($r.X + $r.W / 2, $r.Y + $r.H),
-            @($r.X, $r.Y + $r.H / 2)
+            @{ X = $r.X; Y = $r.Y },
+            @{ X = $r.X + $r.W; Y = $r.Y },
+            @{ X = $r.X; Y = $r.Y + $r.H },
+            @{ X = $r.X + $r.W; Y = $r.Y + $r.H },
+            @{ X = $r.X + $r.W / 2; Y = $r.Y },
+            @{ X = $r.X + $r.W; Y = $r.Y + $r.H / 2 },
+            @{ X = $r.X + $r.W / 2; Y = $r.Y + $r.H },
+            @{ X = $r.X; Y = $r.Y + $r.H / 2 }
         )
         $handleFill = New-Object System.Windows.Media.SolidColorBrush ([System.Windows.Media.ColorConverter]::ConvertFromString('#2563EB'))
         $handleFill.Freeze()
@@ -394,8 +500,8 @@ function Show-EditorWindow {
             $hd.Fill = $handleFill
             $hd.Stroke = [System.Windows.Media.Brushes]::White
             $hd.StrokeThickness = $borderStroke
-            [System.Windows.Controls.Canvas]::SetLeft($hd, $hp[0] - $handleSize / 2)
-            [System.Windows.Controls.Canvas]::SetTop($hd, $hp[1] - $handleSize / 2)
+            [System.Windows.Controls.Canvas]::SetLeft($hd, $hp.X - $handleSize / 2)
+            [System.Windows.Controls.Canvas]::SetTop($hd, $hp.Y - $handleSize / 2)
             [void]$canvas.Children.Add($hd)
         }
 
@@ -424,7 +530,10 @@ function Show-EditorWindow {
     }.GetNewClosure()
 
     $cropApply = {
-        if ($null -eq $state.Crop.Rect -or $state.Crop.Rect.W -lt 1 -or $state.Crop.Rect.H -lt 1) { return }
+        if ($null -eq $state.Crop.Rect -or $state.Crop.Rect.W -lt 1 -or $state.Crop.Rect.H -lt 1) {
+            return
+        }
+        & $dbg ("cropApply: ENTER Rect X={0:N1} Y={1:N1} W={2:N1} H={3:N1} Bitmap={4}x{5}" -f $state.Crop.Rect.X, $state.Crop.Rect.Y, $state.Crop.Rect.W, $state.Crop.Rect.H, $state.Bitmap.PixelWidth, $state.Bitmap.PixelHeight)
         try {
             $r = & $cropClampRect $state.Crop.Rect
             $x = [int][math]::Round($r.X)
@@ -440,55 +549,51 @@ function Show-EditorWindow {
             $cropped = New-Object System.Windows.Media.Imaging.CroppedBitmap ($state.Bitmap, $rect)
             $cropped.Freeze()
 
-            # Shapes translate (- crop.X, - crop.Y)
-            & $cropRemoveOverlay
+            # Vor-Crop-Snapshot fuer Undo
+            $oldBitmap = $state.Bitmap
+            $oldW = [double]$c.ShapeLayer.Width
+            $oldH = [double]$c.ShapeLayer.Height
             $dx = - [double]$x
             $dy = - [double]$y
-            foreach ($child in @($c.ShapeLayer.Children)) {
-                if ($child -is [System.Windows.Shapes.Line]) {
-                    $child.X1 += $dx; $child.Y1 += $dy
-                    $child.X2 += $dx; $child.Y2 += $dy
-                } elseif ($child -is [System.Windows.Shapes.Polyline]) {
-                    $newPts = New-Object System.Windows.Media.PointCollection
-                    foreach ($p in $child.Points) {
-                        $newPts.Add((New-Object System.Windows.Point (($p.X + $dx), ($p.Y + $dy))))
-                    }
-                    $child.Points = $newPts
-                } elseif ($child -is [System.Windows.Shapes.Rectangle]) {
-                    $oldX = [System.Windows.Controls.Canvas]::GetLeft($child)
-                    $oldY = [System.Windows.Controls.Canvas]::GetTop($child)
-                    if ([double]::IsNaN($oldX)) { $oldX = 0 }
-                    if ([double]::IsNaN($oldY)) { $oldY = 0 }
-                    [System.Windows.Controls.Canvas]::SetLeft($child, $oldX + $dx)
-                    [System.Windows.Controls.Canvas]::SetTop($child, $oldY + $dy)
-                }
-            }
 
-            # Bitmap ersetzen
-            $state.Bitmap = $cropped
-            $c.ImgBitmap.Source = $cropped
-            $c.ImgBitmap.Width = $w
-            $c.ImgBitmap.Height = $h
-            $c.ShapeLayer.Width = $w
-            $c.ShapeLayer.Height = $h
+            # Shapes translate (- crop.X, - crop.Y) -- Crop-Overlay vorher entfernen
+            & $cropRemoveOverlay
+            & $translateShapes $dx $dy
+
+            # Bitmap + Layer-Masse auf Crop-Ergebnis setzen
+            & $applyCropBitmap $cropped ([double]$w) ([double]$h)
 
             # Statuszeile aktualisieren
             $sizeText = ("  ({0}x{1})" -f $w, $h)
             $c.TxtStatus.Text = "Bild: " + [System.IO.Path]::GetFileName($state.ImagePath) + $sizeText + " (zugeschnitten)"
 
-            # Undo/Redo nach Crop leeren -- Stacks zeigen auf UIElement-Positionen,
-            # die nach der Translation nicht mehr semantisch zur alten Bitmap passen.
-            $state.UndoStack.Clear()
-            $state.RedoStack.Clear()
-            & $updateUndoButtons
+            # Undo-Snapshot pushen -- Crop ist jetzt rueckgaengig-machbar.
+            # Vorher-Shape-Eintraege im Stack bleiben gueltig (UIElements existieren
+            # weiter, nur in neuen Positionen). doUndo/doRedo dispatcht nach Kind.
+            & $pushUndo @{
+                Kind      = 'Crop'
+                OldBitmap = $oldBitmap
+                OldWidth  = $oldW
+                OldHeight = $oldH
+                NewBitmap = $cropped
+                NewWidth  = [double]$w
+                NewHeight = [double]$h
+                Dx        = $dx
+                Dy        = $dy
+            }
 
             # Tool zurueck auf Select
             & $cropCancel
             $c.ToolSelect.IsChecked = $true
 
-            # Fit-to-Window auf neue Dimensionen
-            & $fitToWindow
+            # Fit-to-Window auf neue Dimensionen.
+            # Achtung: $fitToWindow wird erst NACH $cropApply definiert -- die
+            # Closure-Variable waere $null. Daher Slot via $state.FitToWindow.
+            if ($null -ne $state.FitToWindow) { & $state.FitToWindow }
+            & $dbg ("cropApply: DONE -> ShapeLayer={0:N0}x{1:N0}" -f $c.ShapeLayer.Width, $c.ShapeLayer.Height)
         } catch {
+            & $dbg ("!! cropApply EXCEPTION: {0} | {1}" -f $_.Exception.GetType().FullName, $_.Exception.Message)
+            & $dbg ("!! at: {0}" -f $_.InvocationInfo.PositionMessage)
             [System.Windows.MessageBox]::Show(
                 "Zuschnitt fehlgeschlagen:`n" + $_.Exception.Message,
                 'LucentScreen', [System.Windows.MessageBoxButton]::OK,
@@ -517,6 +622,7 @@ function Show-EditorWindow {
                 param($s, $e)
                 $prevTool = $state.Tool
                 $state.Tool = $tool
+                & $dbg ("ToolSwitch: {0} -> {1} (ShapeLayer={2:N0}x{3:N0} Children={4})" -f $prevTool, $tool, $c.ShapeLayer.Width, $c.ShapeLayer.Height, $c.ShapeLayer.Children.Count)
                 # Wechsel weg von Crop: aufraeumen
                 if ($prevTool -eq 'Crop' -and $tool -ne 'Crop') {
                     & $cropCancel
@@ -533,7 +639,10 @@ function Show-EditorWindow {
                             W = $cw * 0.8
                             H = $ch * 0.8
                         }
+                        & $dbg ("ToolSwitch->Crop: initial Rect set X={0:N1} Y={1:N1} W={2:N1} H={3:N1}" -f $state.Crop.Rect.X, $state.Crop.Rect.Y, $state.Crop.Rect.W, $state.Crop.Rect.H)
                         & $cropRebuildOverlay
+                    } else {
+                        & $dbg ("ToolSwitch->Crop: SKIPPED initial Rect, ShapeLayer too small ({0}x{1})" -f $cw, $ch)
                     }
                 }
                 # Mauszeiger ueber dem Canvas spiegelt das Tool
@@ -592,7 +701,12 @@ function Show-EditorWindow {
                     $state.Crop.Rect = @{ X = $pt.X; Y = $pt.Y; W = 0; H = 0 }
                 }
                 if ($null -ne $state.Crop.Rect) {
-                    $state.Crop.StartRect = @{ X = $state.Crop.Rect.X; Y = $state.Crop.Rect.Y; W = $state.Crop.Rect.W; H = $state.Crop.Rect.H }
+                    $state.Crop.StartRect = @{
+                        X = $state.Crop.Rect.X
+                        Y = $state.Crop.Rect.Y
+                        W = $state.Crop.Rect.W
+                        H = $state.Crop.Rect.H
+                    }
                 }
                 $state.Dragging = $true
                 [void]$c.ShapeLayer.CaptureMouse()
@@ -680,7 +794,7 @@ function Show-EditorWindow {
                 if ($dx -lt 3 -and $dy -lt 3) {
                     $c.ShapeLayer.Children.Remove($state.Preview)
                 } else {
-                    & $pushUndo $state.Preview
+                    & $pushUndo @{ Kind = 'Shape'; Element = $state.Preview }
                 }
             }
             $state.Preview = $null
@@ -727,13 +841,16 @@ function Show-EditorWindow {
         # Verfuegbarer Platz im ScrollViewer abzueglich kleinem Rand
         $availW = [math]::Max(50.0, $c.Scroller.ActualWidth - 20)
         $availH = [math]::Max(50.0, $c.Scroller.ActualHeight - 20)
-        if ($bitmap.PixelWidth -le 0 -or $bitmap.PixelHeight -le 0) { return }
-        $z = [math]::Min($availW / $bitmap.PixelWidth, $availH / $bitmap.PixelHeight)
+        # Aktuelle Bitmap aus $state -- $bitmap waere nach Crop noch die alte.
+        $bm = $state.Bitmap
+        if ($bm.PixelWidth -le 0 -or $bm.PixelHeight -le 0) { return }
+        $z = [math]::Min($availW / $bm.PixelWidth, $availH / $bm.PixelHeight)
         if ($z -le 0) { $z = 1 }
         # Nur kleiner-machen automatisch (downscale); bei kleinen Bildern bleibt 100%
         if ($z -gt 1) { $z = 1.0 }
         & $setZoom $z
     }.GetNewClosure()
+    $state.FitToWindow = $fitToWindow
 
     # Toolbar-Bindings
     $c.BtnFit.Add_Click({ param($s, $e); & $fitToWindow }.GetNewClosure())
@@ -786,6 +903,15 @@ function Show-EditorWindow {
             $c.TxtStatus.Text = "Gespeichert: $($r.Path)"
 
             try { [System.Windows.Clipboard]::SetImage($rtb) } catch { $null = $_ }
+
+            # Toast mit Copy-Glyph (Segoe MDL2 0xE8C8) + Auto-Close des Editors.
+            # Show-CaptureToast ist ueber LucentScreen.ps1 modul-weit verfuegbar.
+            if (Get-Command Show-CaptureToast -ErrorAction SilentlyContinue) {
+                $copyGlyph = "$([char]0xE8C8)"
+                $fname = [System.IO.Path]::GetFileName($r.Path)
+                Show-CaptureToast -Title 'Gespeichert + kopiert' -Subtitle $fname -Glyph $copyGlyph
+            }
+            $win.Close()
         } catch {
             [System.Windows.MessageBox]::Show(
                 "Unerwarteter Fehler beim Speichern:`n" + $_.Exception.Message,

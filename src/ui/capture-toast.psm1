@@ -35,7 +35,10 @@ function Show-CaptureToast {
     param(
         [Parameter(Mandatory)][string]$Title,
         [string]$Subtitle = '',
-        [int]$DurationMs = 1400
+        [int]$DurationMs = 1400,
+        # Segoe MDL2 Asset codepoint als String (z.B. "$([char]0xE722)" = Kamera,
+        # "$([char]0xE8C8)" = Copy). Default ist Kamera fuer Capture-Toasts.
+        [string]$Glyph = ''
     )
 
     if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
@@ -48,9 +51,10 @@ function Show-CaptureToast {
     try {
         $xamlPath = Join-Path $PSScriptRoot '..\views\capture-toast.xaml'
         $win = Load-Xaml -Path $xamlPath
-        $c = Get-XamlControls -Root $win -Names 'TxtTitle', 'TxtSubtitle'
+        $c = Get-XamlControls -Root $win -Names 'TxtTitle', 'TxtSubtitle', 'TxtGlyph'
         $c.TxtTitle.Text = $Title
         $c.TxtSubtitle.Text = $Subtitle
+        if (-not [string]::IsNullOrEmpty($Glyph)) { $c.TxtGlyph.Text = $Glyph }
 
         # Position rechts oben auf dem Maus-Monitor
         $cursor = [System.Windows.Forms.Cursor]::Position

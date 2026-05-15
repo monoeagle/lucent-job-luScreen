@@ -27,7 +27,8 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0"
+            <TextBlock x:Name="TxtGlyph"
+                       Grid.Column="0"
                        FontFamily="Segoe MDL2 Assets"
                        FontSize="28"
                        Foreground="#FF00B7EB"

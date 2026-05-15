@@ -33,6 +33,7 @@ $docsDir = Join-Path $root 'luscreen-docs'
 $htmlDoc = Join-Path $root 'LucentScreen.docs.html'
 $reportsDir = Join-Path $root 'reports'
 $appPidFile = Join-Path $env:LOCALAPPDATA 'LucentScreen/run/app.pid'
+$editorDbgLog = Join-Path $env:LOCALAPPDATA 'LucentScreen/logs/editor-debug.log'
 
 # -----------------------------------------------------------------
 # Actions
@@ -229,9 +230,31 @@ function Action-Audit {
 }
 
 function Action-AppStart {
+    param(
+        [int]$DebugLevel = 0,
+        [switch]$ResetLog
+    )
     if (-not (Test-Path $entryScript)) {
         Write-Host "Einstiegsskript fehlt: $entryScript" -ForegroundColor Yellow
         return
+    }
+    # Saubere Sequenz: erst stoppen (idempotent), dann starten -- damit der
+    # Kindprozess garantiert mit den gewuenschten env-vars startet und nicht
+    # eine alte Instanz mit altem Code weiterlaeuft.
+    if (Test-Path $appPidFile) {
+        Action-AppStop | Out-Null
+        Start-Sleep -Milliseconds 250
+    }
+    if ($ResetLog -and (Test-Path -LiteralPath $editorDbgLog)) {
+        try { Remove-Item -LiteralPath $editorDbgLog -Force -EA SilentlyContinue } catch { $null = $_ }
+        Write-Host "  Editor-Debug-Log geleert." -ForegroundColor DarkGray
+    }
+    if ($DebugLevel -gt 0) {
+        $env:LUSCREEN_EDITOR_DEBUG = "$DebugLevel"
+        Write-Host ("  Debug-Level $DebugLevel aktiv (LUSCREEN_EDITOR_DEBUG)") -ForegroundColor Yellow
+        Write-Host ("  Logfile: {0}" -f $editorDbgLog) -ForegroundColor DarkGray
+    } else {
+        Remove-Item Env:\LUSCREEN_EDITOR_DEBUG -ErrorAction SilentlyContinue
     }
     Write-Host "Starte LucentScreen (-STA) ..." -ForegroundColor Cyan
     $null = New-Item -ItemType Directory -Force -Path (Split-Path $appPidFile -Parent)
@@ -246,6 +269,20 @@ function Action-AppStop {
     Write-Host "Stoppe PID $appPid ..." -ForegroundColor Cyan
     try { Stop-Process -Id $appPid -Force } catch { Write-Host "  schon beendet?" -ForegroundColor DarkGray }
     Remove-Item -LiteralPath $appPidFile -Force -EA SilentlyContinue
+}
+
+function Action-EditorDebugTail {
+    param([int]$Lines = 80)
+    if (-not (Test-Path -LiteralPath $editorDbgLog)) {
+        Write-Host "Noch kein editor-debug.log vorhanden." -ForegroundColor Yellow
+        Write-Host "  Pfad: $editorDbgLog" -ForegroundColor DarkGray
+        Write-Host "  Hinweis: Editor wurde noch nicht mit Debug-Level >= 1 gestartet ('sd' im Menue)." -ForegroundColor DarkGray
+        return
+    }
+    Write-Host ("Letzte {0} Zeilen aus editor-debug.log:" -f $Lines) -ForegroundColor Cyan
+    Write-Host "  $editorDbgLog" -ForegroundColor DarkGray
+    Write-Host ""
+    Get-Content -LiteralPath $editorDbgLog -Tail $Lines
 }
 
 function Action-DocsBuild {
@@ -337,8 +374,10 @@ function Show-Menu {
     Write-Host "  a) Audit (Parse + PSSA + Pester, dann auditor-Agent)"
     Write-Host ""
     Write-Host " --- App ---" -ForegroundColor DarkCyan
-    Write-Host "  s) Start (-STA)"
-    Write-Host "  S) Stop"
+    Write-Host "  s)  Start (-STA, immer mit Vorab-Stop)"
+    Write-Host "  S)  Stop"
+    Write-Host "  sd) Start mit Editor-Debug (Level 2: Logfile + Sonden, Log wird vorher geleert)"
+    Write-Host "  lg) Letzte 80 Zeilen editor-debug.log anzeigen"
     Write-Host "  cfg) Konfig-Dialog oeffnen (-STA)"
     Write-Host "  prereqs) Voraussetzungen pruefen"
     Write-Host ""
@@ -372,6 +411,8 @@ function Invoke-Action {
         'a' { Action-Audit }
         's' { Action-AppStart }
         'S' { Action-AppStop }
+        'sd' { Action-AppStart -DebugLevel 2 -ResetLog }
+        'lg' { Action-EditorDebugTail }
         'cfg' { Action-ConfigDialog }
         'prereqs' { Action-Prereqs }
         'd' { Action-DocsBuild }

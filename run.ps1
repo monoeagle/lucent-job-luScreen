@@ -33,7 +33,6 @@ $entryScript = Join-Path $srcDir 'LucentScreen.ps1'
 $pssaTool = Join-Path $root 'tools/Invoke-PSSA.ps1'
 $pssaInstall = Join-Path $root 'tools/Install-PSScriptAnalyzer-Offline.ps1'
 $docsDir = Join-Path $root 'luscreen-docs'
-$docsBuildPy = Join-Path $docsDir 'build_docs.py'
 $htmlDoc = Join-Path $root 'LucentScreen.docs.html'
 $reportsDir = Join-Path $root 'reports'
 $appPidFile = Join-Path $env:LOCALAPPDATA 'LucentScreen/run/app.pid'
@@ -254,18 +253,15 @@ function Action-AppStop {
 }
 
 function Action-DocsBuild {
-    if (-not (Test-Path $docsBuildPy)) {
-        Write-Host "Doc-Build-Skript fehlt: $docsBuildPy" -ForegroundColor Yellow
+    $docsRun = Join-Path $docsDir 'run.ps1'
+    if (-not (Test-Path -LiteralPath $docsRun)) {
+        Write-Host "Doc-Wrapper fehlt: $docsRun" -ForegroundColor Yellow
         return
     }
-    Write-Host "Baue Zensical-Site ..." -ForegroundColor Cyan
-    Push-Location $docsDir
-    try {
-        & python build_docs.py
-        $exit = $LASTEXITCODE
-    } finally {
-        Pop-Location
-    }
+    Write-Host "Baue Zensical-Site (managed venv) ..." -ForegroundColor Cyan
+    & $script:PSShell -NoProfile -File $docsRun build
+    $exit = $LASTEXITCODE
+
     if ($exit -ne 0) {
         Write-Host "Build fehlgeschlagen (exit $exit) -- Browser nicht geoeffnet." -ForegroundColor Red
         return
@@ -277,6 +273,16 @@ function Action-DocsBuild {
     } else {
         Write-Host "site/index.html fehlt -- Build hat nichts geliefert?" -ForegroundColor Yellow
     }
+}
+
+function Action-DocsServe {
+    $docsRun = Join-Path $docsDir 'run.ps1'
+    if (-not (Test-Path -LiteralPath $docsRun)) {
+        Write-Host "Doc-Wrapper fehlt: $docsRun" -ForegroundColor Yellow
+        return
+    }
+    Write-Host "Starte Doku-Live-Server (Ctrl+C zum Beenden) ..." -ForegroundColor Cyan
+    & $script:PSShell -NoProfile -File $docsRun serve
 }
 
 function Action-HtmlDoc {
@@ -331,6 +337,7 @@ function Show-Menu {
     Write-Host ""
     Write-Host " --- Doku ---" -ForegroundColor DarkCyan
     Write-Host "  d) Zensical-Site bauen + im Standard-Browser oeffnen"
+    Write-Host "  D) Doku-Live-Server starten (http://127.0.0.1:8000)"
     Write-Host "  h) HTML-Single-Page Status (LucentScreen.docs.html)"
     Write-Host ""
     Write-Host " --- Werkzeuge ---" -ForegroundColor DarkCyan
@@ -357,6 +364,7 @@ function Invoke-Action {
         'S' { Action-AppStop }
         'prereqs' { Action-Prereqs }
         'd' { Action-DocsBuild }
+        'D' { Action-DocsServe }
         'h' { Action-HtmlDoc }
         'i' { Action-InstallPssa }
         'ip' { Action-InstallPester }

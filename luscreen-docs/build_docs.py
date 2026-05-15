@@ -18,6 +18,29 @@ import argparse
 import shutil
 from pathlib import Path
 
+# Windows-PowerShell-Konsolen sind oft cp1252; ohne Reconfigure crashen
+# Emoji-Ausgaben mit UnicodeEncodeError. Python 3.7+ unterstuetzt reconfigure().
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+# Zensical 0.0.30+ braucht Python >= 3.10. Klare Meldung statt kryptischer
+# pip-/Import-Fehler.
+MIN_PY = (3, 10)
+if sys.version_info < MIN_PY:
+    cur = "{}.{}".format(*sys.version_info[:2])
+    need = "{}.{}".format(*MIN_PY)
+    print(
+        "Python " + cur + " ist zu alt fuer Zensical (benoetigt >= " + need + ").\n"
+        "Optionen:\n"
+        "  - Eine neuere Python-Version installieren (z.B. via winget install Python.Python.3.12)\n"
+        "  - Statt 'run.ps1 d' den Bash-Wrapper nutzen, der eine venv mit passendem Python anlegt:\n"
+        "      bash luscreen-docs/run_luscreen_docs.sh --build\n"
+    )
+    sys.exit(2)
+
 BASE_DIR    = Path(__file__).resolve().parent
 DOCS_DIR    = BASE_DIR / "docs"
 SITE_DIR    = BASE_DIR / "site"
@@ -108,7 +131,7 @@ def serve(port: int = 8000):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="CodeSigning Commander Docs Builder")
+    parser = argparse.ArgumentParser(description="LucentScreen Docs Builder")
     parser.add_argument("--serve",   action="store_true", help="Live-Server starten")
     parser.add_argument("--port",    type=int, default=8000, help="Port für Live-Server")
     parser.add_argument("--check",   action="store_true", help="Nur Struktur prüfen")

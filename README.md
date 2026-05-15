@@ -33,7 +33,7 @@ Volle Konventionen und Architekturregeln: [`CLAUDE.md`](CLAUDE.md).
 ## Dokumentation
 
 - **Single-Page-HTML:** [`LucentScreen.docs.html`](LucentScreen.docs.html) — eigenständig, ohne Web-Server lesbar
-- **Site (Zensical):** `./run.ps1 d` → `luscreen-docs/site/index.html`
+- **Site (Zensical):** `./run.ps1 d` → Build + Browser-Open. `./run.ps1 D` für Live-Server.
 - **Architektur intern:** [`docs/Architektur.md`](docs/Architektur.md)
 
 ## Lizenz / Maintainer

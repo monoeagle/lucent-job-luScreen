@@ -123,7 +123,8 @@ T   Pester (einzelne Test-Datei)
 a   Audit (auditor-Agent: parse+pssa+pester+arch+doc-sync)
 s   App starten (-STA)
 S   App stoppen
-d   Docs bauen (luscreen-docs → site/)
+d   Zensical-Site bauen + im Standard-Browser öffnen
+D   Doku-Live-Server starten (http://127.0.0.1:8000)
 h   HTML-Single-Page Doku bauen (LucentScreen.docs.html)
 ```
 

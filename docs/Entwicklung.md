@@ -31,6 +31,31 @@ Alternativ direkter Download via nupkg-URL (ohne NuGet-Provider):
 **Die Runtime der App selbst hat keine externen Modul-Abhängigkeiten** — sie
 nutzt nur Windows-eingebaute Assemblies (WPF, GDI+, WinForms, Win32 P/Invoke).
 
+## Doku bauen
+
+Die Zensical-Site wird über `luscreen-docs/run.ps1` gebaut — PowerShell-nativ, mit
+einer **verwalteten Python-venv** unter `luscreen-docs/.venv-docs/`. Kein bash, kein WSL.
+
+```powershell
+./run.ps1 d                            # Build + Browser-Open
+./run.ps1 D                            # Live-Server (http://127.0.0.1:8000)
+
+# Oder direkt:
+./luscreen-docs/run.ps1 prereqs        # Python ≥ 3.10 und venv-Status prüfen
+./luscreen-docs/run.ps1 build          # nur statisches HTML in site/
+./luscreen-docs/run.ps1 serve          # Live-Server
+./luscreen-docs/run.ps1 clean          # .venv-docs und site/ entfernen
+./luscreen-docs/run.ps1                # interaktives Menü
+```
+
+**Was der Wrapper tut:**
+1. Sucht Python ≥ 3.10 im PATH (`py -3.13`, `py -3.12`, ..., `python`, `python3`)
+2. Legt `.venv-docs/` mit dieser Python-Version an
+3. Installiert Zensical in die venv (kein Eingriff in System-Python)
+4. Ruft `build_docs.py` mit dem venv-Python auf
+
+Wenn kein Python ≥ 3.10 da ist: `winget install Python.Python.3.12`.
+
 ## Täglicher Loop
 
 ```

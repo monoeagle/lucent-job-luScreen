@@ -224,9 +224,12 @@ Empfohlene Minimal-Hooks (alle non-blocking):
 - Markdown only, kein Build, kein Theming
 
 ### Public-Site (`<name>-docs/`)
-- Zensical (MkDocs-Material-Wrapper) — `pip install zensical`
-- Sektionen: Grundlagen / Anleitung / Referenz / Entwicklung
-- Build via `build_docs.py` (Python) oder `run_<name>_docs.sh` (Live-Server)
+- Zensical (MkDocs-Material-Wrapper) — wird automatisch in venv installiert
+- Sektionen: Grundlagen / Anleitung / Referenz / Entwicklung / Erledigt
+- **Build-Wrapper:** `<name>-docs/run.ps1` — PowerShell-native, verwaltet `.venv-docs/`
+  mit Python ≥ 3.10 (Zensical-Mindestversion). Keine bash/WSL-Abhängigkeit.
+- Tasks: `prereqs | build | serve | clean | menu`
+- Vom Haupt-`run.ps1` aus über Tasten `d` (Build + Browser) und `D` (Live-Server)
 
 ### Single-Page-HTML (`<App>.docs.html`)
 - Eine Datei, embedded CSS, Dark/Light-Theme
@@ -312,7 +315,7 @@ Erkenntnis-Format:
 9. [ ] `reports/README.md` + leere Unterordner
 10. [ ] `run.ps1` mit Standard-Menü (inkl. `ip` für Pester-Bundle)
 11. [ ] `docs/` Gerüst (Architektur/Bedienung/Entwicklung/Troubleshooting/lessons/superpowers/handoffs)
-12. [ ] `<name>-docs/` Zensical-Setup (aus CSC kopieren, `zensical.toml` anpassen) — **inkl. `entwicklung/erledigt.md` und Nav-Eintrag**
+12. [ ] `<name>-docs/` Zensical-Setup: `zensical.toml`, `build_docs.py` (UTF-8-safe Output, Python-Mindestversion-Check), `<name>-docs/run.ps1` (PS-Wrapper mit `.venv-docs`-Management) — **inkl. `entwicklung/erledigt.md` und Nav-Eintrag**
 13. [ ] `<App>.docs.html` Bootstrap (aus BM kopieren, Inhalt anpassen)
 14. [ ] `.erkenntnisse/README.md`
 15. [ ] `.claude/settings.local.json` mit Permissions + Hooks
@@ -340,12 +343,24 @@ Erkenntnis-Format:
 ## Commits & Pushes
 | # | Datum | Hash | Push | Scope | Beschreibung |
 |---|---|---|---|---|---|
-| 1 | `YYYYMMDD-HHMM` | `abc1234` | ✓ | <scope> | … |
+| 1 | `YYYYMMDD-HHMM` | `_pending_` | — | <scope> | … |
 ```
 
 **Datumsformat-Begründung:** `YYYYMMDD-HHMM` ist sortierbar (alphanumerische Sortierung == chronologische), eindeutig (keine Trennzeichen-Ambiguität wie `15.05.2026` vs `5/15/2026`), kompakt. Zwischen Datum und Zeit Bindestrich, kein Doppelpunkt (Windows-Pfad-kompatibel).
 
 **Scope-Tags** für Commit-Log: `meta`, `scaffold`, `AP <n>`, `compat`, `fix`, `docs`, `chore`.
+
+### Hash-Backfill-Regel (Option 2)
+
+**Hash NICHT nachträglich eintragen.** `git log` ist die Quelle der Wahrheit für Commit-Hashes; ein zweiter Commit nur fürs Nachtragen erzeugt Backfill-Rauschen.
+
+- VOR `git commit`: neuer Eintrag mit `Datum`, `Scope`, `Beschreibung`. Hash bleibt `_pending_`, Push-Spalte `—`.
+- NACH `git commit` + `git push`: nichts mehr in `erledigt.md` anfassen.
+- Wer den Hash zu einem Eintrag sehen will, sucht in `git log` per Datum/Scope/Beschreibung.
+
+Vorteil: kein selbst-referenzieller Spiral-Commit, kein „chore: Commit-Log-Eintrag mit Hash …"-Rauschen, `git log` und `erledigt.md` ergänzen sich (das eine zeigt das Was, das andere das Warum/Zusammenhang).
+
+Optional in einer ruhigen Minute: am Ende eines Meilensteins kann **ein** Sammel-Commit alle bisherigen `_pending_`-Einträge auf einmal mit Hashes belegen. Selten und bewusst, kein Reflex.
 
 ---
 

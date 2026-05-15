@@ -25,6 +25,29 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 **Quality-Stand:** Parse 19/19 clean · PSSA 0 Findings · Pester 10/10 grün auf PS 7 und PS 5.1.
 
+### AP 5 — Countdown-Overlay — abgeschlossen `20260515-1632`
+
+- [x] WPF-Fenster: randlos, `Topmost`, `ShowInTaskbar=False`, `AllowsTransparency=True`
+- [x] Position rechts unten auf dem Monitor unter Maus (`WorkingArea` respektiert Taskbar)
+- [x] Große Zahl (48pt) auf halbtransparentem Hintergrund mit Akzent-Border
+- [x] Click-through via `WS_EX_TRANSPARENT` + `WS_EX_NOACTIVATE` + `WS_EX_TOOLWINDOW` (P/Invoke `SetWindowLong`)
+- [x] `DispatcherTimer` sekündlich
+- [x] Overlay schließt vor Capture (Close + 80 ms Yield, Smoke zeigt: Overlay nicht im Bild)
+- [x] ESC während Countdown bricht ab (`PreviewKeyDown`)
+- [x] In `$invokeCapture` eingebunden: bei `DelaySeconds > 0` Overlay zuerst, dann `Invoke-Capture` mit Delay=0
+
+**Artefakte:**
+- `src/core/native.psm1` erweitert: `GetWindowLong`, `SetWindowLong`, Konstanten `GWL_EXSTYLE=-20`, `WS_EX_TRANSPARENT=0x20`, `WS_EX_TOOLWINDOW=0x80`, `WS_EX_LAYERED=0x80000`, `WS_EX_NOACTIVATE=0x08000000`
+- `src/views/countdown-overlay.xaml` — 170×110, abgerundete Border mit Akzent-Stroke
+- `src/ui/countdown-overlay.psm1` — `Show-CountdownOverlay -Seconds <int>` → `$true`/`$false` (Cancel). Modale Schleife via `DispatcherFrame` (kein `ShowDialog` wegen `WS_EX_NOACTIVATE`).
+- `src/LucentScreen.ps1` — Countdown vor `Invoke-Capture`; Abbruch → kein Capture; Delay wird im Overlay verbraten, `Invoke-Capture` läuft dann mit `-DelaySeconds 0`
+
+**Interaktiver Smoke-Test mit DelaySeconds=3:**
+- 3× hintereinander `Ctrl+Shift+3`: jedes Mal exakt ~3 s Latenz zwischen „angefordert" und „OK" im Log
+- Overlay rechts unten sichtbar, Zahl tickt 3 → 2 → 1, Overlay erscheint nicht im finalen Screenshot
+
+**Quality-Stand:** Parse 51/51 clean · PSSA 0 Findings · Pester 76/76 grün (1 skipped) unter PS 5.1.
+
 ### AP 7 — Zwischenablage — abgeschlossen `20260515-1624`
 
 - [x] Helper „Bitmap → Clipboard" via `Clipboard.SetImage(BitmapSource)` mit STA-Guard
@@ -251,6 +274,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 21 | `20260515-1608` | `_pending_` | — | chore | todo.md aufgeräumt: erledigte Sub-Items aus AP 5 (Delay aus Config) und AP 6 (Auto-Mkdir, Bitmap.Save, OutputDir-Lazy) entfernt, weil von AP 4 abgedeckt. AP-Beschreibungen oben jeweils mit Hinweis ergänzt was schon erledigt ist. |
 | 22 | `20260515-1616` | `_pending_` | — | AP 6 | Dateinamen-Schema: `Format-CaptureFilename` mit Tokens `{mode}`, `{postfix}`, yyyy/yy/MM/dd/HH/mm/ss (case-sensitive `-creplace`, Reihenfolge: lange Tokens zuerst). `Resolve-UniqueFilename` hängt -2/-3/... an. `_Test-DirectoryWritable` macht Probe-Write vor `Bitmap.Save` (klare PermissionDenied-Meldung). `Save-Capture` nimmt jetzt `-Template`/`-Postfix`. `LucentScreen.ps1` reicht `$Config.FileNameFormat` durch. 10 neue Tests. Smoke-Test mit 5 Captures in 2 Sekunden zeigt -2/-3-Suffixe. |
 | 23 | `20260515-1624` | `_pending_` | — | AP 7 | Zwischenablage: `src/core/clipboard.psm1` mit `Convert-BitmapToBitmapSource` (PNG-Roundtrip + Frozen) und `Set-ClipboardImage` (STA-Guard, Retry-Backoff 50→100→200→400→800ms, max 5 Versuche). 3 Tests (1 skipped wegen MTA). `LucentScreen.ps1` kopiert das Bild nach jedem Capture in die Zwischenablage. Verlaufsfenster-Hook bleibt als einziger Sub-Punkt offen und wandert zu AP 8. |
+| 24 | `20260515-1632` | `_pending_` | — | AP 5 | Countdown-Overlay: `src/views/countdown-overlay.xaml` + `src/ui/countdown-overlay.psm1` mit `Show-CountdownOverlay`. Click-through über `SetWindowLong(GWL_EXSTYLE)` mit `WS_EX_TRANSPARENT \| WS_EX_NOACTIVATE \| WS_EX_TOOLWINDOW`. Modale Schleife via `DispatcherFrame` (statt `ShowDialog`, weil `NoActivate` Fokus-Probleme macht). `native.psm1` erweitert um WindowLong-P/Invoke. In `$invokeCapture` vor `Invoke-Capture` eingehängt; Delay wird im Overlay statt im Capture verbraten, ESC bricht ab. Smoke mit DelaySeconds=3 zeigt 3-Sekunden-Latenz und sauberes Verschwinden des Overlays vor Screenshot. |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

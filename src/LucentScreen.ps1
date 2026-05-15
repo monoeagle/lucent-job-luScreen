@@ -156,6 +156,7 @@ Import-Module (Join-Path $coreDir 'clipboard.psm1') -Force
 Import-Module (Join-Path $uiDir 'about-dialog.psm1') -Force
 Import-Module (Join-Path $uiDir 'config-dialog.psm1') -Force
 Import-Module (Join-Path $uiDir 'region-overlay.psm1') -Force
+Import-Module (Join-Path $uiDir 'countdown-overlay.psm1') -Force
 Import-Module (Join-Path $uiDir 'tray.psm1') -Force
 
 $assetsDir = Join-Path $rootDir '..\assets'
@@ -179,7 +180,20 @@ $invokeCapture = {
             }
         }
 
-        $r = Invoke-Capture -Mode $mode -RegionRect $regionRect -DelaySeconds $delay
+        # Countdown vor Capture -- Overlay verschwindet beim Close() und der
+        # WPF-Dispatcher rendert das vor dem naechsten Screenshot.
+        if ($delay -gt 0) {
+            $proceed = Show-CountdownOverlay -Seconds $delay
+            if (-not $proceed) {
+                Write-LsLog -Level Info -Source 'capture' -Message 'Countdown abgebrochen'
+                return
+            }
+            # Kleiner Yield, damit das Overlay sicher weg ist
+            Start-Sleep -Milliseconds 80
+        }
+
+        # Delay=0 hier -- das Warten hat das Overlay schon erledigt
+        $r = Invoke-Capture -Mode $mode -RegionRect $regionRect -DelaySeconds 0
         if (-not $r.Success) {
             Write-LsLog -Level Warn -Source 'capture' -Message ("Capture fehlgeschlagen: " + $r.Message)
             return

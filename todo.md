@@ -11,20 +11,6 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 > Erledigte Arbeitspakete + Commit/Push-Log siehe [`luscreen-docs/docs/entwicklung/erledigt.md`](../luscreen-docs/docs/entwicklung/erledigt.md).
 
 
-## AP 5 — Countdown-Overlay
-
-> Die reine Delay-Verzögerung (Sleep gemäß Config) ist bereits durch AP 4 (`Invoke-Capture -DelaySeconds`) erledigt. Hier folgt nur noch das sichtbare Countdown-Overlay.
-
-- [ ] Countdown-Overlay als WPF-Fenster
-  - [ ] Randlos (`WindowStyle=None`), `Topmost`, `ShowInTaskbar=False`
-  - [ ] Unten rechts auf primärem (oder „Maus-")Monitor positionieren
-  - [ ] Große Schrift, halbtransparenter Hintergrund
-  - [ ] Click-through via `WS_EX_TRANSPARENT` (P/Invoke `SetWindowLong`)
-  - [ ] `DispatcherTimer` tickt sekündlich runter
-- [ ] **Wichtig:** Overlay verschwindet bevor Capture läuft, damit es nicht im Bild landet
-  - [ ] `window.Hide()` + Dispatcher-Yield (`InvokeAsync(..., Background)`) + kurzer `Thread.Sleep(50)`, dann Screenshot
-- [ ] Abbruch per ESC während Countdown
-- [ ] In `$invokeCapture` einbinden: bei `DelaySeconds > 0` Overlay vor `Invoke-Capture` zeigen, dann verbergen, dann capturen
 
 ## AP 7 — Zwischenablage (Rest)
 

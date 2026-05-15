@@ -58,6 +58,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 8 | `20260515-1418` | `bc8dd3e` | ✓ | chore | Commit-Log-Eintrag 7 mit finalem Hash nachgetragen |
 | 9 | `20260515-1421` | `1914bfd` | ✓ | fix | `run.ps1 d` öffnet `site/index.html` nach erfolgreichem Build im Standard-Browser, Exit-Code-Check zwischengeschaltet, Menü-Text aktualisiert |
 | 10 | `20260515-1421` | `9171d9b` | ✓ | chore | Commit-Log-Eintrag 9 mit finalem Hash nachgetragen |
+| 11 | `20260515-1421` | `1c3d67c` | ✓ | chore | Commit-Log-Eintrag 10 mit finalem Hash nachgetragen |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

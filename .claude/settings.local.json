@@ -32,7 +32,8 @@
       "PowerShell(& powershell.exe -NoProfile -File .\\\\run.ps1 t 2>&1 | Select-Object -Last 8)",
       "PowerShell(\"=== PS 7 ===\"; pwsh -NoProfile -File .\\\\run.ps1 t 2>&1 | Select-Object -Last 6; \"\"; \"=== PS 5.1 ===\"; & powershell.exe -NoProfile -File .\\\\run.ps1 t 2>&1 | Select-Object -Last 6)",
       "PowerShell(\"=== PS7 via bundle ===\"; pwsh -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 4; \"\"; \"=== PS5.1 via bundle ===\"; & powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 4)",
-      "PowerShell(Get-Process *)"
+      "PowerShell(Get-Process *)",
+      "PowerShell(pwsh -NoProfile -File .\\\\run.ps1 p 2>&1 | Select-Object -Last 2; pwsh -NoProfile -File .\\\\run.ps1 l 2>&1 | Select-Object -Last 2; Get-Content reports\\\\pssa\\\\pssa-report.md -TotalCount 6)"
     ]
   }
 }

@@ -262,8 +262,20 @@ function Action-DocsBuild {
     Push-Location $docsDir
     try {
         & python build_docs.py
+        $exit = $LASTEXITCODE
     } finally {
         Pop-Location
+    }
+    if ($exit -ne 0) {
+        Write-Host "Build fehlgeschlagen (exit $exit) -- Browser nicht geoeffnet." -ForegroundColor Red
+        return
+    }
+    $indexHtml = Join-Path $docsDir 'site/index.html'
+    if (Test-Path -LiteralPath $indexHtml) {
+        Write-Host "Oeffne im Standard-Browser ..." -ForegroundColor Cyan
+        Start-Process $indexHtml
+    } else {
+        Write-Host "site/index.html fehlt -- Build hat nichts geliefert?" -ForegroundColor Yellow
     }
 }
 
@@ -318,7 +330,7 @@ function Show-Menu {
     Write-Host "  prereqs) Voraussetzungen pruefen"
     Write-Host ""
     Write-Host " --- Doku ---" -ForegroundColor DarkCyan
-    Write-Host "  d) Zensical-Site bauen (luscreen-docs -> site/)"
+    Write-Host "  d) Zensical-Site bauen + im Standard-Browser oeffnen"
     Write-Host "  h) HTML-Single-Page Status (LucentScreen.docs.html)"
     Write-Host ""
     Write-Host " --- Werkzeuge ---" -ForegroundColor DarkCyan

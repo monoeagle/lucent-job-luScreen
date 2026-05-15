@@ -37,7 +37,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$repoRoot  = Resolve-Path (Join-Path $scriptDir '..')
+$repoRoot = Resolve-Path (Join-Path $scriptDir '..')
 $reportDir = Join-Path $repoRoot 'reports\pssa'
 $null = New-Item -ItemType Directory -Force -Path $reportDir
 
@@ -50,7 +50,7 @@ function _Find-BundledPssa {
     $versions = Get-ChildItem -LiteralPath $root -Directory -EA SilentlyContinue |
         Where-Object { $_.Name -match '^\d+\.\d+\.\d+$' }
     if (-not $versions) { return $null }
-    $highest = $versions | Sort-Object -Property @{Expression={[version]$_.Name}} -Descending |
+    $highest = $versions | Sort-Object -Property @{Expression = { [version]$_.Name } } -Descending |
         Select-Object -First 1
     $manifest = Join-Path $highest.FullName 'PSScriptAnalyzer.psd1'
     if (Test-Path -LiteralPath $manifest) { return $manifest }
@@ -78,14 +78,14 @@ Write-Host ("  PSSA {0} aus {1}" -f $pssaVersion, $pssaSource) -ForegroundColor 
 # -----------------------------------------------------------------
 #  Source-Dateien sammeln
 # -----------------------------------------------------------------
-$exclusions = @('.git','.archiv','_deps','reports','docs','luscreen-docs','.erkenntnisse','node_modules','packaging')
+$exclusions = @('.git', '.archiv', '_deps', 'reports', 'docs', 'luscreen-docs', '.erkenntnisse', 'node_modules', 'packaging')
 $allFiles = Get-ChildItem -LiteralPath $repoRoot -Recurse -File -EA SilentlyContinue |
-    Where-Object { $_.Extension -in '.ps1','.psm1','.psd1' }
+    Where-Object { $_.Extension -in '.ps1', '.psm1', '.psd1' }
 
 # Pfad-Token-basierte Exclusion: jede Pfad-Komponente prueffen,
 # damit ein Match nicht von Substring-Treffern (z.B. .archiv-irgendwas) abhaengt.
 $files = foreach ($f in $allFiles) {
-    $rel = $f.FullName.Substring($repoRoot.Path.Length).TrimStart('\','/')
+    $rel = $f.FullName.Substring($repoRoot.Path.Length).TrimStart('\', '/')
     $tokens = $rel -split '[\\/]'
     $skip = $false
     foreach ($t in $tokens) { if ($exclusions -contains $t) { $skip = $true; break } }
@@ -124,19 +124,19 @@ $diagnostics = New-Object System.Collections.Generic.List[object]
 $idx = 0
 foreach ($f in $files) {
     $idx++
-    $rel = $f.FullName.Substring($repoRoot.Path.Length).TrimStart('\','/')
-    Write-Progress -Activity "PSSA" -Status $rel -PercentComplete (100.0 * $idx / [Math]::Max($fileCount,1))
+    $rel = $f.FullName.Substring($repoRoot.Path.Length).TrimStart('\', '/')
+    Write-Progress -Activity "PSSA" -Status $rel -PercentComplete (100.0 * $idx / [Math]::Max($fileCount, 1))
     try {
         $r = Invoke-ScriptAnalyzer -Path $f.FullName @pssaArgs
         foreach ($d in @($r)) {
             $diagnostics.Add([pscustomobject]@{
-                File       = $rel
-                Line       = [int]$d.Line
-                Column     = [int]$d.Column
-                Severity   = [string]$d.Severity
-                RuleName   = [string]$d.RuleName
-                Message    = [string]$d.Message
-            })
+                    File       = $rel
+                    Line       = [int]$d.Line
+                    Column     = [int]$d.Column
+                    Severity   = [string]$d.Severity
+                    RuleName   = [string]$d.RuleName
+                    Message    = [string]$d.Message
+                })
         }
     } catch {
         Write-Host ("  WARN: {0} -- {1}" -f $rel, $_.Exception.Message) -ForegroundColor Yellow
@@ -149,7 +149,7 @@ Write-Progress -Activity "PSSA" -Completed
 # -----------------------------------------------------------------
 $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
 
-$bySeverity = @{ 'Error'=0; 'Warning'=0; 'Information'=0; 'Other'=0 }
+$bySeverity = @{ 'Error' = 0; 'Warning' = 0; 'Information' = 0; 'Other' = 0 }
 foreach ($d in $diagnostics) {
     if ($bySeverity.ContainsKey($d.Severity)) { $bySeverity[$d.Severity]++ }
     else { $bySeverity['Other']++ }
@@ -204,7 +204,7 @@ if ($diagnostics.Count -eq 0) {
     [void]$md.AppendLine()
 
     # Detail by Severity
-    foreach ($sev in 'Error','Warning','Information') {
+    foreach ($sev in 'Error', 'Warning', 'Information') {
         $list = $diagnostics | Where-Object Severity -eq $sev
         if (-not $list) { continue }
         [void]$md.AppendLine("## $sev ($($list.Count))")

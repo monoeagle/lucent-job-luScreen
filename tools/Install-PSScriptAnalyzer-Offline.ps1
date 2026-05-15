@@ -21,7 +21,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Resolve-Path "$PSScriptRoot/.."
-$target   = Join-Path $repoRoot '_deps'
+$target = Join-Path $repoRoot '_deps'
 
 $null = New-Item -ItemType Directory -Force -Path $target
 

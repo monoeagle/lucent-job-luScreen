@@ -4,7 +4,7 @@
     # Die hier ausgeschlossenen Regeln sind bewusst gesetzte Projekt-
     # Konventionen oder fuer den WPF/Tray-Kontext ungeeignet.
 
-    Severity = @('Error','Warning','Information')
+    Severity = @('Error', 'Warning', 'Information')
 
     ExcludeRules = @(
         # run.ps1, tools/ und Setup-Skripte verwenden Write-Host bewusst fuer
@@ -33,7 +33,12 @@
 
         # Information-Level; interne Helper (Funktionen mit _-Prefix)
         # brauchen kein Comment-Help.
-        'PSProvideCommentHelp'
+        'PSProvideCommentHelp',
+
+        # Projekt-Konvention: Funktionsnamen wie Load-Xaml, Action-Prereqs,
+        # _Rotate-Logs sind etabliert. Umbenennung waere konsistenz-
+        # schaedigend (Konsistenz mit BoundaryManager-Pattern).
+        'PSUseApprovedVerbs'
     )
 
     Rules = @{

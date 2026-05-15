@@ -24,18 +24,16 @@ $root = $PSScriptRoot
 # -----------------------------------------------------------------
 # Pfade
 # -----------------------------------------------------------------
-$srcDir       = Join-Path $root 'src'
-$testsDir     = Join-Path $root 'tests'
-$entryScript  = Join-Path $srcDir 'LucentScreen.ps1'
-$pssaTool     = Join-Path $root 'tools/Invoke-PSSA.ps1'
-$pssaInstall  = Join-Path $root 'tools/Install-PSScriptAnalyzer-Offline.ps1'
-$packTool     = Join-Path $root 'tools/Pack-Transfer.ps1'
-$docsDir      = Join-Path $root 'luscreen-docs'
-$docsBuildPy  = Join-Path $docsDir 'build_docs.py'
-$htmlDoc      = Join-Path $root 'LucentScreen.docs.html'
-$reportsDir   = Join-Path $root 'reports'
-$logsDir      = Join-Path $env:LOCALAPPDATA 'LucentScreen/logs'
-$appPidFile   = Join-Path $env:LOCALAPPDATA 'LucentScreen/run/app.pid'
+$srcDir = Join-Path $root 'src'
+$testsDir = Join-Path $root 'tests'
+$entryScript = Join-Path $srcDir 'LucentScreen.ps1'
+$pssaTool = Join-Path $root 'tools/Invoke-PSSA.ps1'
+$pssaInstall = Join-Path $root 'tools/Install-PSScriptAnalyzer-Offline.ps1'
+$docsDir = Join-Path $root 'luscreen-docs'
+$docsBuildPy = Join-Path $docsDir 'build_docs.py'
+$htmlDoc = Join-Path $root 'LucentScreen.docs.html'
+$reportsDir = Join-Path $root 'reports'
+$appPidFile = Join-Path $env:LOCALAPPDATA 'LucentScreen/run/app.pid'
 
 # -----------------------------------------------------------------
 # Actions
@@ -99,14 +97,14 @@ function Action-ParseCheck {
     [void]$report.AppendLine("Generiert: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
     [void]$report.AppendLine("")
 
-    $files = Get-ChildItem -Recurse -Include *.ps1,*.psm1 -Path $srcDir,$testsDir,(Join-Path $root 'tools'),$root -EA SilentlyContinue |
+    $files = Get-ChildItem -Recurse -Include *.ps1, *.psm1 -Path $srcDir, $testsDir, (Join-Path $root 'tools'), $root -EA SilentlyContinue |
         Where-Object { $_.FullName -notmatch '\\(_deps|reports|\.git)\\' }
 
     $errorCount = 0
     foreach ($f in $files) {
         $errs = $null
         [void][System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errs)
-        $rel = $f.FullName.Substring($root.Length).TrimStart('\','/')
+        $rel = $f.FullName.Substring($root.Length).TrimStart('\', '/')
         if ($errs.Count -gt 0) {
             $errorCount += $errs.Count
             Write-Host "  [FEHLER] $rel ($($errs.Count))" -ForegroundColor Red
@@ -132,10 +130,10 @@ function Action-ParseCheck {
 function Action-PSSA {
     param([switch]$OnlyChanged, [switch]$FailOnError)
     Write-Host "Starte PSScriptAnalyzer ..." -ForegroundColor Cyan
-    $args = @()
-    if ($OnlyChanged) { $args += '-OnlyChangedSinceMain' }
-    if ($FailOnError) { $args += '-FailOnError' }
-    & pwsh -NoProfile -File $pssaTool @args
+    $pArgs = @()
+    if ($OnlyChanged) { $pArgs += '-OnlyChangedSinceMain' }
+    if ($FailOnError) { $pArgs += '-FailOnError' }
+    & pwsh -NoProfile -File $pssaTool @pArgs
     $report = Join-Path $reportsDir 'pssa/pssa-report.md'
     if (Test-Path -LiteralPath $report) {
         Write-Host ""
@@ -154,10 +152,11 @@ function Action-PesterAll {
         return
     }
 
+    Import-Module Pester -MinimumVersion 5.0 -ErrorAction Stop
     $cfg = [PesterConfiguration]::Default
-    $cfg.Run.Path             = $testsDir
-    $cfg.Output.Verbosity     = 'Detailed'
-    $cfg.TestResult.Enabled   = $true
+    $cfg.Run.Path = $testsDir
+    $cfg.Output.Verbosity = 'Detailed'
+    $cfg.TestResult.Enabled = $true
     $cfg.TestResult.OutputPath = $xml
     Invoke-Pester -Configuration $cfg
     Write-Host ""
@@ -169,11 +168,12 @@ function Action-PesterOne {
     $tests = Get-ChildItem $testsDir -Filter *.Tests.ps1 -EA SilentlyContinue
     if (-not $tests) { Write-Host "  Keine Tests gefunden." -ForegroundColor Yellow; return }
     for ($i = 0; $i -lt $tests.Count; $i++) {
-        Write-Host ("  [{0}] {1}" -f ($i+1), $tests[$i].Name)
+        Write-Host ("  [{0}] {1}" -f ($i + 1), $tests[$i].Name)
     }
     $sel = Read-Host "Nummer waehlen"
     $idx = [int]$sel - 1
     if ($idx -lt 0 -or $idx -ge $tests.Count) { Write-Host "Ungueltig." -ForegroundColor Red; return }
+    Import-Module Pester -MinimumVersion 5.0 -ErrorAction Stop
     Invoke-Pester -Path $tests[$idx].FullName -Output Detailed
 }
 
@@ -202,16 +202,16 @@ function Action-AppStart {
     }
     Write-Host "Starte LucentScreen (-STA) ..." -ForegroundColor Cyan
     $null = New-Item -ItemType Directory -Force -Path (Split-Path $appPidFile -Parent)
-    $proc = Start-Process pwsh -ArgumentList '-STA','-NoProfile','-File',$entryScript -PassThru -WindowStyle Hidden
+    $proc = Start-Process pwsh -ArgumentList '-STA', '-NoProfile', '-File', $entryScript -PassThru -WindowStyle Hidden
     $proc.Id | Set-Content -LiteralPath $appPidFile -Encoding UTF8
     Write-Host "  PID: $($proc.Id)" -ForegroundColor Green
 }
 
 function Action-AppStop {
     if (-not (Test-Path $appPidFile)) { Write-Host "Keine laufende Instanz (kein PID-File)." -ForegroundColor Yellow; return }
-    $pid = [int](Get-Content -LiteralPath $appPidFile -Raw)
-    Write-Host "Stoppe PID $pid ..." -ForegroundColor Cyan
-    try { Stop-Process -Id $pid -Force } catch { Write-Host "  schon beendet?" -ForegroundColor DarkGray }
+    $appPid = [int](Get-Content -LiteralPath $appPidFile -Raw)
+    Write-Host "Stoppe PID $appPid ..." -ForegroundColor Cyan
+    try { Stop-Process -Id $appPid -Force } catch { Write-Host "  schon beendet?" -ForegroundColor DarkGray }
     Remove-Item -LiteralPath $appPidFile -Force -EA SilentlyContinue
 }
 
@@ -291,22 +291,22 @@ function Show-Menu {
 function Invoke-Action {
     param([string]$Code)
     switch ($Code) {
-        'p'        { Action-ParseCheck }
-        'l'        { Action-PSSA }
-        'L'        { Action-PSSA -OnlyChanged }
-        't'        { Action-PesterAll }
-        'T'        { Action-PesterOne }
-        'a'        { Action-Audit }
-        's'        { Action-AppStart }
-        'S'        { Action-AppStop }
-        'prereqs'  { Action-Prereqs }
-        'd'        { Action-DocsBuild }
-        'h'        { Action-HtmlDoc }
-        'i'        { Action-InstallPssa }
-        'c'        { Action-CleanReports }
-        'q'        { return $false }
-        ''         { }
-        default    { Write-Host "Unbekannt: $Code" -ForegroundColor Yellow }
+        'p' { Action-ParseCheck }
+        'l' { Action-PSSA }
+        'L' { Action-PSSA -OnlyChanged }
+        't' { Action-PesterAll }
+        'T' { Action-PesterOne }
+        'a' { Action-Audit }
+        's' { Action-AppStart }
+        'S' { Action-AppStop }
+        'prereqs' { Action-Prereqs }
+        'd' { Action-DocsBuild }
+        'h' { Action-HtmlDoc }
+        'i' { Action-InstallPssa }
+        'c' { Action-CleanReports }
+        'q' { return $false }
+        '' { }
+        default { Write-Host "Unbekannt: $Code" -ForegroundColor Yellow }
     }
     return $true
 }

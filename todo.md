@@ -10,31 +10,12 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 
 > Erledigte Arbeitspakete + Commit/Push-Log siehe [`luscreen-docs/docs/entwicklung/erledigt.md`](../luscreen-docs/docs/entwicklung/erledigt.md).
 
-## AP 1 — Konfiguration
-
-- [x] Default-Konfig im Code (Hotkeys, Zielordner, Verzögerung, Dateinamensschema)
-- [x] Konfig-Datei `config.json` in `%APPDATA%\LucentScreen\` (User-scope, NICHT im Programmordner — wichtig für MSI/Per-Machine-Install)
-- [x] Laden/Speichern der Konfig (mit Migrations-/Default-Fallback, Schema-Version)
-- [x] Konfig-Dialog als **WPF-Fenster** (XAML)
-  - [x] Zielordner wählen (WinForms-FolderBrowserDialog)
-  - [x] Hotkeys einstellen (Modifier + Taste, mit Konflikterkennung)
-    - [x] Hotkey „Bereich"
-    - [x] Hotkey „Aktives Fenster"
-    - [x] Hotkey „Monitor unter Maus"
-    - [x] Hotkey „Alle Monitore"
-  - [x] Verzögerung in Sekunden (0–30)
-  - [x] Dateinamen-Schema (Zeitstempel-Format, Postfix für Edit)
-  - [x] Speichern/Abbrechen, Live-Validierung
-- [ ] Konfig-Änderungen wirken zur Laufzeit (Hotkeys neu registrieren, FileWatcher-Pfad aktualisieren) — folgt mit AP 3 (Hotkeys) und AP 2 (Tray-Re-Init)
-
-## AP 2 — Tray-Icon & Kontextmenü
-
 ## AP 3 — Globale Hotkeys
 
 - [ ] P/Invoke für `RegisterHotKey` / `UnregisterHotKey` (user32.dll) via `Add-Type`
 - [ ] Hidden-Window für `WM_HOTKEY` — in WPF via `HwndSource.FromHwnd` + `AddHook` an einem unsichtbaren Fenster
 - [ ] Hotkey-Registry-Dictionary (ID ↔ Aktion)
-- [ ] Re-Registrierung bei Konfig-Änderung
+- [ ] Re-Registrierung nach Konfig-Speichern (Rest aus AP 1 — `$script:Config` ist schon aktualisiert)
 - [ ] Konfliktbehandlung (Hotkey schon vergeben → Userdialog mit Vorschlag)
 - [ ] Cleanup beim Beenden (alle IDs unregistern)
 
@@ -75,6 +56,7 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 - [ ] Kollisionsschutz (Suffix `-2`, `-3`, … falls Datei existiert)
 - [ ] Zielordner anlegen, falls fehlt (inkl. Berechtigungsprüfung)
 - [ ] Schreiben mit `Bitmap.Save(..., ImageFormat.Png)` ODER `PngBitmapEncoder` (WPF-nativ)
+- [ ] OutputDir-Änderungen aus dem Konfig-Dialog zur Laufzeit übernehmen (kein App-Restart nötig — `$script:Config.OutputDir` wird beim nächsten Capture gelesen, also keine zusätzliche Logik nötig; nur sicherstellen, dass Save-Pfad lazy resolved wird)
 
 ## AP 7 — Zwischenablage
 

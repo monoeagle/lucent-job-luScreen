@@ -66,7 +66,8 @@ function Show-HistoryWindow {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$OutputDir,
-        [System.Windows.Window]$Owner
+        [System.Windows.Window]$Owner,
+        [string]$EditPostfix = '_edited'
     )
 
     if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
@@ -89,7 +90,7 @@ function Show-HistoryWindow {
 
     $names = @('LstItems', 'TxtFolder', 'TxtStatus', 'TxtSelection',
         'BtnOpen', 'BtnReveal', 'BtnCopy', 'BtnDelete', 'BtnRefresh',
-        'MiOpen', 'MiReveal', 'MiCopy', 'MiDelete')
+        'MiEdit', 'MiOpen', 'MiReveal', 'MiCopy', 'MiDelete')
     $c = Get-XamlControls -Root $win -Names $names
 
     $c.TxtFolder.Text = "Ordner: $OutputDir"
@@ -215,6 +216,17 @@ function Show-HistoryWindow {
     $state.DebounceTimer = $poller
 
     # Kommando-Handler
+    $cmdEdit = {
+        $sel = @($c.LstItems.SelectedItems)
+        if ($sel.Count -eq 0) { return }
+        # Editor blockt mit ShowDialog -- bei Mehrfachauswahl sequentiell.
+        foreach ($entry in $sel) {
+            [void](Show-EditorWindow -ImagePath $entry.FullName -Owner $win -Postfix $EditPostfix)
+        }
+        # Falls neue _edited-Dateien entstanden, Refresh anstossen.
+        & $refresh
+    }.GetNewClosure()
+
     $cmdOpen = {
         $sel = @($c.LstItems.SelectedItems)
         if ($sel.Count -eq 0) { return }
@@ -280,15 +292,16 @@ function Show-HistoryWindow {
     $c.BtnCopy.Add_Click($cmdCopy)
     $c.BtnDelete.Add_Click($cmdDelete)
     $c.BtnRefresh.Add_Click($cmdRefresh)
+    $c.MiEdit.Add_Click($cmdEdit)
     $c.MiOpen.Add_Click($cmdOpen)
     $c.MiReveal.Add_Click($cmdReveal)
     $c.MiCopy.Add_Click($cmdCopy)
     $c.MiDelete.Add_Click($cmdDelete)
 
-    # Doppelklick auf ListBoxItem -> Oeffnen
+    # Doppelklick auf ListBoxItem -> Editor (primaere Aktion)
     $c.LstItems.add_MouseDoubleClick({
             param($s, $e)
-            & $cmdOpen
+            & $cmdEdit
         }.GetNewClosure())
 
     $c.LstItems.add_SelectionChanged({
@@ -304,8 +317,8 @@ function Show-HistoryWindow {
                 'Escape' { $win.Close(); $e.Handled = $true; break }
                 'F5' { & $cmdRefresh; $e.Handled = $true; break }
                 'Delete' { & $cmdDelete; $e.Handled = $true; break }
-                'Enter' { & $cmdOpen; $e.Handled = $true; break }
-                'Return' { & $cmdOpen; $e.Handled = $true; break }
+                'Enter' { & $cmdEdit; $e.Handled = $true; break }
+                'Return' { & $cmdEdit; $e.Handled = $true; break }
                 default {
                     if ($ctrl -and ($e.Key -eq [System.Windows.Input.Key]::C)) {
                         & $cmdCopy

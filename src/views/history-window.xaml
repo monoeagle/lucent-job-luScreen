@@ -77,7 +77,8 @@
             </ListBox.ItemsPanel>
             <ListBox.ContextMenu>
                 <ContextMenu x:Name="ItemMenu">
-                    <MenuItem x:Name="MiOpen"   Header="Oeffnen"/>
+                    <MenuItem x:Name="MiEdit"   Header="Editieren"/>
+                    <MenuItem x:Name="MiOpen"   Header="Oeffnen (Default-App)"/>
                     <MenuItem x:Name="MiReveal" Header="Im Ordner zeigen"/>
                     <MenuItem x:Name="MiCopy"   Header="In Zwischenablage kopieren"/>
                     <Separator/>

@@ -10,6 +10,36 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 ## Arbeitspakete
 
+### AP 9 Etappe 1 — Mini-Editor (Geruest + Save) — abgeschlossen `20260515-1828`
+
+- [x] Hook aus Verlaufsfenster: Doppelklick / Enter / Kontextmenue „Editieren" oeffnet den Editor; bestehendes „Oeffnen" bleibt fuer die Default-App
+- [x] Eigenes WPF-Fenster mit `Canvas` ueber `Image` (Background-Bitmap), eingebettet in `ScrollViewer` + `Grid.LayoutTransform` mit `ScaleTransform`
+- [x] Zoom: Mausrad (Strg+Wheel = fein 1.1x, sonst 1.25x), Toolbar-Buttons `Fit`/`100%`/`+`/`−`, Tastatur `Strg+0`/`Strg++`/`Strg+−`
+- [x] Render-Pipeline: `RenderTargetBitmap` ueber den `StageRoot`-Grid -> PNG via `PngBitmapEncoder`. Ueber den Canvas-Layer geht in Etappe 1 noch nichts drauf; das Save-Geruest steht trotzdem schon und kann in Etappe 2 unveraendert weiterverwendet werden.
+- [x] Speichern: IMMER als neue Datei (`<original>_edited.png`, Postfix konfigurierbar via `Config.EditPostfix`), Kollisionsschutz mit `-2/-3` ueber `Resolve-UniqueFilename`. Editiertes Bild zusaetzlich in Clipboard.
+- [x] Tastenkuerzel: `Strg+S` (Save), `Esc` (Schliessen)
+- [x] Workarea-Clamping (max 1100x780, kleiner bei knapperer Monitor-Workarea)
+
+**Artefakte:**
+- `src/core/editor.psm1` — `Format-EditedFilename`, `Save-EditedImage` (BitmapSource → PNG via `PngBitmapEncoder`)
+- `src/views/editor-window.xaml` — Toolbar (Save/Fit/100%/+/-/Close), `ScrollViewer` mit `StageRoot`-Grid (Image + Shape-Layer Canvas) und `LayoutTransform`-Scale, Statusbar
+- `src/ui/editor-window.psm1` — `Show-EditorWindow -ImagePath [-Owner] [-Postfix]`, `BitmapFrame.Create` zum Laden, Zoom-Closures, Save-Action mit Offscreen-Grid-Render
+- `tests/core.editor.Tests.ps1` — 6 Pester-Tests (Format-EditedFilename: 3 Cases, Save-EditedImage: PNG-Magic, Kollisions-Suffix, Postfix-Parameter)
+- `src/LucentScreen.ps1` — Module-Imports + History-Callback reicht `EditPostfix` aus `Config` durch
+- `src/ui/history-window.psm1` + `src/views/history-window.xaml` — neuer `MiEdit`-Kontextmenueintrag, `BtnOpen` + `MiOpen` bleiben als „Default-App", Doppelklick + Enter rufen jetzt den Editor, `$cmdEdit` ruft `Show-EditorWindow` und triggert Refresh
+
+**Implementierungs-Detail:**
+- **Offscreen-Render statt direktes `RenderTargetBitmap` ueber sichtbaren Stage:** Der sichtbare `StageRoot` hat eine `LayoutTransform` (Zoom). `RenderTargetBitmap` rendert Visuals **inklusive** Transform, was beim Zoom > 1 zu Aufploppen der Aufloesung fuehrt. Loesung: in der Save-Action ein temporaeres `Grid` ohne Transform mit derselben Bitmap (und spaeter den Shapes) bauen, `Measure`/`Arrange`/`UpdateLayout`, dann rendern. Zoom-State bleibt davon unberuehrt.
+- **Pseudo-Code-Behind:** XAML hat `Window.Loaded`-Trigger fuer Initial-Fit, weil die ScrollViewer-`ActualWidth`/`ActualHeight` erst nach erstem Layout-Pass valide sind.
+- **Doppelklick/Enter → Editor (statt Default-App):** Vorher hatte der Verlauf Doppelklick=Default-App; jetzt ist Editor die primaere Aktion, „Oeffnen" bleibt im Kontextmenue als Sekundaerpfad fuer Bildbetrachter / Vollbild-Vorschau.
+
+**Quality-Stand:** Parse 65/65 clean · PSSA 0 Findings · Pester 96/96 gruen (1 skipped — STA-Guard).
+
+**Bewusst noch offen (Etappe 2/3):**
+- Annotations-Tools (Rahmen, Linie, Pfeil, Balken, Radierer) + Vektor-Layer
+- Undo/Redo, Selection mit Adorner
+- ESC-Confirm bei ungespeicherten Aenderungen
+
 ### AP 8 — Verlaufsfenster — abgeschlossen `20260515-1810`
 
 - [x] WPF-Fenster mit `ListBox` (`WrapPanel`-ItemsPanel, VirtualizingPanel-Recycling) und `DataTemplate` für Thumbnail + Name + Zeit/Größe
@@ -323,6 +353,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 25 | `20260515-1650` | `_pending_` | — | polish | Capture-Toast: `src/views/capture-toast.xaml` + `src/ui/capture-toast.psm1` mit `Show-CaptureToast` (non-blocking, Kamera-Glyph, FadeIn 150ms + FadeOut 800ms, Click-Through, NoActivate). `$script:CurrentToast` cancelt vorherigen Toast vor Anzeige des neuen. In `$invokeCapture` nach erfolgreichem Save aufgerufen. FadeOut-Dauer auf User-Wunsch von 250ms auf 800ms verlängert. |
 | 26 | `20260515-1810` | `_pending_` | — | AP 8 | Verlaufsfenster: `src/core/history.psm1` (Get-HistoryItems, Open/Reveal/Remove via Microsoft.VisualBasic-Recycle-Bin, Copy-HistoryFileToClipboard wiederverwendet `Set-ClipboardImage`). `src/views/history-window.xaml` + `src/ui/history-window.psm1` mit `Show-HistoryWindow`. INPC-Klasse `LucentScreen.HistoryEntry` via Add-Type fuer Thumbnail-Binding. ListBox+WrapPanel+VirtualizingPanel-Recycling, DataTemplate mit `BitmapFrame.Create`+`TransformedBitmap` (Downscale auf 200 px) — `BitmapImage`+`DecodePixelWidth` lieferte leere Tiles. Live-Update via `DispatcherTimer`-Polling (2 s, Snapshot-Signatur) — `FileSystemWatcher` mit PS-ScriptBlock-Handlern killte den Prozess silent vom Worker-Thread aus. Fenster 1110×1080 (Workarea-clamped, 5×5-Layout). Toolbar + Kontextmenü + Statusbar; PreviewKeyDown fuer Strg+C/Entf/Enter/F5/Esc. Selektions-Erhalt nach Refresh ueber FullName-Set. Helper als ScriptBlock-Variablen (Modul-private Underscore-Funktionen wurden aus `GetNewClosure`-Bloecken nicht aufgeloest). 14 neue Pester-Tests. `LucentScreen.ps1` History-Callback ruft `Show-HistoryWindow`; `DispatcherUnhandledException` jetzt mit Stack-Trace + InnerException-Chain. |
 | 27 | `20260515-1810` | `_pending_` | — | fix | `run.ps1` Switch case-sensitiv (`switch -CaseSensitive ($Code)`) — vorher feuerten `s`/`S`, `l`/`L`, `d`/`D`, `t`/`T` beide Branches in einem Aufruf (App startete und stoppte sofort, PSSA lief zweimal, Docs Build und Serve gleichzeitig). |
+| 28 | `20260515-1828` | `_pending_` | — | AP 9 (1/3) | Mini-Editor Etappe 1: `src/core/editor.psm1` (Format-EditedFilename, Save-EditedImage via PngBitmapEncoder, Wiederverwendung Resolve-UniqueFilename) + 6 Pester-Tests. `src/views/editor-window.xaml` + `src/ui/editor-window.psm1`: ScrollViewer mit StageRoot-Grid (Image + Canvas-Shape-Layer), LayoutTransform-Zoom, Toolbar (Save/Fit/100%/+/-/Close), Mausrad-Zoom (Strg=fein), Strg+S/Strg+0/Strg++/-, ESC. Save baut Offscreen-Grid (kein Zoom-Aufploppen), schreibt `<name>_edited.png` (Postfix aus Config), legt das Resultat zusaetzlich ins Clipboard. Verlaufs-Hook: Doppelklick/Enter rufen jetzt den Editor, Kontextmenue um „Editieren" erweitert, „Oeffnen" bleibt fuer Default-App. Tools, Undo/Redo, ESC-Confirm folgen mit Etappe 2/3. |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

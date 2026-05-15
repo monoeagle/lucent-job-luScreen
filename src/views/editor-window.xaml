@@ -1,0 +1,59 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LucentScreen — Editor"
+        Width="1100" Height="780"
+        MinWidth="520" MinHeight="360"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI" FontSize="13">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="0" Background="#F5F6F8" BorderBrush="#E2E5EB" BorderThickness="0,0,0,1" Padding="10,8">
+            <DockPanel LastChildFill="False">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <Button x:Name="BtnSave"      Content="Speichern (Strg+S)" MinWidth="160" Margin="0,0,12,0"/>
+                    <Separator Margin="0,0,12,0"/>
+                    <Button x:Name="BtnFit"       Content="Fit-to-Window"      MinWidth="120" Margin="0,0,6,0"/>
+                    <Button x:Name="BtnZoom100"   Content="100%"                MinWidth="70"  Margin="0,0,6,0"/>
+                    <Button x:Name="BtnZoomOut"   Content="−"                   MinWidth="34"  Margin="0,0,2,0"/>
+                    <Button x:Name="BtnZoomIn"    Content="+"                   MinWidth="34"  Margin="0,0,12,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                    <Button x:Name="BtnClose"     Content="Schliessen (Esc)"   MinWidth="140"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Canvas im ScrollViewer; Image als Background, Canvas darueber fuer
+             spaetere Shapes (AP 9 Etappe 2). -->
+        <ScrollViewer Grid.Row="1" x:Name="Scroller"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto"
+                      Background="#1A1D26">
+            <Grid x:Name="StageRoot"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center">
+                <Grid.LayoutTransform>
+                    <ScaleTransform x:Name="StageScale" ScaleX="1" ScaleY="1"/>
+                </Grid.LayoutTransform>
+                <Image x:Name="ImgBitmap" Stretch="None"
+                       RenderOptions.BitmapScalingMode="HighQuality"/>
+                <Canvas x:Name="ShapeLayer" Background="Transparent"
+                        IsHitTestVisible="True"/>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Statusbar -->
+        <Border Grid.Row="2" Background="#F5F6F8" BorderBrush="#E2E5EB" BorderThickness="0,1,0,0" Padding="10,4">
+            <DockPanel LastChildFill="True">
+                <TextBlock x:Name="TxtStatus" DockPanel.Dock="Left" Foreground="#444"/>
+                <TextBlock x:Name="TxtZoom"   DockPanel.Dock="Right" Foreground="#666" HorizontalAlignment="Right"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

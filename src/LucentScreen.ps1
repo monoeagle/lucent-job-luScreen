@@ -172,6 +172,8 @@ Import-Module (Join-Path $uiDir 'countdown-overlay.psm1') -Force
 Import-Module (Join-Path $uiDir 'capture-toast.psm1') -Force
 Import-Module (Join-Path $coreDir 'history.psm1') -Force
 Import-Module (Join-Path $uiDir 'history-window.psm1') -Force
+Import-Module (Join-Path $coreDir 'editor.psm1') -Force
+Import-Module (Join-Path $uiDir 'editor-window.psm1') -Force
 Import-Module (Join-Path $uiDir 'tray.psm1') -Force
 
 $assetsDir = Join-Path $rootDir '..\assets'
@@ -252,7 +254,8 @@ $callbacks = @{
     History = {
         Write-LsLog -Level Info -Source 'tray' -Message 'Verlauf geoeffnet'
         try {
-            Show-HistoryWindow -OutputDir $script:Config.OutputDir
+            $postfix = if ($script:Config.ContainsKey('EditPostfix') -and $script:Config.EditPostfix) { $script:Config.EditPostfix } else { '_edited' }
+            Show-HistoryWindow -OutputDir $script:Config.OutputDir -EditPostfix $postfix
         } catch {
             Write-LsLog -Level Error -Source 'tray' -Message ("Verlauf fehlgeschlagen: " + $_.Exception.Message)
         }

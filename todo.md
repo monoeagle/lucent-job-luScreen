@@ -14,9 +14,8 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 
 ## AP 9 — Mini-Editor
 
-- [ ] Hook aus Verlaufsfenster: Doppelklick / Enter / Kontextmenü „Editieren" öffnet den Editor (statt der Default-App wie aktuell)
-- [ ] Eigenes WPF-Fenster mit `Canvas` über `Image` (Background-Bitmap)
-- [ ] Zoom (Maus-Rad mit `ScaleTransform`, Fit-to-Window)
+> Etappe 1 (Geruest + Save) ist erledigt — siehe `luscreen-docs/docs/entwicklung/erledigt.md`. Offen:
+
 - [ ] Tool-Palette (XAML-Toolbar oder Side-Panel)
   - [ ] Rahmen (Rechteck, Konturstärke + Farbe)
   - [ ] Pfeil (Start–Ende, Spitze als Path/Polygon)
@@ -27,11 +26,9 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 - [ ] Vektor-Layer-Modell (`ObservableCollection<Shape>` über Bitmap-Background)
   - [ ] Undo/Redo (Command-Stack)
   - [ ] Auswählen/Verschieben/Löschen einzelner Shapes (HitTest, Adorner für Selection)
-- [ ] Render-Pipeline: `RenderTargetBitmap` über Canvas → PNG via `PngBitmapEncoder`
-- [ ] Speichern
-  - [ ] Speichert IMMER als neue Datei mit Postfix (Original bleibt unberührt)
-  - [ ] Editiertes Bild zusätzlich in Clipboard
-- [ ] Tastenkürzel (STRG+Z/Y, STRG+S, ESC=Schließen mit Nachfrage bei ungespeicherten Änderungen)
+- [ ] Render mit Vektor-Layer in `RenderTargetBitmap` (in Etappe 1 wird aktuell nur das Original kopiert)
+- [ ] STRG+Z/Y fuer Undo/Redo
+- [ ] ESC = Schliessen mit Nachfrage bei ungespeicherten Aenderungen
 
 ## AP 10 — Integration & Politur
 

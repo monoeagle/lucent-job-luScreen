@@ -35,6 +35,7 @@ nav = [
     { "Projektstruktur" = "entwicklung/projektstruktur.md" },
     { "Testing"         = "entwicklung/testing.md" },
     { "Stolpersteine"   = "entwicklung/stolpersteine.md" },
+    { "Erledigt"        = "entwicklung/erledigt.md" },
     { "Changelog"       = "entwicklung/changelog.md" },
   ]},
 ]

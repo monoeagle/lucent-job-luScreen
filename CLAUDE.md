@@ -6,7 +6,9 @@ Windows-Screenshot-Tool als **WPF-Anwendung in Windows PowerShell 5.1** (PS 7 wi
 > Kein PS-7-Sprachfeature nutzen: keine Ternary `? :`, keine Null-Conditional `?.`/`??`, kein `&&`/`||` in der Pipeline.
 > `$IsWindows` existiert in 5.1 nicht (in 7 zudem read-only) — nie überschreiben.
 
-> Lies vor jeder Implementierung `todo.md` (Arbeitspakete) und `docs/Architektur.md` (Module + Datenfluss).
+> Lies vor jeder Implementierung `todo.md` (offene Arbeitspakete) und `docs/Architektur.md` (Module + Datenfluss).
+> Was bereits erledigt ist, steht in `luscreen-docs/docs/entwicklung/erledigt.md` (inkl. Commit-Log).
+> **Datumsformat** in Logs/Tabellen: `YYYYMMDD-HHMM` (z.B. `20260515-1412`).
 
 ---
 

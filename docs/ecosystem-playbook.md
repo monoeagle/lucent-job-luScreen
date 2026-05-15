@@ -308,16 +308,44 @@ Erkenntnis-Format:
 5. [ ] `README.md`, `CHANGELOG.md`
 6. [ ] `.claude/agents/` — mindestens `auditor`, `powershell-specialist`, ggf. UI-Specialist
 7. [ ] `PSScriptAnalyzerSettings.psd1`, `tools/Invoke-PSSA.ps1` (aus BM kopieren, Excludes anpassen)
-8. [ ] `tools/Install-PSScriptAnalyzer-Offline.ps1`
+8. [ ] `tools/Install-PSScriptAnalyzer-Offline.ps1` + `tools/Install-Pester-Offline.ps1`
 9. [ ] `reports/README.md` + leere Unterordner
-10. [ ] `run.ps1` mit Standard-Menü
+10. [ ] `run.ps1` mit Standard-Menü (inkl. `ip` für Pester-Bundle)
 11. [ ] `docs/` Gerüst (Architektur/Bedienung/Entwicklung/Troubleshooting/lessons/superpowers/handoffs)
-12. [ ] `<name>-docs/` Zensical-Setup (aus CSC kopieren, `zensical.toml` anpassen)
+12. [ ] `<name>-docs/` Zensical-Setup (aus CSC kopieren, `zensical.toml` anpassen) — **inkl. `entwicklung/erledigt.md` und Nav-Eintrag**
 13. [ ] `<App>.docs.html` Bootstrap (aus BM kopieren, Inhalt anpassen)
 14. [ ] `.erkenntnisse/README.md`
 15. [ ] `.claude/settings.local.json` mit Permissions + Hooks
 16. [ ] `docs/ecosystem-playbook.md` mit projekt-spezifischen Anpassungen ergänzen
 17. [ ] Erst-Commit + Push
+
+---
+
+## 11. Workflow: Todo → Erledigt
+
+`todo.md` enthält **nur offene Arbeit**. Sobald ein AP-Block vollständig abgehakt ist, wandert er nach `<name>-docs/docs/entwicklung/erledigt.md` und wird in `todo.md` gelöscht. Dieses Logbuch sammelt zusätzlich die Commit/Push-Tabelle.
+
+**Vorlage `erledigt.md`:**
+
+```markdown
+# Erledigt
+
+> Workflow: Fertige Items aus todo.md hierher verschieben, dort löschen.
+> Datumsformat: YYYYMMDD-HHMM (z.B. 20260515-1412).
+
+## Arbeitspakete
+### AP <n> — <Titel> — abgeschlossen `YYYYMMDD-HHMM`
+- [x] …
+
+## Commits & Pushes
+| # | Datum | Hash | Push | Scope | Beschreibung |
+|---|---|---|---|---|---|
+| 1 | `YYYYMMDD-HHMM` | `abc1234` | ✓ | <scope> | … |
+```
+
+**Datumsformat-Begründung:** `YYYYMMDD-HHMM` ist sortierbar (alphanumerische Sortierung == chronologische), eindeutig (keine Trennzeichen-Ambiguität wie `15.05.2026` vs `5/15/2026`), kompakt. Zwischen Datum und Zeit Bindestrich, kein Doppelpunkt (Windows-Pfad-kompatibel).
+
+**Scope-Tags** für Commit-Log: `meta`, `scaffold`, `AP <n>`, `compat`, `fix`, `docs`, `chore`.
 
 ---
 

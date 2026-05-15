@@ -8,16 +8,7 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 
 ---
 
-## AP 0 — Projekt-Setup & Grundgerüst
-
-- [x] Ordnerstruktur anlegen (`src/`, `src/views/` für XAML, `assets/` für Icons, `config/`, `docs/`, `packaging/`)
-- [x] Einstiegsskript `LucentScreen.ps1` mit STA-Apartment-Check (`-STA` ist Pflicht für WPF und Clipboard)
-- [x] Single-Instance-Mutex (verhindert Mehrfachstart)
-- [x] Assemblies laden: `PresentationCore`, `PresentationFramework`, `WindowsBase`, `System.Xaml`, `System.Drawing`, `System.Windows.Forms` (nur für NotifyIcon)
-- [x] XAML-Loader-Helper (`Load-Xaml` Funktion, Named-Elements per `FindName` extrahieren)
-- [x] Zentrales Logging (Datei in `%LOCALAPPDATA%\LucentScreen\logs\` + optional Debug-Konsole)
-- [x] Globale Fehlerbehandlung (`DispatcherUnhandledException`, `AppDomain.UnhandledException`)
-- [x] App-Lifecycle: `[System.Windows.Application]::new()` + `Run()` als Message-Loop-Anker, `ShutdownMode = OnExplicitShutdown` (sonst beendet sich App beim Schließen jedes Fensters)
+> Erledigte Arbeitspakete + Commit/Push-Log siehe [`luscreen-docs/docs/entwicklung/erledigt.md`](../luscreen-docs/docs/entwicklung/erledigt.md).
 
 ## AP 1 — Konfiguration
 
@@ -232,20 +223,10 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 
 ---
 
-## Commits & Pushes (chronologisch)
+## Erledigt + Commit-Log
 
-Tabelle pro Commit/Push — wird vor jedem Push manuell ergänzt. Reihenfolge ist Wahrheit, nicht Datum (mehrere Commits am selben Tag möglich).
+Wird ausgelagert nach [`luscreen-docs/docs/entwicklung/erledigt.md`](../luscreen-docs/docs/entwicklung/erledigt.md). Dort findet sich die chronologische Liste aller bisher fertiggestellten Arbeitspakete sowie die Commit/Push-Tabelle (Datumsformat `YYYYMMDD-HHMM`).
 
-| # | Datum (lokal) | Hash | Push | Scope | Beschreibung |
-|---|---|---|---|---|---|
-| 1 | 2026-05-15 13:02 | `a23a0fa` | ✓ | meta | Initial todo |
-| 2 | 2026-05-15 13:31 | `3704a64` | ✓ | scaffold | Bootstrap LucentScreen scaffolding (Ordner, Agenten, PSSA, Reports, Doku, HTML-Single-Page, Hooks, Ecosystem-Playbook) |
-| 3 | 2026-05-15 13:49 | `5e69a08` | ✓ | AP 0 | Projekt-Setup und Grundgerüst — `src/LucentScreen.ps1`, `src/core/{native,logging,xaml-loader}.psm1`, Pester-Tests (10/10), PSSA 0 Findings |
-| 4 | 2026-05-15 14:12 | `9c375a7` | ✓ | compat | PS 5.1-Kompatibilität, Shell-Detection, Pester-Offline-Bundle (`tools/Install-Pester-Offline.ps1`), No-NuGet-Runtime-Doku |
-| 5 | 2026-05-15 14:12 | `28313f5` | ✓ | chore | Commit-Log-Eintrag 4 mit finalem Hash nachgetragen |
-
-**Regeln:**
-- Eintrag VOR `git commit` ergänzen (Hash und Datum nach erfolgreichem Commit nachtragen)
-- `Push ✓` setzen nach `git push`
-- Scope-Tag: `meta`, `scaffold`, `AP <n>`, `compat`, `fix`, `docs`, `chore`
-- Bei Force-Push oder Revert: zusätzliche Zeile mit Vermerk anhängen, **nicht** alte Zeile editieren
+**Workflow:**
+- Sobald ein AP-Block hier vollständig abgehakt ist, wandert er als Eintrag in `erledigt.md` und wird hier gelöscht.
+- Vor jedem `git commit` neuen Eintrag in der Tabelle in `erledigt.md` anlegen; Hash nach `git commit` und Push-Status nach `git push` nachtragen.

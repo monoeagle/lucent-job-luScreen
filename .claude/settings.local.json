@@ -66,7 +66,11 @@
       "PowerShell(& powershell.exe -NoProfile -File .\\\\tools\\\\Make-Icon.ps1 2>&1 | Select-Object -First 25)",
       "PowerShell(& powershell.exe -NoProfile -File .\\\\tools\\\\Make-Icon.ps1 2>&1 | Select-Object -First 30)",
       "PowerShell(& powershell.exe -NoProfile -Command \"Add-Type -AssemblyName System.Drawing; \\\\$ico = [System.Drawing.Icon]::new\\(\\(Resolve-Path .\\\\assets\\\\luscreen.ico\\).Path\\); \\\\\"Icon OK: \\\\$\\(\\\\$ico.Width\\)x\\\\$\\(\\\\$ico.Height\\)\\\\\"; \\\\$ico.Dispose\\(\\)\" 2>&1)",
-      "PowerShell(& powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 3)"
+      "PowerShell(& powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 3)",
+      "PowerShell(& powershell.exe -NoProfile -File .\\\\run.ps1 l 2>&1 | Select-Object -Last 2; Get-Content reports\\\\pssa\\\\pssa-report.md -TotalCount 6)",
+      "PowerShell(& powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\core.hotkeys.Tests.ps1 -Output Detailed\" 2>&1 | Select-String -Pattern '\\\\[\\\\-\\\\]|Expected|but got|Error|FAIL' -Context 0,3 | Select-Object -First 30)",
+      "PowerShell(& powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\core.hotkeys.Tests.ps1 -Output Minimal\" 2>&1 | Select-Object -Last 4)",
+      "PowerShell(& powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 3; \"\"; & powershell.exe -NoProfile -File .\\\\run.ps1 l 2>&1 | Select-Object -Last 2; Get-Content reports\\\\pssa\\\\pssa-report.md -TotalCount 6)"
     ]
   }
 }

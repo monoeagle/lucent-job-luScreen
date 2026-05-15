@@ -25,6 +25,27 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 **Quality-Stand:** Parse 19/19 clean · PSSA 0 Findings · Pester 10/10 grün auf PS 7 und PS 5.1.
 
+### AP 3 — Globale Hotkeys — abgeschlossen `20260515-1551`
+
+- [x] P/Invoke für `RegisterHotKey` / `UnregisterHotKey` via `Add-Type` (`LucentScreen.HotKey`)
+- [x] Hidden-Window mit `WindowInteropHelper.EnsureHandle()` + `HwndSource.AddHook` für `WM_HOTKEY` (0x312)
+- [x] Hotkey-Registry-Dictionary (`$script:HotkeyState.Registered` — ID → Name/Callback/Display/Hwnd)
+- [x] Re-Registrierung nach Konfig-Speichern (Tray-Callback `Config` ruft `Register-AllHotkeys` neu auf `$script:Config.Hotkeys`)
+- [x] Konflikt-Behandlung mit `Marshal.GetLastWin32Error()` + MessageBox-Warnung beim Start
+- [x] Cleanup im `Application.Exit`-Handler (`Unregister-AllHotkeys` vor Tray-Dispose)
+
+**Artefakte:**
+- `src/core/hotkeys.psm1`: `LucentScreen.HotKey` (P/Invoke), `Convert-ModifiersToFlags`, `Convert-KeyNameToVirtualKey` (via `KeyInterop.VirtualKeyFromKey`), `Register-AllHotkeys`, `Unregister-AllHotkeys`, `Invoke-HotkeyById`, `Get-RegisteredHotkeys`
+- `tests/core.hotkeys.Tests.ps1`: 16 Pester-Tests (Modifier-Flags, VK-Codes, Register/Unregister mit Thread-HWND, Conflict-Erkennung bei unbekannter Taste, NextId-Eindeutigkeit)
+- `src/LucentScreen.ps1`: Hidden-WPF-Window mit `EnsureHandle`, `HwndSource.AddHook` dispatcht `WM_HOTKEY` an `Invoke-HotkeyById`, Re-Register im Config-Callback, Unregister im Exit-Handler
+
+**Interaktiver Smoke-Test:**
+- Start: Log meldet `[hotkey] Registriert: 5, Konflikte: 0`
+- `Ctrl+Shift+1` (Region) → MessageBox „Capture-Engine kommt mit AP 4"
+- Beenden über Tray oder Hotkey-Konflikt-MessageBox → `Unregister-AllHotkeys` läuft sauber, kein dangling Hotkey
+
+**Quality-Stand:** Parse 39/39 clean · PSSA 0 Findings · Pester 53/53 grün unter PS 5.1.
+
 ### AP 2 — Tray-Icon & Kontextmenü — abgeschlossen `20260515-1529`
 
 - [x] `System.Windows.Forms.NotifyIcon` mit Programm-Icon (`assets/luscreen.ico`, multi-res 16/32/48/64)
@@ -142,6 +163,8 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 15 | `20260515-1458` | `_pending_` | — | AP 1 | Konfig-Dialog (WPF): `src/views/config-dialog.xaml`, `src/ui/config-dialog.psm1` mit `Show-ConfigDialog` (Hotkey-Capture via PreviewKeyDown, FolderBrowserDialog, Slider/Textbox-Sync, Live-Validation). `core/config.psm1` um `Format-Hotkey`/`ConvertFrom-HotkeyString`/`Test-ConfigValid`/`Test-HotkeyConflict` ergänzt + 14 neue Tests (jetzt 37/37 grün). `tools/Show-ConfigDialog.ps1` STA-Launcher und `run.ps1 cfg`-Task. |
 | 16 | `20260515-1513` | `_pending_` | — | compat | PS 7-Support entfernt — PS 5.1 ist einziges Target. `$script:PSShell`-Detection raus aus `run.ps1`, Self-Relaunch in `LucentScreen.ps1` direkt mit `powershell.exe`, `$IsLinux`/`$IsMacOS` aus `luscreen-docs/run.ps1`. CLAUDE.md mit „Future"-Note (PS 7 später evtl. wieder). PSSA-Bundle `1.25.0` in `_deps/` via neuem `-Url`-Mode (Invoke-WebRequest, kein NuGet). `Install-{PSScriptAnalyzer,Pester}-Offline.ps1` speichern nupkg als `.zip` (PS-5.1-Expand-Archive akzeptiert nur `.zip`). |
 | 17 | `20260515-1529` | `_pending_` | — | AP 2 | Tray-Icon mit Kontextmenü + About-Dialog. `assets/luscreen.ico` via `tools/Make-Icon.ps1` (multi-res, manuelles ICO-Binärformat statt BinaryWriter wegen PS-5.1-ctor-Mucken). `src/ui/tray.psm1` `Initialize-Tray` mit 8 Menü-Einträgen, Doppelklick-Hook, Dispose-Closure. `src/{views,ui}/about-dialog.*`. `LucentScreen.ps1` wired alles; Capture-Aktionen vorerst MessageBox-Stubs bis AP 4. Interaktiver Smoke-Test passed (User hat Tray-Menü inkl. Konfig-Dialog und Beenden geklickt, Tray sauber disposed). |
+| 18 | `20260515-1521` | `_pending_` | — | chore | todo.md aufgeräumt: AP 1 (komplett erledigt) und leerer AP 2-Header entfernt, Restpunkt „Re-Apply zur Laufzeit" in AP 3 + AP 6 verschoben. |
+| 19 | `20260515-1551` | `_pending_` | — | AP 3 | Globale Hotkeys: `src/core/hotkeys.psm1` mit P/Invoke (`LucentScreen.HotKey`: RegisterHotKey/UnregisterHotKey + MOD_*-Konstanten), `Convert-ModifiersToFlags`, `Convert-KeyNameToVirtualKey` via `KeyInterop`, `Register-AllHotkeys` mit Conflict-Erkennung (`Marshal.GetLastWin32Error`), `Unregister-AllHotkeys`, `Invoke-HotkeyById`. 16 Pester-Tests. `LucentScreen.ps1` legt Hidden-Window mit `EnsureHandle()` an, hookt `WM_HOTKEY` (0x312) via `HwndSource.AddHook`, registriert beim Start, re-registriert nach Config-Save, unregistriert im Exit-Handler. Interaktiver Smoke-Test: Ctrl+Shift+1 löst Region-Callback aus. |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

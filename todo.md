@@ -10,14 +10,6 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 
 > Erledigte Arbeitspakete + Commit/Push-Log siehe [`luscreen-docs/docs/entwicklung/erledigt.md`](../luscreen-docs/docs/entwicklung/erledigt.md).
 
-## AP 3 — Globale Hotkeys
-
-- [ ] P/Invoke für `RegisterHotKey` / `UnregisterHotKey` (user32.dll) via `Add-Type`
-- [ ] Hidden-Window für `WM_HOTKEY` — in WPF via `HwndSource.FromHwnd` + `AddHook` an einem unsichtbaren Fenster
-- [ ] Hotkey-Registry-Dictionary (ID ↔ Aktion)
-- [ ] Re-Registrierung nach Konfig-Speichern (Rest aus AP 1 — `$script:Config` ist schon aktualisiert)
-- [ ] Konfliktbehandlung (Hotkey schon vergeben → Userdialog mit Vorschlag)
-- [ ] Cleanup beim Beenden (alle IDs unregistern)
 
 ## AP 4 — Capture-Engine
 

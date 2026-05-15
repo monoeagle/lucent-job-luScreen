@@ -136,6 +136,9 @@ $app.add_DispatcherUnhandledException({
 
 $app.add_Exit({
         Write-LsLog -Level Info -Source 'shutdown' -Message 'Application.Exit-Event'
+        if ($script:HotkeyHwnd -and $script:HotkeyHwnd -ne [IntPtr]::Zero) {
+            try { Unregister-AllHotkeys -Hwnd $script:HotkeyHwnd } catch { $null = $_ }
+        }
         if ($script:TrayDispose) {
             try { $script:TrayDispose.Invoke() } catch { $null = $_ }
         }
@@ -147,6 +150,7 @@ $app.add_Exit({
 # 8) Tray-Icon + Kontextmenue
 # ---------------------------------------------------------------
 $uiDir = Join-Path $rootDir 'ui'
+Import-Module (Join-Path $coreDir 'hotkeys.psm1') -Force
 Import-Module (Join-Path $uiDir 'about-dialog.psm1') -Force
 Import-Module (Join-Path $uiDir 'config-dialog.psm1') -Force
 Import-Module (Join-Path $uiDir 'tray.psm1') -Force
@@ -189,7 +193,11 @@ $callbacks = @{
             $r = Save-Config -Config $updated
             if ($r.Success) {
                 $script:Config = $updated
-                Write-LsLog -Level Info -Source 'tray' -Message 'Konfig gespeichert (Hotkey-Re-Apply folgt mit AP 3)'
+                Write-LsLog -Level Info -Source 'tray' -Message 'Konfig gespeichert'
+                if ($script:HotkeyHwnd -and $script:HotkeyHwnd -ne [IntPtr]::Zero) {
+                    $hkResult = Register-AllHotkeys -Hwnd $script:HotkeyHwnd -HotkeyMap $script:Config.Hotkeys -Callbacks $callbacks
+                    Write-LsLog -Level Info -Source 'hotkey' -Message ("Re-registriert: {0}, Konflikte: {1}" -f $hkResult.Registered.Count, $hkResult.Conflicts.Count)
+                }
             } else {
                 Write-LsLog -Level Error -Source 'tray' -Message ("Konfig-Speichern fehlgeschlagen: " + $r.Message)
             }
@@ -210,9 +218,58 @@ $trayResult = Initialize-Tray -Icon $iconPath.Path -Version $appVersion -Callbac
 $script:TrayDispose = $trayResult.Dispose
 Write-LsLog -Level Info -Source 'boot' -Message 'Tray-Icon aktiv'
 
+# ---------------------------------------------------------------
+# 9) Globale Hotkeys
+# ---------------------------------------------------------------
+# Hidden-WPF-Fenster, das nie sichtbar wird -- liefert nur den HWND,
+# an dem WM_HOTKEY ankommt. EnsureHandle() erzeugt den Handle ohne
+# Show() aufzurufen.
+$script:HotkeyHwnd = [IntPtr]::Zero
+$hiddenWindow = New-Object System.Windows.Window
+$hiddenWindow.WindowStyle = [System.Windows.WindowStyle]::None
+$hiddenWindow.ShowInTaskbar = $false
+$hiddenWindow.Width = 0
+$hiddenWindow.Height = 0
+$hiddenWindow.Top = -10000
+$hiddenWindow.Left = -10000
+$hiddenWindow.Visibility = [System.Windows.Visibility]::Hidden
+
+$helper = New-Object System.Windows.Interop.WindowInteropHelper $hiddenWindow
+[void]$helper.EnsureHandle()
+$script:HotkeyHwnd = $helper.Handle
+
+$hotkeyHook = {
+    param($h, $msg, $wp, $lp, [ref]$handled)
+    if ($msg -eq [LucentScreen.HotKey]::WM_HOTKEY) {
+        $id = [int]$wp
+        Invoke-HotkeyById -Id $id
+        $handled.Value = $true
+    }
+    return [IntPtr]::Zero
+}
+$hotkeySource = [System.Windows.Interop.HwndSource]::FromHwnd($script:HotkeyHwnd)
+$hotkeySource.AddHook($hotkeyHook)
+
+$hkResult = Register-AllHotkeys -Hwnd $script:HotkeyHwnd -HotkeyMap $script:Config.Hotkeys -Callbacks $callbacks
+Write-LsLog -Level Info -Source 'hotkey' -Message ("Registriert: {0}, Konflikte: {1}" -f $hkResult.Registered.Count, $hkResult.Conflicts.Count)
+foreach ($c in $hkResult.Conflicts) {
+    Write-LsLog -Level Warn -Source 'hotkey' -Message ("Konflikt '{0}' ({1}): {2}" -f $c.Name, $c.Display, $c.Reason)
+}
+if ($hkResult.Conflicts.Count -gt 0) {
+    $msg = "Folgende Hotkeys konnten nicht registriert werden (vermutlich von einer anderen Anwendung belegt):`n`n"
+    foreach ($c in $hkResult.Conflicts) {
+        $msg += " - $($c.Name): $($c.Display)`n"
+    }
+    $msg += "`nBitte in der Konfiguration eine andere Kombination waehlen."
+    [System.Windows.MessageBox]::Show(
+        $msg, 'LucentScreen -- Hotkey-Konflikt',
+        [System.Windows.MessageBoxButton]::OK,
+        [System.Windows.MessageBoxImage]::Warning) | Out-Null
+}
+
 Write-LsLog -Level Info -Source 'boot' -Message 'Bootstrap abgeschlossen, App-Loop startet'
 
 # ---------------------------------------------------------------
-# 9) Message-Loop
+# 10) Message-Loop
 # ---------------------------------------------------------------
 [void]$app.Run()

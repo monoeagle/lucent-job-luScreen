@@ -57,7 +57,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 7 | `20260515-1418` | `2cccf5a` | ✓ | docs | `erledigt.md` angelegt, AP 0 + Commit-Log aus `todo.md` hierher verschoben, Datumsformat `YYYYMMDD-HHMM` etabliert, `zensical.toml`-Nav um „Erledigt" erweitert, `ecosystem-playbook` um Workflow-Abschnitt 11 ergänzt |
 | 8 | `20260515-1418` | `bc8dd3e` | ✓ | chore | Commit-Log-Eintrag 7 mit finalem Hash nachgetragen |
 | 9 | `20260515-1421` | `1914bfd` | ✓ | fix | `run.ps1 d` öffnet `site/index.html` nach erfolgreichem Build im Standard-Browser, Exit-Code-Check zwischengeschaltet, Menü-Text aktualisiert |
-| 10 | `20260515-1421` | _pending_ | — | chore | Commit-Log-Eintrag 9 mit finalem Hash nachgetragen |
+| 10 | `20260515-1421` | `9171d9b` | ✓ | chore | Commit-Log-Eintrag 9 mit finalem Hash nachgetragen |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

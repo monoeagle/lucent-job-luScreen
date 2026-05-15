@@ -1,0 +1,140 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LucentScreen — Konfiguration"
+        Width="640" Height="640"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        FontFamily="Segoe UI" FontSize="13">
+    <Window.Resources>
+        <Style TargetType="Label">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="6,3"/>
+            <Setter Property="Height" Value="26"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="MinWidth" Value="100"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Padding" Value="10,2"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,14">
+            <TextBlock Text="Einstellungen" FontSize="18" FontWeight="SemiBold"/>
+            <TextBlock Foreground="#666"
+                       Text="Aenderungen wirken nach Klick auf 'Speichern'. Hotkeys werden bei der naechsten App-Startsequenz neu registriert."
+                       TextWrapping="Wrap" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Inhalt -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <GroupBox Header="Speicherort &amp; Dateinamen" Padding="10" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Label Grid.Row="0" Grid.Column="0" Content="Zielordner:"/>
+                        <TextBox x:Name="TxtOutputDir" Grid.Row="0" Grid.Column="1" Margin="0,4"/>
+                        <Button x:Name="BtnBrowse" Grid.Row="0" Grid.Column="2" Content="Durchsuchen..." Margin="6,4,0,4"/>
+
+                        <Label Grid.Row="1" Grid.Column="0" Content="Dateinamen-Schema:"/>
+                        <TextBox x:Name="TxtFileNameFormat" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,4"/>
+
+                        <Label Grid.Row="2" Grid.Column="0" Content=" "/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                   Foreground="#888" FontSize="11" TextWrapping="Wrap"
+                                   Text="Platzhalter: {mode} = Region/ActiveWindow/Monitor/AllMonitors. Datums-Tokens wie yyyy-MM-dd_HH-mm-ss werden ersetzt."/>
+
+                        <Label Grid.Row="3" Grid.Column="0" Content="Edit-Postfix:"/>
+                        <TextBox x:Name="TxtEditPostfix" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,4"/>
+                    </Grid>
+                </GroupBox>
+
+                <GroupBox Header="Verzoegerung" Padding="10" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Content="Sekunden bis Aufnahme:"/>
+                        <Slider x:Name="SldDelay" Grid.Column="1" Minimum="0" Maximum="30" TickFrequency="1"
+                                IsSnapToTickEnabled="True" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBox x:Name="TxtDelay" Grid.Column="2" TextAlignment="Center"/>
+                    </Grid>
+                </GroupBox>
+
+                <GroupBox Header="Hotkeys (in Feld klicken, dann Tastenkombination druecken)" Padding="10" Margin="0,0,0,4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="180"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Label Grid.Row="0" Grid.Column="0" Content="Bereich:"/>
+                        <TextBox x:Name="HkRegion" Grid.Row="0" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
+                        <Button x:Name="HkRegionClear" Grid.Row="0" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+
+                        <Label Grid.Row="1" Grid.Column="0" Content="Aktives Fenster:"/>
+                        <TextBox x:Name="HkActiveWindow" Grid.Row="1" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
+                        <Button x:Name="HkActiveWindowClear" Grid.Row="1" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+
+                        <Label Grid.Row="2" Grid.Column="0" Content="Monitor unter Maus:"/>
+                        <TextBox x:Name="HkMonitor" Grid.Row="2" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
+                        <Button x:Name="HkMonitorClear" Grid.Row="2" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+
+                        <Label Grid.Row="3" Grid.Column="0" Content="Alle Monitore:"/>
+                        <TextBox x:Name="HkAllMonitors" Grid.Row="3" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
+                        <Button x:Name="HkAllMonitorsClear" Grid.Row="3" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+
+                        <Label Grid.Row="4" Grid.Column="0" Content="Tray-Menue oeffnen:"/>
+                        <TextBox x:Name="HkTrayMenu" Grid.Row="4" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
+                        <Button x:Name="HkTrayMenuClear" Grid.Row="4" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+                    </Grid>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Validation-Bereich -->
+        <Border Grid.Row="2" Margin="0,8,0,0" Padding="10,8" Background="#FFFBEB" BorderBrush="#FACC15" BorderThickness="1"
+                x:Name="ValidationBox" Visibility="Collapsed">
+            <TextBlock x:Name="ValidationText" Foreground="#92400E" TextWrapping="Wrap"/>
+        </Border>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button x:Name="BtnCancel" Content="Abbrechen" Margin="0,0,8,0" IsCancel="True"/>
+            <Button x:Name="BtnSave"   Content="Speichern" IsDefault="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

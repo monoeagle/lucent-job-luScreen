@@ -143,3 +143,92 @@ Describe 'config: save' {
         $loaded.SchemaVersion | Should -Be (Get-DefaultConfig).SchemaVersion
     }
 }
+
+Describe 'config: Format-Hotkey' {
+    It 'formatiert Ctrl+Shift+D1 als Ctrl+Shift+1' {
+        Format-Hotkey @{ Modifiers = @('Control', 'Shift'); Key = 'D1' } | Should -Be 'Control+Shift+1'
+    }
+    It 'formatiert Alt+F4' {
+        Format-Hotkey @{ Modifiers = @('Alt'); Key = 'F4' } | Should -Be 'Alt+F4'
+    }
+    It 'akzeptiert leere Modifier-Liste' {
+        Format-Hotkey @{ Modifiers = @(); Key = 'A' } | Should -Be 'A'
+    }
+}
+
+Describe 'config: ConvertFrom-HotkeyString' {
+    It 'parst "Ctrl+Shift+1" zu Control/Shift/D1' {
+        $hk = ConvertFrom-HotkeyString 'Ctrl+Shift+1'
+        $hk.Modifiers | Should -Contain 'Control'
+        $hk.Modifiers | Should -Contain 'Shift'
+        $hk.Key       | Should -Be 'D1'
+    }
+    It 'parst "Alt+F4"' {
+        $hk = ConvertFrom-HotkeyString 'Alt+F4'
+        $hk.Modifiers | Should -Be @('Alt')
+        $hk.Key       | Should -Be 'F4'
+    }
+    It 'liefert $null bei leerem Input' {
+        ConvertFrom-HotkeyString '   ' | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'config: Test-HotkeyConflict' {
+    It 'meldet keinen Konflikt bei Default-Config' {
+        $r = Test-HotkeyConflict -Hotkeys (Get-DefaultConfig).Hotkeys
+        $r.IsValid | Should -BeTrue
+        $r.Conflicts.Count | Should -Be 0
+    }
+    It 'erkennt zwei identische Hotkeys' {
+        $map = @{
+            A = @{ Modifiers = @('Control', 'Shift'); Key = 'D1' }
+            B = @{ Modifiers = @('Shift', 'Control'); Key = 'D1' }  # gleiche Modifier in anderer Reihenfolge
+        }
+        $r = Test-HotkeyConflict -Hotkeys $map
+        $r.IsValid          | Should -BeFalse
+        $r.Conflicts.Count  | Should -Be 1
+    }
+    It 'unterscheidet unterschiedliche Modifier' {
+        $map = @{
+            A = @{ Modifiers = @('Control', 'Shift'); Key = 'D1' }
+            B = @{ Modifiers = @('Alt'); Key = 'D1' }
+        }
+        (Test-HotkeyConflict -Hotkeys $map).IsValid | Should -BeTrue
+    }
+}
+
+Describe 'config: Test-ConfigValid' {
+    It 'akzeptiert Default-Config' {
+        $r = Test-ConfigValid -Config (Get-DefaultConfig)
+        $r.IsValid     | Should -BeTrue
+        $r.Errors.Count | Should -Be 0
+    }
+    It 'fehlerhafte Delay (>30) wird gefangen' {
+        $c = Get-DefaultConfig
+        $c.DelaySeconds = 99
+        $r = Test-ConfigValid -Config $c
+        $r.IsValid | Should -BeFalse
+        ($r.Errors -join ' ') | Should -Match 'Verzoegerung'
+    }
+    It 'leerer Zielordner wird gefangen' {
+        $c = Get-DefaultConfig
+        $c.OutputDir = ''
+        $r = Test-ConfigValid -Config $c
+        $r.IsValid | Should -BeFalse
+        ($r.Errors -join ' ') | Should -Match 'Zielordner'
+    }
+    It 'Dateinamen-Schema ohne {mode} wird gefangen' {
+        $c = Get-DefaultConfig
+        $c.FileNameFormat = 'screenshot_yyyy.png'
+        $r = Test-ConfigValid -Config $c
+        $r.IsValid | Should -BeFalse
+        ($r.Errors -join ' ') | Should -Match '\{mode\}'
+    }
+    It 'Hotkey-Konflikt schlaegt durch' {
+        $c = Get-DefaultConfig
+        $c.Hotkeys.ActiveWindow.Key = 'D1'  # collides mit Region
+        $r = Test-ConfigValid -Config $c
+        $r.IsValid | Should -BeFalse
+        ($r.Errors -join ' ') | Should -Match 'Konflikt'
+    }
+}

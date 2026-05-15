@@ -313,6 +313,16 @@ function Action-CleanReports {
     Write-Host "Fertig." -ForegroundColor Green
 }
 
+function Action-ConfigDialog {
+    $script = Join-Path $root 'tools/Show-ConfigDialog.ps1'
+    if (-not (Test-Path -LiteralPath $script)) {
+        Write-Host "Show-ConfigDialog.ps1 fehlt." -ForegroundColor Yellow
+        return
+    }
+    Write-Host "Oeffne Konfig-Dialog (-STA) ..." -ForegroundColor Cyan
+    & $script:PSShell -NoProfile -STA -File $script
+}
+
 # -----------------------------------------------------------------
 # Menue
 # -----------------------------------------------------------------
@@ -333,6 +343,7 @@ function Show-Menu {
     Write-Host " --- App ---" -ForegroundColor DarkCyan
     Write-Host "  s) Start (-STA)"
     Write-Host "  S) Stop"
+    Write-Host "  cfg) Konfig-Dialog oeffnen (-STA)"
     Write-Host "  prereqs) Voraussetzungen pruefen"
     Write-Host ""
     Write-Host " --- Doku ---" -ForegroundColor DarkCyan
@@ -362,6 +373,7 @@ function Invoke-Action {
         'a' { Action-Audit }
         's' { Action-AppStart }
         'S' { Action-AppStop }
+        'cfg' { Action-ConfigDialog }
         'prereqs' { Action-Prereqs }
         'd' { Action-DocsBuild }
         'D' { Action-DocsServe }

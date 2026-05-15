@@ -15,17 +15,17 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 - [x] Default-Konfig im Code (Hotkeys, Zielordner, Verzögerung, Dateinamensschema)
 - [x] Konfig-Datei `config.json` in `%APPDATA%\LucentScreen\` (User-scope, NICHT im Programmordner — wichtig für MSI/Per-Machine-Install)
 - [x] Laden/Speichern der Konfig (mit Migrations-/Default-Fallback, Schema-Version)
-- [ ] Konfig-Dialog als **WPF-Fenster** (XAML)
-  - [ ] Zielordner wählen (über `Microsoft.Win32` oder WinForms-FolderBrowserDialog als Fallback)
-  - [ ] Hotkeys einstellen (Modifier + Taste, mit Konflikterkennung)
-    - [ ] Hotkey „Bereich"
-    - [ ] Hotkey „Aktives Fenster"
-    - [ ] Hotkey „Monitor unter Maus"
-    - [ ] Hotkey „Alle Monitore"
-  - [ ] Verzögerung in Sekunden (0–30)
-  - [ ] Dateinamen-Schema (Zeitstempel-Format, Postfix für Edit)
-  - [ ] Speichern/Abbrechen, Live-Validierung
-- [ ] Konfig-Änderungen wirken zur Laufzeit (Hotkeys neu registrieren, FileWatcher-Pfad aktualisieren)
+- [x] Konfig-Dialog als **WPF-Fenster** (XAML)
+  - [x] Zielordner wählen (WinForms-FolderBrowserDialog)
+  - [x] Hotkeys einstellen (Modifier + Taste, mit Konflikterkennung)
+    - [x] Hotkey „Bereich"
+    - [x] Hotkey „Aktives Fenster"
+    - [x] Hotkey „Monitor unter Maus"
+    - [x] Hotkey „Alle Monitore"
+  - [x] Verzögerung in Sekunden (0–30)
+  - [x] Dateinamen-Schema (Zeitstempel-Format, Postfix für Edit)
+  - [x] Speichern/Abbrechen, Live-Validierung
+- [ ] Konfig-Änderungen wirken zur Laufzeit (Hotkeys neu registrieren, FileWatcher-Pfad aktualisieren) — folgt mit AP 3 (Hotkeys) und AP 2 (Tray-Re-Init)
 
 ## AP 2 — Tray-Icon & Kontextmenü
 

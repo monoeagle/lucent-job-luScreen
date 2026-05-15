@@ -25,6 +25,30 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 **Quality-Stand:** Parse 19/19 clean · PSSA 0 Findings · Pester 10/10 grün auf PS 7 und PS 5.1.
 
+### AP 1 (Teil 2) — Konfig-Dialog (WPF) — abgeschlossen `20260515-1458`
+
+- [x] Konfig-Dialog als WPF-Fenster (XAML)
+- [x] Zielordner wählen (`FolderBrowserDialog`)
+- [x] 5 Hotkey-Felder mit KeyDown-Capture und Konflikterkennung (Region, ActiveWindow, Monitor, AllMonitors, TrayMenu)
+- [x] Verzögerung 0–30 s (Slider + Textbox, synchronisiert)
+- [x] Dateinamen-Schema, Edit-Postfix
+- [x] Speichern/Abbrechen, Live-Validierung mit Inline-Warn-Box
+- [ ] Re-Apply zur Laufzeit (Hotkeys/FileWatcher) — folgt nach AP 2/AP 3
+
+**Artefakte:**
+- `src/views/config-dialog.xaml` — XAML-Window (640×640, FixedDialog, ResourceDictionary-Style)
+- `src/ui/config-dialog.psm1` — `Show-ConfigDialog` (STA-Check, FolderBrowser, Hotkey-Capture via `PreviewKeyDown`, Slider/Textbox-Bindung, Validation-Box)
+- `src/core/config.psm1` (erweitert) — `Format-Hotkey`, `ConvertFrom-HotkeyString`, `Test-ConfigValid`, `Test-HotkeyConflict`
+- `tools/Show-ConfigDialog.ps1` — STA-Launcher für interaktiven Smoke-Test
+- `run.ps1` — neue Taste `cfg` (Action-ConfigDialog)
+- 14 zusätzliche Pester-Tests (Format-Hotkey, ConvertFrom, Test-HotkeyConflict, Test-ConfigValid)
+
+**Bugfixes während der Tests:**
+- `ConvertFrom-HotkeyString` mit Whitespace-Input crashte unter StrictMode (`$null.Count`). Fix: `@(…)`-Wrap.
+- `Test-ConfigValid` warf `Index out of range` weil Methoden-Komma die `-f`-Argumente fraß. Fix: Extra-Klammer um das Format-Statement, dann `Add()` mit nur einem Argument.
+
+**Quality-Stand:** Parse 29/29 clean · PSSA 0 Findings · Pester 37/37 grün auf PS 7 und PS 5.1. Headless-Smoke des XAML: lädt sauber, alle 15 Named-Controls erreichbar.
+
 ### AP 1 (Teil 1) — Konfigurations-Backend — abgeschlossen `20260515-1446`
 
 - [x] Default-Konfig im Code (Hotkeys, Zielordner, Verzögerung, Dateinamensschema)
@@ -91,6 +115,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 12 | `20260515-1435` | `_pending_` | — | fix | `build_docs.py` UTF-8-safe Output + Python-Mindestversion-Check (3.10); `luscreen-docs/run.ps1` PS-Wrapper mit `.venv-docs`-Management, Python-Detection, Build/Serve/Clean/Menu; Haupt-`run.ps1` `Action-DocsBuild` ruft Wrapper, neue Taste `D` für Live-Server; `run_luscreen_docs.sh` (bash) gelöscht; Playbook-Abschnitt 11 um Option-2-Regel (Hash nicht backfillen) ergänzt |
 | 13 | `20260515-1440` | `_pending_` | — | fix | `zensical.toml: use_directory_urls = false` damit Doku-Site aus `file://` direkt klickbar ist (statt Verzeichnis-Listing) |
 | 14 | `20260515-1446` | `_pending_` | — | AP 1 | Config-Backend: `src/core/config.psm1` (Get-DefaultConfig, Get-ConfigPath, Read-Config mit Defaults-Merge und Migration, Save-Config atomar). 13 Pester-Tests. Bootstrap in `src/LucentScreen.ps1` laedt Config nach Logging. Pflicht-Path: `%APPDATA%/LucentScreen/config.json`. WPF-Konfig-Dialog folgt nach AP 2. |
+| 15 | `20260515-1458` | `_pending_` | — | AP 1 | Konfig-Dialog (WPF): `src/views/config-dialog.xaml`, `src/ui/config-dialog.psm1` mit `Show-ConfigDialog` (Hotkey-Capture via PreviewKeyDown, FolderBrowserDialog, Slider/Textbox-Sync, Live-Validation). `core/config.psm1` um `Format-Hotkey`/`ConvertFrom-HotkeyString`/`Test-ConfigValid`/`Test-HotkeyConflict` ergänzt + 14 neue Tests (jetzt 37/37 grün). `tools/Show-ConfigDialog.ps1` STA-Launcher und `run.ps1 cfg`-Task. |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

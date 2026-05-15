@@ -223,4 +223,165 @@ function Save-Config {
     }
 }
 
-Export-ModuleMember -Function Get-ConfigPath, Get-DefaultConfig, Read-Config, Save-Config
+# ---------------------------------------------------------------
+#  Hotkey-Helpers (UI-unabhaengig, daher hier in core)
+# ---------------------------------------------------------------
+
+# Erlaubte Modifier-Tokens (case-insensitive beim Parsen)
+$script:ValidModifiers = @('Control', 'Ctrl', 'Shift', 'Alt', 'Win', 'Windows')
+
+# Mapping von User-Eingaben zu kanonischen Modifier-Namen (wie in Config gespeichert)
+$script:CanonicalModifier = @{
+    'control' = 'Control'
+    'ctrl'    = 'Control'
+    'shift'   = 'Shift'
+    'alt'     = 'Alt'
+    'win'     = 'Win'
+    'windows' = 'Win'
+}
+
+function Format-Hotkey {
+    <#
+    .SYNOPSIS
+        Wandelt einen Hotkey-Hashtable in einen lesbaren String.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param([Parameter(Mandatory)][hashtable]$Hotkey)
+
+    $parts = @()
+    foreach ($m in @($Hotkey.Modifiers)) {
+        if ($m) { $parts += $m }
+    }
+    if ($Hotkey.ContainsKey('Key') -and $Hotkey.Key) {
+        # D1..D9, D0 -> nur die Ziffer anzeigen; sonst Original
+        if ($Hotkey.Key -match '^D(\d)$') {
+            $parts += $Matches[1]
+        } else {
+            $parts += $Hotkey.Key
+        }
+    }
+    return ($parts -join '+')
+}
+
+function ConvertFrom-HotkeyString {
+    <#
+    .SYNOPSIS
+        Wandelt einen String wie "Ctrl+Shift+1" in einen Hotkey-Hashtable.
+    .DESCRIPTION
+        Akzeptiert '+' als Trenner, beliebige Reihenfolge, Modifier-Aliase
+        (Ctrl=Control, Win=Windows). Returns $null bei Parse-Fehler.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param([Parameter(Mandatory)][string]$Text)
+
+    $tokens = @($Text -split '\+' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    if ($tokens.Count -lt 1) { return $null }
+
+    $mods = @()
+    $key = $null
+    foreach ($t in $tokens) {
+        $lt = $t.ToLowerInvariant()
+        if ($script:CanonicalModifier.ContainsKey($lt)) {
+            $mods += $script:CanonicalModifier[$lt]
+            continue
+        }
+        # Reine Ziffer -> D<n>
+        if ($t -match '^\d$') {
+            $key = "D$t"
+            continue
+        }
+        # Alles andere als Key uebernehmen (z.B. F1, A, Space). Letzter Token gewinnt.
+        $key = $t
+    }
+    if (-not $key) { return $null }
+
+    return @{ Modifiers = @($mods); Key = $key }
+}
+
+function Test-ConfigValid {
+    <#
+    .SYNOPSIS
+        Validiert ein Config-Hashtable. Liefert Result-Hashtable mit Liste
+        der Fehlermeldungen (leer wenn alles ok).
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param([Parameter(Mandatory)][hashtable]$Config)
+
+    $errors = New-Object System.Collections.Generic.List[string]
+
+    if (-not $Config.ContainsKey('OutputDir') -or [string]::IsNullOrWhiteSpace($Config.OutputDir)) {
+        $errors.Add('Zielordner darf nicht leer sein.')
+    }
+
+    if ($Config.ContainsKey('DelaySeconds')) {
+        $d = $Config.DelaySeconds
+        if (-not ($d -is [int] -or $d -is [long]) -or $d -lt 0 -or $d -gt 30) {
+            $errors.Add('Verzoegerung muss eine ganze Zahl zwischen 0 und 30 sein.')
+        }
+    } else {
+        $errors.Add('Verzoegerung fehlt.')
+    }
+
+    if (-not $Config.ContainsKey('FileNameFormat') -or [string]::IsNullOrWhiteSpace($Config.FileNameFormat)) {
+        $errors.Add('Dateinamen-Schema darf nicht leer sein.')
+    } elseif ($Config.FileNameFormat -notmatch '\{mode\}') {
+        $errors.Add('Dateinamen-Schema muss den Platzhalter "{mode}" enthalten.')
+    }
+
+    if ($Config.ContainsKey('Hotkeys') -and ($Config.Hotkeys -is [hashtable])) {
+        $conflict = Test-HotkeyConflict -Hotkeys $Config.Hotkeys
+        if (-not $conflict.IsValid) {
+            foreach ($c in $conflict.Conflicts) {
+                # Extra-Klammer noetig: Methoden-Komma wuerde sonst die -f-Argumente
+                # aufteilen und ".Add(<format-string>, $b, $c)" daraus machen.
+                $msg = ("Hotkey-Konflikt: {0} und {1} teilen sich '{2}'." -f $c.Names[0], $c.Names[1], $c.Display)
+                $errors.Add($msg)
+            }
+        }
+    }
+
+    return @{
+        IsValid = ($errors.Count -eq 0)
+        Errors  = @($errors)
+    }
+}
+
+function Test-HotkeyConflict {
+    <#
+    .SYNOPSIS
+        Prueft eine Hotkey-Map auf doppelte Bindings.
+    .OUTPUTS
+        IsValid (bool) + Conflicts (Array aus @{ Names = @(name1,name2); Display = 'Ctrl+Shift+1' }).
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param([Parameter(Mandatory)][hashtable]$Hotkeys)
+
+    # Normalisierte Repraesentation pro Hotkey: sortierte Modifier + Key
+    $seen = @{}
+    $conflicts = New-Object System.Collections.Generic.List[hashtable]
+
+    foreach ($name in @($Hotkeys.Keys)) {
+        $hk = $Hotkeys[$name]
+        if (-not ($hk -is [hashtable])) { continue }
+        $mods = @($hk.Modifiers) | Sort-Object
+        $sig = ($mods -join '+') + '|' + [string]$hk.Key
+        if ($seen.ContainsKey($sig)) {
+            $conflicts.Add(@{
+                    Names   = @($seen[$sig], $name)
+                    Display = (Format-Hotkey $hk)
+                })
+        } else {
+            $seen[$sig] = $name
+        }
+    }
+    return @{
+        IsValid   = ($conflicts.Count -eq 0)
+        Conflicts = @($conflicts)
+    }
+}
+
+Export-ModuleMember -Function Get-ConfigPath, Get-DefaultConfig, Read-Config, Save-Config, Format-Hotkey, ConvertFrom-HotkeyString, Test-ConfigValid, Test-HotkeyConflict

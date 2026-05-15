@@ -26,15 +26,6 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 - [ ] Abbruch per ESC während Countdown
 - [ ] In `$invokeCapture` einbinden: bei `DelaySeconds > 0` Overlay vor `Invoke-Capture` zeigen, dann verbergen, dann capturen
 
-## AP 6 — Dateinamen-Schema
-
-> Speichern selbst (`Bitmap.Save` + auto-mkdir + lazy OutputDir) ist bereits durch AP 4 in `Save-Capture` erledigt. Hier folgt nur noch das vollständige Namensschema.
-
-- [ ] `FileNameFormat` aus der Config respektieren (aktuell hartcodiert `LucentScreen_YYYYMMDD-HHmmss_<Mode>.png`) — Tokens: `{mode}`, Datums-Tokens (`yyyy`/`MM`/`dd`/`HH`/`mm`/`ss`)
-- [ ] Edit-Variante: Postfix aus `Config.EditPostfix` (z. B. `_edited`) anhängen, wenn aus dem Editor gespeichert (AP 9)
-- [ ] Kollisionsschutz (Suffix `-2`, `-3`, … falls Datei existiert)
-- [ ] Berechtigungsprüfung beim ersten Schreibversuch in einen neuen `OutputDir` (klare Fehlermeldung statt Stack-Trace)
-
 ## AP 7 — Zwischenablage
 
 - [ ] Helper „Bitmap → Clipboard" via `System.Windows.Clipboard.SetImage(BitmapSource)` — STA beachten

@@ -25,6 +25,28 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 **Quality-Stand:** Parse 19/19 clean · PSSA 0 Findings · Pester 10/10 grün auf PS 7 und PS 5.1.
 
+### AP 6 — Dateinamen-Schema — abgeschlossen `20260515-1616`
+
+- [x] `FileNameFormat` aus Config respektieren mit Tokens `{mode}`, `{postfix}`, `yyyy`, `yy`, `MM`, `dd`, `HH`, `mm`, `ss`
+- [x] Edit-Variante: `{postfix}`-Token + `Postfix`-Parameter in `Save-Capture` (für AP 9 Editor vorbereitet)
+- [x] Kollisionsschutz: `Resolve-UniqueFilename` hängt `-2`, `-3`, … vor der Endung an
+- [x] Berechtigungsprüfung: Probe-File-Write vor `Bitmap.Save`, klare `PermissionDenied`-Meldung statt Stack-Trace
+
+**Artefakte:**
+- `src/core/capture.psm1`: `Format-CaptureFilename` (case-sensitive `-creplace`, Reihenfolge yyyy→yy→MM→dd→HH→mm→ss), `Resolve-UniqueFilename`, `_Test-DirectoryWritable`, erweitertes `Save-Capture` mit `-Template`/`-Postfix`
+- `tests/core.capture.Tests.ps1`: 10 neue Tests (Format-CaptureFilename: 5, Resolve-UniqueFilename: 3, Save-Capture-Kollisionen+Postfix: 2)
+- `src/LucentScreen.ps1`: `$invokeCapture` liest `$script:Config.FileNameFormat` und reicht es als `-Template` durch
+
+**Implementierungs-Detail:**
+- Frühere Version nutzte `DateTime.ToString($template)` — scheiterte daran, dass `g` (Era) in `.png` zu `n. Chr.` expandiert wurde. Lösung: explizite `-creplace`-Substitution unserer fixen Token-Liste, kein `ToString` über das ganze Template.
+- `-creplace` (case-sensitive) damit `MM` (Monat) und `mm` (Minute) unterscheidbar bleiben.
+
+**Interaktiver Smoke-Test:**
+- 5 Captures innerhalb 2 Sekunden → `…_16-16-08_Monitor.png` + `-2`-Suffix; `…_16-16-09_Monitor.png` + `-2` + `-3`-Suffix
+- Alle Dateien valide PNG
+
+**Quality-Stand:** Parse 45/45 clean · PSSA 0 Findings · Pester 74/74 grün unter PS 5.1.
+
 ### Vorgezogen aus AP 5 / AP 6 — `20260515-1602`
 
 Im Zuge von AP 4 mit-erledigt, aus den dortigen AP-Blöcken in `todo.md` entfernt:
@@ -206,6 +228,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 19 | `20260515-1551` | `_pending_` | — | AP 3 | Globale Hotkeys: `src/core/hotkeys.psm1` mit P/Invoke (`LucentScreen.HotKey`: RegisterHotKey/UnregisterHotKey + MOD_*-Konstanten), `Convert-ModifiersToFlags`, `Convert-KeyNameToVirtualKey` via `KeyInterop`, `Register-AllHotkeys` mit Conflict-Erkennung (`Marshal.GetLastWin32Error`), `Unregister-AllHotkeys`, `Invoke-HotkeyById`. 16 Pester-Tests. `LucentScreen.ps1` legt Hidden-Window mit `EnsureHandle()` an, hookt `WM_HOTKEY` (0x312) via `HwndSource.AddHook`, registriert beim Start, re-registriert nach Config-Save, unregistriert im Exit-Handler. Interaktiver Smoke-Test: Ctrl+Shift+1 löst Region-Callback aus. |
 | 20 | `20260515-1602` | `_pending_` | — | AP 4 | Capture-Engine: `src/core/capture.psm1` mit `Invoke-Capture` für vier Modi (Monitor/AllMonitors/ActiveWindow/Region), GDI+ `Graphics.CopyFromScreen`, DWM-Frame-Bounds für ActiveWindow mit `GetWindowRect`-Fallback. Region-Overlay (`src/views/region-overlay.xaml` + `src/ui/region-overlay.psm1`) mit Drag-Selection und ESC-Cancel. `native.psm1` erweitert (GetForegroundWindow, GetWindowRect, DwmGetWindowAttribute, GetCursorPos, POINT-Struct). 11 neue Tests. `LucentScreen.ps1`: $invokeCapture ersetzt die Placeholder-MessageBox; Screenshots landen in `$Config.OutputDir` mit `LucentScreen_YYYYMMDD-HHmmss_<Mode>.png` (volles Schema folgt mit AP 6). Interaktiver Test: Monitor- und ActiveWindow-Captures erzeugt valide PNGs. |
 | 21 | `20260515-1608` | `_pending_` | — | chore | todo.md aufgeräumt: erledigte Sub-Items aus AP 5 (Delay aus Config) und AP 6 (Auto-Mkdir, Bitmap.Save, OutputDir-Lazy) entfernt, weil von AP 4 abgedeckt. AP-Beschreibungen oben jeweils mit Hinweis ergänzt was schon erledigt ist. |
+| 22 | `20260515-1616` | `_pending_` | — | AP 6 | Dateinamen-Schema: `Format-CaptureFilename` mit Tokens `{mode}`, `{postfix}`, yyyy/yy/MM/dd/HH/mm/ss (case-sensitive `-creplace`, Reihenfolge: lange Tokens zuerst). `Resolve-UniqueFilename` hängt -2/-3/... an. `_Test-DirectoryWritable` macht Probe-Write vor `Bitmap.Save` (klare PermissionDenied-Meldung). `Save-Capture` nimmt jetzt `-Template`/`-Postfix`. `LucentScreen.ps1` reicht `$Config.FileNameFormat` durch. 10 neue Tests. Smoke-Test mit 5 Captures in 2 Sekunden zeigt -2/-3-Suffixe. |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

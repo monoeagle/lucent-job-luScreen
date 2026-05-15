@@ -184,7 +184,13 @@ $invokeCapture = {
             return
         }
         try {
-            $save = Save-Capture -Bitmap $r.Bitmap -Mode $mode -OutputDir $script:Config.OutputDir
+            $tmpl = if ($script:Config.ContainsKey('FileNameFormat') -and $script:Config.FileNameFormat) {
+                $script:Config.FileNameFormat
+            } else {
+                'LucentScreen_yyyyMMdd-HHmmss_{mode}.png'
+            }
+            $save = Save-Capture -Bitmap $r.Bitmap -Mode $mode `
+                -OutputDir $script:Config.OutputDir -Template $tmpl
             if ($save.Success) {
                 Write-LsLog -Level Info -Source 'capture' -Message ("OK: {0} ({1}x{2}) -> {3}" -f $mode, $r.Width, $r.Height, $save.Path)
             } else {

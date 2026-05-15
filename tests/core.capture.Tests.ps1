@@ -50,6 +50,66 @@ Describe 'capture: Capture-Rect' {
     }
 }
 
+Describe 'capture: Format-CaptureFilename' {
+    It 'ersetzt {mode} korrekt' {
+        $fixed = [datetime]'2026-05-15 14:12:34'
+        $r = Format-CaptureFilename -Template 'lsc_{mode}.png' -Mode 'Region' -Now $fixed
+        $r | Should -Be 'lsc_Region.png'
+    }
+
+    It 'rendert Datums-Tokens korrekt' {
+        $fixed = [datetime]'2026-05-15 14:12:34'
+        $r = Format-CaptureFilename -Template 'yyyyMMdd-HHmmss_{mode}.png' -Mode 'Monitor' -Now $fixed
+        $r | Should -Be '20260515-141234_Monitor.png'
+    }
+
+    It 'ActiveWindow-Mode darf trotz "d" und "M" im Namen nicht durch Date-Format zerlegt werden' {
+        $fixed = [datetime]'2026-05-15 14:12:34'
+        $r = Format-CaptureFilename -Template '{mode}_yyyy.png' -Mode 'ActiveWindow' -Now $fixed
+        $r | Should -Be 'ActiveWindow_2026.png'
+    }
+
+    It '{postfix} wird ersetzt' {
+        $fixed = [datetime]'2026-05-15 14:12:34'
+        $r = Format-CaptureFilename -Template '{mode}{postfix}.png' -Mode 'Region' -Postfix '_edited' -Now $fixed
+        $r | Should -Be 'Region_edited.png'
+    }
+
+    It 'leeres {postfix} bleibt leer' {
+        $fixed = [datetime]'2026-05-15 14:12:34'
+        $r = Format-CaptureFilename -Template '{mode}{postfix}.png' -Mode 'Region' -Now $fixed
+        $r | Should -Be 'Region.png'
+    }
+}
+
+Describe 'capture: Resolve-UniqueFilename' {
+    BeforeEach {
+        $script:Dir = Join-Path $TestDrive ("uniq_" + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Force -Path $script:Dir | Out-Null
+    }
+
+    It 'liefert Original-Pfad wenn frei' {
+        $p = Join-Path $script:Dir 'frei.png'
+        Resolve-UniqueFilename -Path $p | Should -Be $p
+    }
+
+    It 'haengt -2 an wenn Original existiert' {
+        $p = Join-Path $script:Dir 'kollision.png'
+        New-Item -ItemType File -Path $p -Force | Out-Null
+        $r = Resolve-UniqueFilename -Path $p
+        $r | Should -Be (Join-Path $script:Dir 'kollision-2.png')
+    }
+
+    It 'zaehlt weiter bei -2, -3, -4' {
+        $p = Join-Path $script:Dir 'spec.png'
+        New-Item -ItemType File -Path $p -Force | Out-Null
+        New-Item -ItemType File -Path (Join-Path $script:Dir 'spec-2.png') -Force | Out-Null
+        New-Item -ItemType File -Path (Join-Path $script:Dir 'spec-3.png') -Force | Out-Null
+        $r = Resolve-UniqueFilename -Path $p
+        $r | Should -Be (Join-Path $script:Dir 'spec-4.png')
+    }
+}
+
 Describe 'capture: Save-Capture' {
     BeforeEach {
         $script:OutDir = Join-Path $TestDrive ("out_" + [guid]::NewGuid().ToString('N'))
@@ -65,6 +125,33 @@ Describe 'capture: Save-Capture' {
             (Get-Item $r.Path).Length | Should -BeGreaterThan 0
             # Dateiname enthaelt den Mode
             ([IO.Path]::GetFileName($r.Path)) | Should -Match '_TestMode\.png$'
+        } finally {
+            $bmp.Dispose()
+        }
+    }
+
+    It 'haengt -2 an bei zweitem Save in derselben Sekunde' {
+        $bmp = Capture-Rect -Left 0 -Top 0 -Width 16 -Height 16
+        try {
+            # Festes Template ohne Datums-Tokens, damit garantiert kollidiert
+            $tmpl = 'fix_{mode}.png'
+            $r1 = Save-Capture -Bitmap $bmp -Mode 'X' -OutputDir $script:OutDir -Template $tmpl
+            $r2 = Save-Capture -Bitmap $bmp -Mode 'X' -OutputDir $script:OutDir -Template $tmpl
+            $r1.Success | Should -BeTrue
+            $r2.Success | Should -BeTrue
+            ([IO.Path]::GetFileName($r1.Path)) | Should -Be 'fix_X.png'
+            ([IO.Path]::GetFileName($r2.Path)) | Should -Be 'fix_X-2.png'
+        } finally {
+            $bmp.Dispose()
+        }
+    }
+
+    It 'nutzt {postfix} wenn im Template' {
+        $bmp = Capture-Rect -Left 0 -Top 0 -Width 16 -Height 16
+        try {
+            $r = Save-Capture -Bitmap $bmp -Mode 'Region' -OutputDir $script:OutDir `
+                -Template '{mode}{postfix}.png' -Postfix '_edit'
+            ([IO.Path]::GetFileName($r.Path)) | Should -Be 'Region_edit.png'
         } finally {
             $bmp.Dispose()
         }

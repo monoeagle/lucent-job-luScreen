@@ -126,20 +126,105 @@ function Capture-Rect {
     return $bmp
 }
 
+function Format-CaptureFilename {
+    <#
+    .SYNOPSIS
+        Wendet das User-konfigurierbare FileNameFormat auf den aktuellen
+        Zeitpunkt + Mode + optionalem Postfix an.
+    .DESCRIPTION
+        Unterstuetzte Tokens (alle case-sensitive):
+          {mode}    -- Capture-Modus (Region/ActiveWindow/Monitor/AllMonitors)
+          {postfix} -- optionaler Suffix (EditPostfix aus Config)
+          yyyy yy   -- Jahr (4- oder 2-stellig)
+          MM        -- Monat (01-12)
+          dd        -- Tag (01-31)
+          HH        -- Stunde 24h (00-23)
+          mm        -- Minute (00-59)
+          ss        -- Sekunde (00-59)
+        Andere Buchstaben bleiben literal -- wir verwenden NICHT
+        DateTime.ToString, weil dort u.a. 'g' (Era) und einzelne 'M'/'d'
+        eigene Bedeutung haben und unwillkommen in Dateinamen sind.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)][string]$Template,
+        [Parameter(Mandatory)][string]$Mode,
+        [string]$Postfix = '',
+        [datetime]$Now = (Get-Date)
+    )
+
+    # Reihenfolge: lange Tokens zuerst (yyyy vor yy). -creplace ist
+    # case-sensitive, damit MM und mm unterscheidbar bleiben.
+    $r = $Template
+    $r = $r -creplace 'yyyy', $Now.ToString('yyyy')
+    $r = $r -creplace 'yy', $Now.ToString('yy')
+    $r = $r -creplace 'MM', $Now.ToString('MM')
+    $r = $r -creplace 'dd', $Now.ToString('dd')
+    $r = $r -creplace 'HH', $Now.ToString('HH')
+    $r = $r -creplace 'mm', $Now.ToString('mm')
+    $r = $r -creplace 'ss', $Now.ToString('ss')
+
+    return $r.Replace('{mode}', $Mode).Replace('{postfix}', $Postfix)
+}
+
+function Resolve-UniqueFilename {
+    <#
+    .SYNOPSIS
+        Liefert einen freien Dateipfad. Bei Kollision wird vor der Endung
+        ein Suffix -2, -3, ... angehaengt.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param([Parameter(Mandatory)][string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path)) { return $Path }
+
+    $dir = Split-Path -Parent $Path
+    $base = [System.IO.Path]::GetFileNameWithoutExtension($Path)
+    $ext = [System.IO.Path]::GetExtension($Path)
+
+    $i = 2
+    while ($true) {
+        $candidate = Join-Path $dir ("{0}-{1}{2}" -f $base, $i, $ext)
+        if (-not (Test-Path -LiteralPath $candidate)) { return $candidate }
+        $i++
+        if ($i -gt 9999) { throw "Kein freier Dateiname unter $Path (>9999 Kollisionen)" }
+    }
+}
+
+function _Test-DirectoryWritable {
+    param([string]$Path)
+    $probe = Join-Path $Path (".lucentscreen-write-probe-" + [guid]::NewGuid().ToString('N'))
+    try {
+        [System.IO.File]::WriteAllBytes($probe, [byte[]]@(0))
+        Remove-Item -LiteralPath $probe -Force -ErrorAction SilentlyContinue
+        return $true
+    } catch {
+        return $false
+    }
+}
+
 function Save-Capture {
     <#
     .SYNOPSIS
-        Speichert ein Bitmap als PNG im Zielordner mit minimalem Dateinamen.
-    .DESCRIPTION
-        Vorlaeufige Form fuer AP 4 -- AP 6 ergaenzt das volle Schema mit
-        Postfix, Kollisionsschutz und User-konfigurierbarem Format.
+        Speichert ein Bitmap als PNG mit benutzerdefiniertem Schema und
+        Kollisionsschutz.
+    .PARAMETER Template
+        Dateinamenschema (siehe Format-CaptureFilename). Optional -- ohne
+        Wert wird ein Default mit Mode genutzt.
+    .PARAMETER Postfix
+        Wert fuer {postfix}-Token, typischerweise '' bei direkten Captures,
+        '_edited' o.ae. beim Speichern aus dem Editor (AP 9).
     #>
     [CmdletBinding()]
     [OutputType([hashtable])]
     param(
         [Parameter(Mandatory)][System.Drawing.Bitmap]$Bitmap,
         [Parameter(Mandatory)][string]$Mode,
-        [Parameter(Mandatory)][string]$OutputDir
+        [Parameter(Mandatory)][string]$OutputDir,
+        [string]$Template = 'LucentScreen_yyyyMMdd-HHmmss_{mode}.png',
+        [string]$Postfix = ''
     )
 
     if (-not (Test-Path -LiteralPath $OutputDir)) {
@@ -155,16 +240,26 @@ function Save-Capture {
         }
     }
 
-    $ts = Get-Date -Format 'yyyyMMdd-HHmmss'
-    $file = Join-Path $OutputDir ("LucentScreen_${ts}_${Mode}.png")
+    if (-not (_Test-DirectoryWritable -Path $OutputDir)) {
+        return @{
+            Success = $false
+            Status  = 'PermissionDenied'
+            Message = "Keine Schreibrechte auf '$OutputDir'."
+            Path    = $null
+        }
+    }
+
+    $filename = Format-CaptureFilename -Template $Template -Mode $Mode -Postfix $Postfix
+    $candidate = Join-Path $OutputDir $filename
+    $finalPath = Resolve-UniqueFilename -Path $candidate
 
     try {
-        $Bitmap.Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
+        $Bitmap.Save($finalPath, [System.Drawing.Imaging.ImageFormat]::Png)
         return @{
             Success = $true
             Status  = 'OK'
-            Message = "Gespeichert: $file"
-            Path    = $file
+            Message = "Gespeichert: $finalPath"
+            Path    = $finalPath
         }
     } catch {
         return @{
@@ -258,4 +353,4 @@ function Invoke-Capture {
     }
 }
 
-Export-ModuleMember -Function Get-AllScreens, Get-VirtualScreenBounds, Get-ScreenUnderCursor, Get-ForegroundWindowRect, Capture-Rect, Save-Capture, Invoke-Capture
+Export-ModuleMember -Function Get-AllScreens, Get-VirtualScreenBounds, Get-ScreenUnderCursor, Get-ForegroundWindowRect, Capture-Rect, Save-Capture, Invoke-Capture, Format-CaptureFilename, Resolve-UniqueFilename

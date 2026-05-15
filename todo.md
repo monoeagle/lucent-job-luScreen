@@ -11,23 +11,6 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 > Erledigte Arbeitspakete + Commit/Push-Log siehe [`luscreen-docs/docs/entwicklung/erledigt.md`](../luscreen-docs/docs/entwicklung/erledigt.md).
 
 
-## AP 4 — Capture-Engine
-
-- [ ] DPI-Awareness via App-Manifest **oder** `SetProcessDpiAwarenessContext(PER_MONITOR_AWARE_V2)` ganz früh im Startup (vor jeglicher UI-Initialisierung)
-- [ ] Multi-Monitor-Erkennung (`System.Windows.Forms.Screen.AllScreens` — funktioniert auch in WPF-Apps)
-- [ ] Capture-Helfer: `System.Drawing.Bitmap` + `Graphics.CopyFromScreen` (GDI+); Konvertierung zu `BitmapSource` für WPF-Anzeige
-- [ ] **Modus „Alle Monitore"**: Virtual Screen Bounding-Box (`SystemInformation.VirtualScreen`)
-- [ ] **Modus „Monitor unter Maus"**: `Screen.FromPoint(Cursor.Position)`
-- [ ] **Modus „Aktives Fenster"**
-  - [ ] `GetForegroundWindow` + `DwmGetWindowAttribute(DWMWA_EXTENDED_FRAME_BOUNDS)` für korrekte Frame-Größe
-  - [ ] Fallback `GetWindowRect` bei Fehler
-- [ ] **Modus „Bereich"**
-  - [ ] WPF-Vollbild-Overlay-Fenster (`WindowStyle=None`, `AllowsTransparency=True`, `Topmost=True`, über alle Monitore gestreckt)
-  - [ ] Maus-Rechteck-Auswahl mit Live-Vorschau (Canvas + Rectangle-Shape)
-  - [ ] ESC = Abbruch, Loslassen = Bestätigen
-  - [ ] Auswahl-Bitmap aus Vollbild-Capture ausschneiden
-- [ ] Speichern als PNG (lossless, mit korrekter DPI im Metadaten-Header)
-
 ## AP 5 — Verzögerter Auslöser & Countdown-Overlay
 
 - [ ] Verzögerung aus Konfig lesen (0 = sofort)

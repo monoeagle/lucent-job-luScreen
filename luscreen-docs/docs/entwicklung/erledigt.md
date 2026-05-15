@@ -25,6 +25,33 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 **Quality-Stand:** Parse 19/19 clean · PSSA 0 Findings · Pester 10/10 grün auf PS 7 und PS 5.1.
 
+### AP 4 — Capture-Engine — abgeschlossen `20260515-1602`
+
+- [x] DPI-Awareness (war schon AP 0)
+- [x] Multi-Monitor-Erkennung über `Screen.AllScreens`
+- [x] Capture-Helfer: `System.Drawing.Bitmap` + `Graphics.CopyFromScreen` (`Capture-Rect`)
+- [x] Modus „Alle Monitore" über `SystemInformation.VirtualScreen`
+- [x] Modus „Monitor unter Maus" über `Screen.FromPoint(GetCursorPos())`
+- [x] Modus „Aktives Fenster" via `GetForegroundWindow` + `DwmGetWindowAttribute(DWMWA_EXTENDED_FRAME_BOUNDS=9)`, Fallback `GetWindowRect`
+- [x] Modus „Bereich" mit Vollbild-Overlay (`src/views/region-overlay.xaml`), Maus-Drag-Auswahl + Live-Größe + ESC-Cancel
+- [x] PNG speichern mit `Bitmap.Save(...,ImageFormat.Png)` in `Save-Capture` (volles Dateinamen-Schema folgt mit AP 6)
+- [ ] BitmapSource-Konvertierung für WPF-Vorschau — verschoben nach AP 9 (Editor braucht es)
+
+**Artefakte:**
+- `src/core/native.psm1` erweitert: `GetForegroundWindow`, `GetWindowRect`, `DwmGetWindowAttribute`, `GetCursorPos`, `POINT`-Struct, `DWMWA_EXTENDED_FRAME_BOUNDS`-Konstante
+- `src/core/capture.psm1`: `Get-AllScreens`, `Get-VirtualScreenBounds`, `Get-ScreenUnderCursor`, `Get-ForegroundWindowRect` (mit DWM-bevorzugt + Fallback), `Capture-Rect`, `Save-Capture` (minimal-Schema, AP 6 erweitert), `Invoke-Capture` (orchestriert)
+- `src/views/region-overlay.xaml` — WPF-Fenster über VirtualScreen, `AllowsTransparency=True`, `Background=#33000000`, `Cursor=Cross`
+- `src/ui/region-overlay.psm1` — `Show-RegionOverlay` mit Drag-State, ESC-Cancel, MouseUp-Confirm, Live-Größe-Anzeige
+- `tests/core.capture.Tests.ps1` — 11 Pester-Tests (Screen-Enumeration, Capture-Rect, Save-Capture, Invoke-Capture für alle Modi)
+- `src/LucentScreen.ps1` — `$invokeCapture`-ScriptBlock ersetzt die MessageBox-Stubs: Region → Overlay → Capture, andere Modi direkt; `Save-Capture` zum konfigurierten `OutputDir`
+
+**Interaktiver Smoke-Test:**
+- `Ctrl+Shift+3` (Monitor) → `LucentScreen_20260515-160132_Monitor.png` (1600×900, 137 KB)
+- `Ctrl+Shift+2` (ActiveWindow) → `LucentScreen_20260515-160206_ActiveWindow.png` (861×602, 34 KB)
+- Beide Dateien valide PNG unter `%USERPROFILE%/Pictures/LucentScreen/`
+
+**Quality-Stand:** Parse 45/45 clean · PSSA 0 Findings · Pester 64/64 grün unter PS 5.1.
+
 ### AP 3 — Globale Hotkeys — abgeschlossen `20260515-1551`
 
 - [x] P/Invoke für `RegisterHotKey` / `UnregisterHotKey` via `Add-Type` (`LucentScreen.HotKey`)
@@ -165,6 +192,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 17 | `20260515-1529` | `_pending_` | — | AP 2 | Tray-Icon mit Kontextmenü + About-Dialog. `assets/luscreen.ico` via `tools/Make-Icon.ps1` (multi-res, manuelles ICO-Binärformat statt BinaryWriter wegen PS-5.1-ctor-Mucken). `src/ui/tray.psm1` `Initialize-Tray` mit 8 Menü-Einträgen, Doppelklick-Hook, Dispose-Closure. `src/{views,ui}/about-dialog.*`. `LucentScreen.ps1` wired alles; Capture-Aktionen vorerst MessageBox-Stubs bis AP 4. Interaktiver Smoke-Test passed (User hat Tray-Menü inkl. Konfig-Dialog und Beenden geklickt, Tray sauber disposed). |
 | 18 | `20260515-1521` | `_pending_` | — | chore | todo.md aufgeräumt: AP 1 (komplett erledigt) und leerer AP 2-Header entfernt, Restpunkt „Re-Apply zur Laufzeit" in AP 3 + AP 6 verschoben. |
 | 19 | `20260515-1551` | `_pending_` | — | AP 3 | Globale Hotkeys: `src/core/hotkeys.psm1` mit P/Invoke (`LucentScreen.HotKey`: RegisterHotKey/UnregisterHotKey + MOD_*-Konstanten), `Convert-ModifiersToFlags`, `Convert-KeyNameToVirtualKey` via `KeyInterop`, `Register-AllHotkeys` mit Conflict-Erkennung (`Marshal.GetLastWin32Error`), `Unregister-AllHotkeys`, `Invoke-HotkeyById`. 16 Pester-Tests. `LucentScreen.ps1` legt Hidden-Window mit `EnsureHandle()` an, hookt `WM_HOTKEY` (0x312) via `HwndSource.AddHook`, registriert beim Start, re-registriert nach Config-Save, unregistriert im Exit-Handler. Interaktiver Smoke-Test: Ctrl+Shift+1 löst Region-Callback aus. |
+| 20 | `20260515-1602` | `_pending_` | — | AP 4 | Capture-Engine: `src/core/capture.psm1` mit `Invoke-Capture` für vier Modi (Monitor/AllMonitors/ActiveWindow/Region), GDI+ `Graphics.CopyFromScreen`, DWM-Frame-Bounds für ActiveWindow mit `GetWindowRect`-Fallback. Region-Overlay (`src/views/region-overlay.xaml` + `src/ui/region-overlay.psm1`) mit Drag-Selection und ESC-Cancel. `native.psm1` erweitert (GetForegroundWindow, GetWindowRect, DwmGetWindowAttribute, GetCursorPos, POINT-Struct). 11 neue Tests. `LucentScreen.ps1`: $invokeCapture ersetzt die Placeholder-MessageBox; Screenshots landen in `$Config.OutputDir` mit `LucentScreen_YYYYMMDD-HHmmss_<Mode>.png` (volles Schema folgt mit AP 6). Interaktiver Test: Monitor- und ActiveWindow-Captures erzeugt valide PNGs. |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

@@ -151,8 +151,10 @@ $app.add_Exit({
 # ---------------------------------------------------------------
 $uiDir = Join-Path $rootDir 'ui'
 Import-Module (Join-Path $coreDir 'hotkeys.psm1') -Force
+Import-Module (Join-Path $coreDir 'capture.psm1') -Force
 Import-Module (Join-Path $uiDir 'about-dialog.psm1') -Force
 Import-Module (Join-Path $uiDir 'config-dialog.psm1') -Force
+Import-Module (Join-Path $uiDir 'region-overlay.psm1') -Force
 Import-Module (Join-Path $uiDir 'tray.psm1') -Force
 
 $assetsDir = Join-Path $rootDir '..\assets'
@@ -161,21 +163,46 @@ $appVersion = '0.1.0'
 
 $script:TrayDispose = $null
 
-$capturePlaceholder = {
+$invokeCapture = {
     param($mode)
-    Write-LsLog -Level Info -Source 'tray' -Message "Capture angefordert: $mode (AP 4 -- noch nicht implementiert)"
-    [System.Windows.MessageBox]::Show(
-        "Capture-Engine kommt mit AP 4.`nModus: $mode",
-        'LucentScreen',
-        [System.Windows.MessageBoxButton]::OK,
-        [System.Windows.MessageBoxImage]::Information) | Out-Null
+    try {
+        Write-LsLog -Level Info -Source 'capture' -Message "Mode=$mode angefordert"
+        $delay = [int]$script:Config.DelaySeconds
+
+        $regionRect = $null
+        if ($mode -eq 'Region') {
+            $regionRect = Show-RegionOverlay
+            if ($null -eq $regionRect) {
+                Write-LsLog -Level Info -Source 'capture' -Message 'Region-Auswahl abgebrochen'
+                return
+            }
+        }
+
+        $r = Invoke-Capture -Mode $mode -RegionRect $regionRect -DelaySeconds $delay
+        if (-not $r.Success) {
+            Write-LsLog -Level Warn -Source 'capture' -Message ("Capture fehlgeschlagen: " + $r.Message)
+            return
+        }
+        try {
+            $save = Save-Capture -Bitmap $r.Bitmap -Mode $mode -OutputDir $script:Config.OutputDir
+            if ($save.Success) {
+                Write-LsLog -Level Info -Source 'capture' -Message ("OK: {0} ({1}x{2}) -> {3}" -f $mode, $r.Width, $r.Height, $save.Path)
+            } else {
+                Write-LsLog -Level Error -Source 'capture' -Message ("Speichern fehlgeschlagen: " + $save.Message)
+            }
+        } finally {
+            if ($r.Bitmap) { $r.Bitmap.Dispose() }
+        }
+    } catch {
+        Write-LsLog -Level Error -Source 'capture' -Message ("Capture-Exception: " + $_.Exception.Message)
+    }
 }
 
 $callbacks = @{
-    Region       = { $capturePlaceholder.Invoke('Region') }.GetNewClosure()
-    ActiveWindow = { $capturePlaceholder.Invoke('ActiveWindow') }.GetNewClosure()
-    Monitor      = { $capturePlaceholder.Invoke('Monitor') }.GetNewClosure()
-    AllMonitors  = { $capturePlaceholder.Invoke('AllMonitors') }.GetNewClosure()
+    Region       = { $invokeCapture.Invoke('Region') }.GetNewClosure()
+    ActiveWindow = { $invokeCapture.Invoke('ActiveWindow') }.GetNewClosure()
+    Monitor      = { $invokeCapture.Invoke('Monitor') }.GetNewClosure()
+    AllMonitors  = { $invokeCapture.Invoke('AllMonitors') }.GetNewClosure()
 
     History = {
         Write-LsLog -Level Info -Source 'tray' -Message 'Verlauf angefordert (AP 8 -- noch nicht implementiert)'

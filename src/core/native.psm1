@@ -13,14 +13,32 @@ using System.Runtime.InteropServices;
 
 namespace LucentScreen {
     public static class Native {
-        // DPI-Awareness-Kontexte (siehe SetProcessDpiAwarenessContext)
+        // DPI-Awareness-Kontexte
         public static readonly IntPtr DPI_AWARENESS_CONTEXT_UNAWARE             = new IntPtr(-1);
         public static readonly IntPtr DPI_AWARENESS_CONTEXT_SYSTEM_AWARE        = new IntPtr(-2);
         public static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE   = new IntPtr(-3);
         public static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = new IntPtr(-4);
 
+        // DWM-Window-Attributes
+        public const int DWMWA_EXTENDED_FRAME_BOUNDS = 9;
+
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool SetProcessDpiAwarenessContext(IntPtr dpiContext);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetWindowRect(IntPtr hwnd, out RECT rect);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetCursorPos(out POINT lpPoint);
+
+        [DllImport("dwmapi.dll")]
+        public static extern int DwmGetWindowAttribute(
+            IntPtr hwnd, int dwAttribute, out RECT pvAttribute, int cbAttribute);
 
         [StructLayout(LayoutKind.Sequential)]
         public struct RECT {
@@ -30,6 +48,12 @@ namespace LucentScreen {
             public int Bottom;
             public int Width  { get { return Right  - Left; } }
             public int Height { get { return Bottom - Top;  } }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT {
+            public int X;
+            public int Y;
         }
     }
 }

@@ -20,7 +20,19 @@
       "PowerShell(pwsh -NoProfile -Command \"Import-Module Pester -MinimumVersion 5.0; Invoke-Pester -Path .\\\\tests\\\\ -Output Detailed\" 2>&1 | Select-Object -Last 40)",
       "PowerShell(pwsh -NoProfile -Command \"Import-Module Pester -MinimumVersion 5.0; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 6)",
       "PowerShell(Test-Path *)",
-      "PowerShell(Stop-Process *)"
+      "PowerShell(Stop-Process *)",
+      "PowerShell(pwsh -NoProfile -File .\\\\run.ps1 p 2>&1 | Select-Object -Last 5; \"\"; pwsh -NoProfile -File .\\\\run.ps1 l 2>&1 | Select-Object -Last 5; \"\"; Get-Content reports\\\\pssa\\\\pssa-report.md -TotalCount 8)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(& powershell.exe -NoProfile -Command \"Install-Module Pester -Scope CurrentUser -Force -SkipPublisherCheck -MinimumVersion 5.0 -ErrorAction Stop; Import-Module Pester -MinimumVersion 5.0; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 15)",
+      "PowerShell(pwsh -NoProfile -File .\\\\run.ps1 p 2>&1 | Select-Object -Last 3; \"\"; pwsh -NoProfile -File .\\\\run.ps1 l 2>&1 | Select-Object -Last 3; \"\"; Get-Content reports\\\\pssa\\\\pssa-report.md -TotalCount 7)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(pwsh -NoProfile -File .\\\\run.ps1 l 2>&1 | Select-Object -Last 3; Get-Content reports\\\\pssa\\\\pssa-report.md -TotalCount 6)",
+      "PowerShell(pwsh -NoProfile -File .\\\\tools\\\\Install-Pester-Offline.ps1 2>&1 | Select-Object -Last 10)",
+      "PowerShell(pwsh -NoProfile -File .\\\\run.ps1 t 2>&1 | Select-Object -Last 8)",
+      "PowerShell(& powershell.exe -NoProfile -File .\\\\run.ps1 t 2>&1 | Select-Object -Last 8)",
+      "PowerShell(\"=== PS 7 ===\"; pwsh -NoProfile -File .\\\\run.ps1 t 2>&1 | Select-Object -Last 6; \"\"; \"=== PS 5.1 ===\"; & powershell.exe -NoProfile -File .\\\\run.ps1 t 2>&1 | Select-Object -Last 6)",
+      "PowerShell(\"=== PS7 via bundle ===\"; pwsh -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 4; \"\"; \"=== PS5.1 via bundle ===\"; & powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 4)",
+      "PowerShell(Get-Process *)"
     ]
   }
 }

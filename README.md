@@ -1,6 +1,6 @@
 # LucentScreen
 
-Windows-Screenshot-Tool als WPF-Anwendung in PowerShell 7+. Tray-Icon, globale Hotkeys, Bereichs-/Monitor-/Fenster-Capture, Editor, Verlauf. Verteilung als signiertes Bundle → MSI.
+Windows-Screenshot-Tool als WPF-Anwendung in Windows PowerShell 5.1 (PS 7 wird auch unterstützt). Tray-Icon, globale Hotkeys, Bereichs-/Monitor-/Fenster-Capture, Editor, Verlauf. Verteilung als signiertes Bundle → MSI. **Keine externen Module zur Laufzeit nötig** — nur OS-eingebaute WPF/GDI+.
 
 ## Einstieg
 

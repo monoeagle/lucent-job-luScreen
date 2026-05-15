@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+#Requires -Version 5.1
 <#
 .SYNOPSIS
     LucentScreen -- Einstiegspunkt der Anwendung.
@@ -30,10 +30,14 @@ param(
 # 1) STA-Apartment sicherstellen
 # ---------------------------------------------------------------
 if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
-    # Self-Relaunch mit -STA und den gleichen Parametern
+    # Self-Relaunch mit -STA und den gleichen Parametern.
+    # PowerShell 7 (pwsh) ist nicht garantiert vorhanden auf Enterprise-
+    # Hosts -- wir fallen auf Windows PowerShell 5.1 (powershell.exe)
+    # zurueck. Beide unterstuetzen -STA und WPF auf Windows.
     $relaunchArgs = @('-NoProfile', '-STA', '-File', $PSCommandPath)
     if ($DebugMode) { $relaunchArgs += '-DebugMode' }
-    Start-Process pwsh -ArgumentList $relaunchArgs | Out-Null
+    $shell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } else { 'powershell.exe' }
+    Start-Process $shell -ArgumentList $relaunchArgs | Out-Null
     exit 0
 }
 
@@ -59,7 +63,8 @@ $rootDir = Split-Path -Parent $PSCommandPath
 $coreDir = Join-Path $rootDir 'core'
 
 Import-Module (Join-Path $coreDir 'logging.psm1') -Force
-[void](Initialize-Logging -MinLevel ($DebugMode ? 'Debug' : 'Info'))
+$logLevel = if ($DebugMode) { 'Debug' } else { 'Info' }
+[void](Initialize-Logging -MinLevel $logLevel)
 Write-LsLog -Level Info  -Source 'boot' -Message 'LucentScreen startet'
 Write-LsLog -Level Debug -Source 'boot' -Message ("LogPath: " + (Get-LogPath))
 

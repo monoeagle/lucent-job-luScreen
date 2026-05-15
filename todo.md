@@ -229,3 +229,22 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 6. **M6 — Politur:** AP 10
 7. **M7 — Packaging & MSI-Übergabe:** AP 11 (Launcher + Signatur + Handover-Dokumente)
 8. **M8 — Optional:** AP 12
+
+---
+
+## Commits & Pushes (chronologisch)
+
+Tabelle pro Commit/Push — wird vor jedem Push manuell ergänzt. Reihenfolge ist Wahrheit, nicht Datum (mehrere Commits am selben Tag möglich).
+
+| # | Datum (lokal) | Hash | Push | Scope | Beschreibung |
+|---|---|---|---|---|---|
+| 1 | 2026-05-15 13:02 | `a23a0fa` | ✓ | meta | Initial todo |
+| 2 | 2026-05-15 13:31 | `3704a64` | ✓ | scaffold | Bootstrap LucentScreen scaffolding (Ordner, Agenten, PSSA, Reports, Doku, HTML-Single-Page, Hooks, Ecosystem-Playbook) |
+| 3 | 2026-05-15 13:49 | `5e69a08` | ✓ | AP 0 | Projekt-Setup und Grundgerüst — `src/LucentScreen.ps1`, `src/core/{native,logging,xaml-loader}.psm1`, Pester-Tests (10/10), PSSA 0 Findings |
+| 4 | _pending_ | _pending_ | — | compat | PS 5.1-Kompatibilität, Shell-Detection, Pester-Offline-Bundle (`tools/Install-Pester-Offline.ps1`), No-NuGet-Runtime-Doku |
+
+**Regeln:**
+- Eintrag VOR `git commit` ergänzen (Hash und Datum nach erfolgreichem Commit nachtragen)
+- `Push ✓` setzen nach `git push`
+- Scope-Tag: `meta`, `scaffold`, `AP <n>`, `compat`, `fix`, `docs`, `chore`
+- Bei Force-Push oder Revert: zusätzliche Zeile mit Vermerk anhängen, **nicht** alte Zeile editieren

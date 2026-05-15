@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+#Requires -Version 5.1
 <#
 .SYNOPSIS
     Laedt PSScriptAnalyzer offline-faehig nach _deps/PSScriptAnalyzer.

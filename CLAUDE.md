@@ -1,6 +1,10 @@
 # LucentScreen — Projekt-Kontext für Claude
 
-Windows-Screenshot-Tool als **WPF-Anwendung in PowerShell 7+** mit Tray-Integration, globalen Hotkeys, Editor und Verlauf. Verteilung als signiertes Paket → MSI durch das Softwareverteilteam.
+Windows-Screenshot-Tool als **WPF-Anwendung in Windows PowerShell 5.1** (PS 7 wird auch unterstützt) mit Tray-Integration, globalen Hotkeys, Editor und Verlauf. Verteilung als signiertes Paket → MSI durch das Softwareverteilteam.
+
+> **PS 5.1 ist Pflicht-Target** — Enterprise-Hosts haben oft nur Windows PowerShell 5.1 (`powershell.exe`).
+> Kein PS-7-Sprachfeature nutzen: keine Ternary `? :`, keine Null-Conditional `?.`/`??`, kein `&&`/`||` in der Pipeline.
+> `$IsWindows` existiert in 5.1 nicht (in 7 zudem read-only) — nie überschreiben.
 
 > Lies vor jeder Implementierung `todo.md` (Arbeitspakete) und `docs/Architektur.md` (Module + Datenfluss).
 
@@ -22,21 +26,21 @@ Regel: **`main.ps1` ist der einzige Ort, der core und ui zusammensteckt.** Modul
 ## STA + Single-Instance (Pflicht)
 
 ```powershell
-# 1. STA prüfen — WPF und Clipboard funktionieren sonst nicht
+# 1. STA prüfen -- WPF und Clipboard funktionieren sonst nicht. Shell-Fallback
+#    auf powershell.exe (5.1) wenn pwsh (7+) fehlt.
 if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
-    Start-Process pwsh -ArgumentList '-STA','-File',$PSCommandPath
+    $shell = if (Get-Command pwsh -EA SilentlyContinue) { 'pwsh' } else { 'powershell.exe' }
+    Start-Process $shell -ArgumentList '-STA','-File',$PSCommandPath
     exit
 }
 
 # 2. Single-Instance via Named-Mutex (kein File-Lock)
-$mutex = New-Object System.Threading.Mutex($false, 'Global\LucentScreen.SingleInstance')
+$mutex = [System.Threading.Mutex]::new($false, 'Global\LucentScreen.SingleInstance')
 if (-not $mutex.WaitOne(0, $false)) { exit }
 
 # 3. DPI-Awareness als allererste Zeile nach Logging
 [LucentScreen.Native]::SetProcessDpiAwarenessContext(-4)  # PER_MONITOR_AWARE_V2
 ```
-
-`$IsWindows` ist in PS7 **read-only** — nie überschreiben (`$runOnWindows` nutzen, falls Test-Mock nötig).
 
 ---
 
@@ -60,7 +64,7 @@ if (-not $mutex.WaitOne(0, $false)) { exit }
 ## Modulvorlage
 
 ```powershell
-#Requires -Version 7.0
+#Requires -Version 5.1
 Set-StrictMode -Version Latest
 
 function Get-Something {
@@ -72,6 +76,18 @@ Export-ModuleMember -Function Get-Something
 ```
 
 Jede Funktion ist entweder exportiert oder fängt mit `_` an (privat).
+
+### PS-5.1-Tabus
+
+| Anti-Pattern | PS-5.1-Lösung |
+|---|---|
+| `$cond ? 'a' : 'b'` | `if ($cond) { 'a' } else { 'b' }` |
+| `$x?.Property` | `if ($null -ne $x) { $x.Property }` |
+| `$val ?? 'default'` | `if ($null -eq $val) { 'default' } else { $val }` |
+| `cmd1 \|\| cmd2` (Pipeline-Chain) | klassisch: separater `if`-Block über `$LASTEXITCODE` |
+| `$IsWindows` lesen | nicht verfügbar in 5.1 — entweder weglassen oder `($PSVersionTable.Platform -ne 'Unix')` |
+| `[Type]::new(args)` für `out`-Parameter | OK; Edge-Cases mit `[ref]` testen |
+| `Invoke-RestMethod -SkipCertificateCheck` | nicht in 5.1 — `[ServicePointManager]::ServerCertificateValidationCallback` setzen |
 
 ---
 

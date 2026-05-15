@@ -49,15 +49,27 @@ return @{ Success = $true;  Status = 'OK';    Message = '…'; Path = $path }
 return @{ Success = $false; Status = 'Error'; Message = '…'; Path = $null }
 ```
 
-## PowerShell 7+ Patterns
+## PowerShell-Version-Target
 
-```powershell
-$val    = (Get-Foo -EA SilentlyContinue)?.Property ?? 'default'
-$result = $condition ? 'yes' : 'no'
-```
+**LucentScreen läuft auf Windows PowerShell 5.1** (Pflicht-Target) UND PowerShell 7+. Keine PS-7-only-Sprachfeatures verwenden:
 
-- Cross-platform paths: `Join-Path` or `[IO.Path]::DirectorySeparatorChar`. Never hard-code `\`.
-- `$IsWindows` is **read-only** in PS7 — never assign.
+| ❌ PS 7 only | ✅ PS 5.1-kompatibel |
+|---|---|
+| `$cond ? 'a' : 'b'` (Ternary) | `if ($cond) { 'a' } else { 'b' }` |
+| `$x?.Property` (Null-Conditional) | `if ($null -ne $x) { $x.Property }` |
+| `$val ?? 'default'` | `if ($null -eq $val) { 'default' } else { $val }` |
+| `cmd1 \|\| cmd2` (Chain-Operator) | `if (-not $?) { … }` oder `$LASTEXITCODE`-Check |
+| `$IsWindows` (read-only ab PS 6) | nicht referenzieren — in 5.1 nicht vorhanden |
+| `Invoke-RestMethod -SkipCertificateCheck` | `[ServicePointManager]::ServerCertificateValidationCallback` |
+
+Erlaubt und empfohlen:
+
+- `[Type]::new(args)` — funktioniert in 5.1 und 7+
+- `$null -eq $x` (links!) — strict-mode-safe
+- `Set-StrictMode -Version Latest`
+- `using namespace` (5.0+)
+
+Paths: `Join-Path` oder `[IO.Path]::DirectorySeparatorChar`. Niemals `\` hartcodieren.
 
 ## Pester 5 Conventions
 

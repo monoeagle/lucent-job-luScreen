@@ -94,7 +94,8 @@ Jede Agent-Datei hat:
 |---|---|---|
 | `PSScriptAnalyzerSettings.psd1` | aus BM-Template | Projekt-spezifische Excludes |
 | `tools/Invoke-PSSA.ps1` | aus BM (`tools/Invoke-PSSA.ps1`) | Lint-Runner, schreibt nach `reports/pssa/` |
-| `tools/Install-PSScriptAnalyzer-Offline.ps1` | aus CSC | Offline-Bundle für Air-Gapped Maschinen |
+| `tools/Install-PSScriptAnalyzer-Offline.ps1` | aus CSC | Offline-Bundle nach `_deps/PSScriptAnalyzer/<ver>/` |
+| `tools/Install-Pester-Offline.ps1` | LucentScreen | Offline-Bundle nach `_deps/Pester/<ver>/` (3 Modi: Save-Module / -Source / -Url) |
 
 ### Settings-Template
 
@@ -154,6 +155,24 @@ reports/
 
 ---
 
+## 4a. PowerShell-Version-Target
+
+`lucent-job-*`-Projekte haben **Windows PowerShell 5.1 als Pflicht-Target**. Enterprise-Hosts (User-PCs nach MSI-Install) haben oft kein PS 7.
+
+Dev und Test darf 7+ nutzen, aber die Runtime-Artefakte (`src/`, embedded Add-Type, P/Invoke) müssen 5.1-kompatibel bleiben.
+
+**Konsequenzen:**
+
+- `#Requires -Version 5.1` (NICHT 7.0)
+- Keine Ternary `? :`, kein `?.`, kein `??`, kein `&&`/`||` in Pipeline-Chains
+- `$IsWindows` nicht verwenden
+- Shell-Detection in jedem `Start-Process`/`& <shell>`-Aufruf:
+  ```powershell
+  $shell = if (Get-Command pwsh -EA SilentlyContinue) { 'pwsh' } else { 'powershell.exe' }
+  ```
+- App-Runtime: **keine externen PowerShell-Module** (keine PSGallery-Abhängigkeiten zur Laufzeit). Nur OS-eingebaute Assemblies.
+- Dev-Tools (PSSA, Pester): über `_deps/<Modul>/<Version>/` Offline-Bundles laden.
+
 ## 5. `run.ps1`-Menü-Standard
 
 Drei Blöcke + Werkzeuge:
@@ -177,8 +196,9 @@ Drei Blöcke + Werkzeuge:
   h) HTML-Single-Page-Status
 
 --- Werkzeuge ---
-  i) PSSA offline installieren
-  c) reports/ leeren
+  i)  PSSA offline installieren
+  ip) Pester offline installieren
+  c)  reports/ leeren
 ```
 
 Direkt-Aufruf: `./run.ps1 <code>` (z.B. `./run.ps1 l`).

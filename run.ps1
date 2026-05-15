@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+#Requires -Version 5.1
 <#
 .SYNOPSIS
     Task-Runner und interaktives Menue fuer LucentScreen.
@@ -21,6 +21,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 
+# Shell-Pfad: bevorzugt pwsh (7+), Fallback Windows PowerShell 5.1
+$script:PSShell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } else { 'powershell.exe' }
+
 # -----------------------------------------------------------------
 # Pfade
 # -----------------------------------------------------------------
@@ -42,13 +45,14 @@ function Action-Prereqs {
     Write-Host "Pruefe Voraussetzungen..." -ForegroundColor Cyan
     $ok = $true
 
-    # PowerShell-Version
+    # PowerShell-Version (5.1 oder 7+)
     $psVer = $PSVersionTable.PSVersion
-    if ($psVer.Major -lt 7) {
-        Write-Host "  [FEHLT] PowerShell 7+ (gefunden: $psVer)" -ForegroundColor Red
+    if ($psVer.Major -lt 5 -or ($psVer.Major -eq 5 -and $psVer.Minor -lt 1)) {
+        Write-Host "  [FEHLT] PowerShell 5.1 oder 7+ (gefunden: $psVer)" -ForegroundColor Red
         $ok = $false
     } else {
-        Write-Host "  [OK]   PowerShell $psVer" -ForegroundColor Green
+        $edition = if ($PSVersionTable.PSEdition) { $PSVersionTable.PSEdition } else { 'Desktop' }
+        Write-Host "  [OK]   PowerShell $psVer ($edition, Shell: $script:PSShell)" -ForegroundColor Green
     }
 
     # STA-Apartment (nur warnen, run.ps1 selbst muss kein STA sein)
@@ -67,12 +71,18 @@ function Action-Prereqs {
         Write-Host "  [FEHLT] PSScriptAnalyzer (./run.ps1 i fuer Install)" -ForegroundColor Yellow
     }
 
-    # Pester
-    if (Get-Module -ListAvailable Pester | Where-Object Version -ge ([Version]'5.0')) {
-        $v = (Get-Module -ListAvailable Pester | Sort-Object Version -Descending | Select-Object -First 1).Version
-        Write-Host "  [OK]   Pester $v" -ForegroundColor Green
+    # Pester (Bundle bevorzugt, dann System)
+    $pesterBundle = Get-ChildItem -Directory -EA SilentlyContinue (Join-Path $root '_deps/Pester') |
+        Where-Object { $_.Name -match '^\d+\.\d+\.\d+$' } |
+        Sort-Object -Property @{Expression = { [version]$_.Name } } -Descending |
+        Select-Object -First 1
+    if ($pesterBundle) {
+        Write-Host "  [OK]   Pester (Bundle $($pesterBundle.Name))" -ForegroundColor Green
+    } elseif (Get-Module -ListAvailable Pester | Where-Object Version -ge ([Version]'5.0')) {
+        $v = (Get-Module -ListAvailable Pester | Where-Object Version -ge ([Version]'5.0') | Sort-Object Version -Descending | Select-Object -First 1).Version
+        Write-Host "  [OK]   Pester (System $v)" -ForegroundColor Green
     } else {
-        Write-Host "  [FEHLT] Pester 5+ (Install-Module Pester -MinimumVersion 5.0)" -ForegroundColor Yellow
+        Write-Host "  [FEHLT] Pester 5+ (./run.ps1 ip fuer Bundle-Install)" -ForegroundColor Yellow
     }
 
     # Python (fuer Zensical-Doku-Build)
@@ -133,12 +143,40 @@ function Action-PSSA {
     $pArgs = @()
     if ($OnlyChanged) { $pArgs += '-OnlyChangedSinceMain' }
     if ($FailOnError) { $pArgs += '-FailOnError' }
-    & pwsh -NoProfile -File $pssaTool @pArgs
+    & $script:PSShell -NoProfile -File $pssaTool @pArgs
     $report = Join-Path $reportsDir 'pssa/pssa-report.md'
     if (Test-Path -LiteralPath $report) {
         Write-Host ""
         Write-Host ("Report: {0}" -f $report) -ForegroundColor DarkGray
     }
+}
+
+function Import-PesterBundled {
+    <#
+    Laedt Pester 5+ bevorzugt aus _deps/Pester/<ver>/, mit Fallback auf
+    ein systemweit installiertes Pester-Modul. Wirft, wenn weder Bundle
+    noch System-Modul (>=5.0) vorhanden ist.
+    #>
+    Remove-Module Pester -ErrorAction SilentlyContinue
+    $bundle = Get-ChildItem -Directory -EA SilentlyContinue (Join-Path $root '_deps/Pester') |
+        Where-Object { $_.Name -match '^\d+\.\d+\.\d+$' } |
+        Sort-Object -Property @{Expression = { [version]$_.Name } } -Descending |
+        Select-Object -First 1
+    if ($bundle) {
+        $manifest = Join-Path $bundle.FullName 'Pester.psd1'
+        if (Test-Path -LiteralPath $manifest) {
+            Import-Module $manifest -Force
+            Write-Host ("  Pester {0} (Bundle)" -f $bundle.Name) -ForegroundColor DarkGray
+            return
+        }
+    }
+    $sys = Get-Module -ListAvailable Pester | Where-Object Version -ge ([Version]'5.0') |
+        Sort-Object Version -Descending | Select-Object -First 1
+    if (-not $sys) {
+        throw "Pester >= 5.0 fehlt. Optionen: './run.ps1 ip' fuer Bundle-Install oder 'Install-Module Pester -MinimumVersion 5.0'."
+    }
+    Import-Module Pester -MinimumVersion 5.0 -ErrorAction Stop
+    Write-Host ("  Pester {0} (System)" -f $sys.Version) -ForegroundColor DarkGray
 }
 
 function Action-PesterAll {
@@ -152,7 +190,7 @@ function Action-PesterAll {
         return
     }
 
-    Import-Module Pester -MinimumVersion 5.0 -ErrorAction Stop
+    Import-PesterBundled
     $cfg = [PesterConfiguration]::Default
     $cfg.Run.Path = $testsDir
     $cfg.Output.Verbosity = 'Detailed'
@@ -173,7 +211,7 @@ function Action-PesterOne {
     $sel = Read-Host "Nummer waehlen"
     $idx = [int]$sel - 1
     if ($idx -lt 0 -or $idx -ge $tests.Count) { Write-Host "Ungueltig." -ForegroundColor Red; return }
-    Import-Module Pester -MinimumVersion 5.0 -ErrorAction Stop
+    Import-PesterBundled
     Invoke-Pester -Path $tests[$idx].FullName -Output Detailed
 }
 
@@ -202,7 +240,7 @@ function Action-AppStart {
     }
     Write-Host "Starte LucentScreen (-STA) ..." -ForegroundColor Cyan
     $null = New-Item -ItemType Directory -Force -Path (Split-Path $appPidFile -Parent)
-    $proc = Start-Process pwsh -ArgumentList '-STA', '-NoProfile', '-File', $entryScript -PassThru -WindowStyle Hidden
+    $proc = Start-Process $script:PSShell -ArgumentList '-STA', '-NoProfile', '-File', $entryScript -PassThru -WindowStyle Hidden
     $proc.Id | Set-Content -LiteralPath $appPidFile -Encoding UTF8
     Write-Host "  PID: $($proc.Id)" -ForegroundColor Green
 }
@@ -243,7 +281,12 @@ function Action-HtmlDoc {
 }
 
 function Action-InstallPssa {
-    & pwsh -NoProfile -File $pssaInstall
+    & $script:PSShell -NoProfile -File $pssaInstall
+}
+
+function Action-InstallPester {
+    $script = Join-Path $root 'tools/Install-Pester-Offline.ps1'
+    & $script:PSShell -NoProfile -File $script
 }
 
 function Action-CleanReports {
@@ -279,8 +322,9 @@ function Show-Menu {
     Write-Host "  h) HTML-Single-Page Status (LucentScreen.docs.html)"
     Write-Host ""
     Write-Host " --- Werkzeuge ---" -ForegroundColor DarkCyan
-    Write-Host "  i) PSScriptAnalyzer offline installieren"
-    Write-Host "  c) reports/ leeren"
+    Write-Host "  i)  PSScriptAnalyzer offline installieren"
+    Write-Host "  ip) Pester offline installieren"
+    Write-Host "  c)  reports/ leeren"
     Write-Host ""
     Write-Host "  q) Beenden"
     Write-Host ""
@@ -303,6 +347,7 @@ function Invoke-Action {
         'd' { Action-DocsBuild }
         'h' { Action-HtmlDoc }
         'i' { Action-InstallPssa }
+        'ip' { Action-InstallPester }
         'c' { Action-CleanReports }
         'q' { return $false }
         '' { }

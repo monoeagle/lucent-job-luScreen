@@ -6,8 +6,30 @@
 
 ```powershell
 ./run.ps1 prereqs       # Voraussetzungen prüfen
-./run.ps1 i             # PSSA offline installieren (falls keine PSGallery)
+./run.ps1 i             # PSSA offline nach _deps/PSScriptAnalyzer/
+./run.ps1 ip            # Pester offline nach _deps/Pester/
 ```
+
+### Air-Gapped / No-NuGet-Setup
+
+Wenn die Dev-Maschine kein PSGallery/NuGet hat:
+
+1. Auf einer Online-Maschine via `Save-Module` die Bundles holen:
+   ```powershell
+   Save-Module PSScriptAnalyzer -Path .\_deps -Force
+   Save-Module Pester -MinimumVersion 5.0 -Path .\_deps -Force
+   ```
+2. `_deps/`-Ordner per Transfer-Bundle zur Air-Gapped-Maschine bringen.
+3. Auf der Air-Gapped-Maschine direkt nutzen — `tools/Invoke-PSSA.ps1` und
+   `run.ps1` finden die Module automatisch in `_deps/`.
+
+Alternativ direkter Download via nupkg-URL (ohne NuGet-Provider):
+```powershell
+./tools/Install-Pester-Offline.ps1 -Url 'https://www.powershellgallery.com/api/v2/package/Pester/5.7.1'
+```
+
+**Die Runtime der App selbst hat keine externen Modul-Abhängigkeiten** — sie
+nutzt nur Windows-eingebaute Assemblies (WPF, GDI+, WinForms, Win32 P/Invoke).
 
 ## Täglicher Loop
 

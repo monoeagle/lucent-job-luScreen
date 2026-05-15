@@ -25,6 +25,18 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 **Quality-Stand:** Parse 19/19 clean · PSSA 0 Findings · Pester 10/10 grün auf PS 7 und PS 5.1.
 
+### Vorgezogen aus AP 5 / AP 6 — `20260515-1602`
+
+Im Zuge von AP 4 mit-erledigt, aus den dortigen AP-Blöcken in `todo.md` entfernt:
+
+**Aus AP 5:**
+- [x] Verzögerung aus Konfig lesen (0 = sofort) — `Invoke-Capture -DelaySeconds` aus `$script:Config.DelaySeconds`
+
+**Aus AP 6:**
+- [x] Zielordner anlegen, falls fehlt — `Save-Capture` macht `New-Item -ItemType Directory -Force`
+- [x] Schreiben mit `Bitmap.Save(..., ImageFormat.Png)`
+- [x] OutputDir-Änderungen wirken zur Laufzeit — `$script:Config.OutputDir` wird beim nächsten Capture lazy aufgelöst, kein extra Refresh nötig
+
 ### AP 4 — Capture-Engine — abgeschlossen `20260515-1602`
 
 - [x] DPI-Awareness (war schon AP 0)
@@ -193,6 +205,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 18 | `20260515-1521` | `_pending_` | — | chore | todo.md aufgeräumt: AP 1 (komplett erledigt) und leerer AP 2-Header entfernt, Restpunkt „Re-Apply zur Laufzeit" in AP 3 + AP 6 verschoben. |
 | 19 | `20260515-1551` | `_pending_` | — | AP 3 | Globale Hotkeys: `src/core/hotkeys.psm1` mit P/Invoke (`LucentScreen.HotKey`: RegisterHotKey/UnregisterHotKey + MOD_*-Konstanten), `Convert-ModifiersToFlags`, `Convert-KeyNameToVirtualKey` via `KeyInterop`, `Register-AllHotkeys` mit Conflict-Erkennung (`Marshal.GetLastWin32Error`), `Unregister-AllHotkeys`, `Invoke-HotkeyById`. 16 Pester-Tests. `LucentScreen.ps1` legt Hidden-Window mit `EnsureHandle()` an, hookt `WM_HOTKEY` (0x312) via `HwndSource.AddHook`, registriert beim Start, re-registriert nach Config-Save, unregistriert im Exit-Handler. Interaktiver Smoke-Test: Ctrl+Shift+1 löst Region-Callback aus. |
 | 20 | `20260515-1602` | `_pending_` | — | AP 4 | Capture-Engine: `src/core/capture.psm1` mit `Invoke-Capture` für vier Modi (Monitor/AllMonitors/ActiveWindow/Region), GDI+ `Graphics.CopyFromScreen`, DWM-Frame-Bounds für ActiveWindow mit `GetWindowRect`-Fallback. Region-Overlay (`src/views/region-overlay.xaml` + `src/ui/region-overlay.psm1`) mit Drag-Selection und ESC-Cancel. `native.psm1` erweitert (GetForegroundWindow, GetWindowRect, DwmGetWindowAttribute, GetCursorPos, POINT-Struct). 11 neue Tests. `LucentScreen.ps1`: $invokeCapture ersetzt die Placeholder-MessageBox; Screenshots landen in `$Config.OutputDir` mit `LucentScreen_YYYYMMDD-HHmmss_<Mode>.png` (volles Schema folgt mit AP 6). Interaktiver Test: Monitor- und ActiveWindow-Captures erzeugt valide PNGs. |
+| 21 | `20260515-1608` | `_pending_` | — | chore | todo.md aufgeräumt: erledigte Sub-Items aus AP 5 (Delay aus Config) und AP 6 (Auto-Mkdir, Bitmap.Save, OutputDir-Lazy) entfernt, weil von AP 4 abgedeckt. AP-Beschreibungen oben jeweils mit Hinweis ergänzt was schon erledigt ist. |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

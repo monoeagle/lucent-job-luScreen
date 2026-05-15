@@ -11,9 +11,10 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 > Erledigte Arbeitspakete + Commit/Push-Log siehe [`luscreen-docs/docs/entwicklung/erledigt.md`](../luscreen-docs/docs/entwicklung/erledigt.md).
 
 
-## AP 5 — Verzögerter Auslöser & Countdown-Overlay
+## AP 5 — Countdown-Overlay
 
-- [ ] Verzögerung aus Konfig lesen (0 = sofort)
+> Die reine Delay-Verzögerung (Sleep gemäß Config) ist bereits durch AP 4 (`Invoke-Capture -DelaySeconds`) erledigt. Hier folgt nur noch das sichtbare Countdown-Overlay.
+
 - [ ] Countdown-Overlay als WPF-Fenster
   - [ ] Randlos (`WindowStyle=None`), `Topmost`, `ShowInTaskbar=False`
   - [ ] Unten rechts auf primärem (oder „Maus-")Monitor positionieren
@@ -23,15 +24,16 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 - [ ] **Wichtig:** Overlay verschwindet bevor Capture läuft, damit es nicht im Bild landet
   - [ ] `window.Hide()` + Dispatcher-Yield (`InvokeAsync(..., Background)`) + kurzer `Thread.Sleep(50)`, dann Screenshot
 - [ ] Abbruch per ESC während Countdown
+- [ ] In `$invokeCapture` einbinden: bei `DelaySeconds > 0` Overlay vor `Invoke-Capture` zeigen, dann verbergen, dann capturen
 
-## AP 6 — Dateinamen & Speicherung
+## AP 6 — Dateinamen-Schema
 
-- [ ] Schema: `YYYYMMDD-HHmmss_<name>.png` (minimaler Zeitstempel)
-- [ ] Edit-Variante: `YYYYMMDD-HHmmss_<name>_<postfix>.png` (Postfix aus Konfig, z. B. `edit`)
+> Speichern selbst (`Bitmap.Save` + auto-mkdir + lazy OutputDir) ist bereits durch AP 4 in `Save-Capture` erledigt. Hier folgt nur noch das vollständige Namensschema.
+
+- [ ] `FileNameFormat` aus der Config respektieren (aktuell hartcodiert `LucentScreen_YYYYMMDD-HHmmss_<Mode>.png`) — Tokens: `{mode}`, Datums-Tokens (`yyyy`/`MM`/`dd`/`HH`/`mm`/`ss`)
+- [ ] Edit-Variante: Postfix aus `Config.EditPostfix` (z. B. `_edited`) anhängen, wenn aus dem Editor gespeichert (AP 9)
 - [ ] Kollisionsschutz (Suffix `-2`, `-3`, … falls Datei existiert)
-- [ ] Zielordner anlegen, falls fehlt (inkl. Berechtigungsprüfung)
-- [ ] Schreiben mit `Bitmap.Save(..., ImageFormat.Png)` ODER `PngBitmapEncoder` (WPF-nativ)
-- [ ] OutputDir-Änderungen aus dem Konfig-Dialog zur Laufzeit übernehmen (kein App-Restart nötig — `$script:Config.OutputDir` wird beim nächsten Capture gelesen, also keine zusätzliche Logik nötig; nur sicherstellen, dass Save-Pfad lazy resolved wird)
+- [ ] Berechtigungsprüfung beim ersten Schreibversuch in einen neuen `OutputDir` (klare Fehlermeldung statt Stack-Trace)
 
 ## AP 7 — Zwischenablage
 

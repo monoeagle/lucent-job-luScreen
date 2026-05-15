@@ -15,6 +15,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/) · Versionierun
 - `todo.md` mit Arbeitspaket-Plan (AP 0 – AP n).
 
 ### Quality
-- PSSA: 0 Findings (10 Dateien gescannt).
-- Pester: 10/10 grün.
-- Smoke-Test: App startet -STA, durchläuft alle Bootstrap-Schritte und blockiert im `Application.Run()`-Message-Loop.
+- PSSA: 0 Findings.
+- Pester: 23/23 grün (10 aus AP 0 + 13 aus AP 1 Teil 1).
+- Smoke-Test: App startet -STA, durchläuft alle Bootstrap-Schritte (inkl. Config-Load) und blockiert im `Application.Run()`-Message-Loop.
+
+### Added (AP 1 Teil 1 — Konfigurations-Backend)
+- `src/core/config.psm1` — Default-Schema v1, `Read-Config` mit Defaults-Merge und Schema-Migration, atomares `Save-Config` (via `.tmp`-Rename).
+- 13 Pester-Tests in `tests/core.config.Tests.ps1`.
+- `src/LucentScreen.ps1` lädt die Config nach Logging und legt sie in `$script:Config` ab. Ort: `%APPDATA%\LucentScreen\config.json`.
+- Default-Hotkeys: `Ctrl+Shift+1..4` für Capture-Modi, `Ctrl+Shift+0` für Tray-Menü.

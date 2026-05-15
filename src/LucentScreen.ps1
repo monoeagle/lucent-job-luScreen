@@ -69,6 +69,15 @@ Write-LsLog -Level Info  -Source 'boot' -Message 'LucentScreen startet'
 Write-LsLog -Level Debug -Source 'boot' -Message ("LogPath: " + (Get-LogPath))
 
 # ---------------------------------------------------------------
+# 3a) Konfiguration laden
+# ---------------------------------------------------------------
+Import-Module (Join-Path $coreDir 'config.psm1') -Force
+$script:Config = Read-Config
+Write-LsLog -Level Info  -Source 'boot' -Message ("Config geladen: " + (Get-ConfigPath))
+Write-LsLog -Level Debug -Source 'boot' -Message ("OutputDir: " + $script:Config.OutputDir)
+Write-LsLog -Level Debug -Source 'boot' -Message ("SchemaVersion: " + $script:Config.SchemaVersion)
+
+# ---------------------------------------------------------------
 # 4) DPI-Awareness
 # ---------------------------------------------------------------
 Import-Module (Join-Path $coreDir 'native.psm1') -Force

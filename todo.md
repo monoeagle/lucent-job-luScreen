@@ -12,9 +12,9 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 
 ## AP 1 — Konfiguration
 
-- [ ] Default-Konfig im Code (Hotkeys, Zielordner, Verzögerung, Dateinamensschema)
-- [ ] Konfig-Datei `config.json` in `%APPDATA%\LucentScreen\` (User-scope, NICHT im Programmordner — wichtig für MSI/Per-Machine-Install)
-- [ ] Laden/Speichern der Konfig (mit Migrations-/Default-Fallback, Schema-Version)
+- [x] Default-Konfig im Code (Hotkeys, Zielordner, Verzögerung, Dateinamensschema)
+- [x] Konfig-Datei `config.json` in `%APPDATA%\LucentScreen\` (User-scope, NICHT im Programmordner — wichtig für MSI/Per-Machine-Install)
+- [x] Laden/Speichern der Konfig (mit Migrations-/Default-Fallback, Schema-Version)
 - [ ] Konfig-Dialog als **WPF-Fenster** (XAML)
   - [ ] Zielordner wählen (über `Microsoft.Win32` oder WinForms-FolderBrowserDialog als Fallback)
   - [ ] Hotkeys einstellen (Modifier + Taste, mit Konflikterkennung)

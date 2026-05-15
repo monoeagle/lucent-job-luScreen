@@ -25,6 +25,35 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 **Quality-Stand:** Parse 19/19 clean · PSSA 0 Findings · Pester 10/10 grün auf PS 7 und PS 5.1.
 
+### AP 1 (Teil 1) — Konfigurations-Backend — abgeschlossen `20260515-1446`
+
+- [x] Default-Konfig im Code (Hotkeys, Zielordner, Verzögerung, Dateinamensschema)
+- [x] Konfig-Datei `config.json` in `%APPDATA%\LucentScreen\` (User-scope, NICHT im Programmordner)
+- [x] Laden/Speichern der Konfig (mit Migrations-/Default-Fallback, Schema-Version)
+- [ ] Konfig-Dialog als WPF-Fenster — folgt nach AP 2 (Tray-Menü)
+- [ ] Konfig-Änderungen wirken zur Laufzeit — folgt mit dem Dialog
+
+**Artefakte:**
+- `src/core/config.psm1` — `Get-DefaultConfig`, `Get-ConfigPath`, `Read-Config` (Merge + Migration), `Save-Config` (atomar via `.tmp`-File)
+- `tests/core.config.Tests.ps1` — 13 Pester-Tests
+- `src/LucentScreen.ps1` — Config wird nach Logging geladen, in `$script:Config` abgelegt
+
+**Schema v1:**
+- `OutputDir` — Standard `~/Pictures/LucentScreen`
+- `DelaySeconds` — Default 0 (0–30 möglich, validiert beim Speichern aus dem Dialog)
+- `FileNameFormat` — `LucentScreen_yyyy-MM-dd_HH-mm-ss_{mode}.png`
+- `EditPostfix` — `_edited`
+- `Hotkeys` — fünf Einträge (`Region`, `ActiveWindow`, `Monitor`, `AllMonitors`, `TrayMenu`), jeweils `{Modifiers, Key}`
+
+**Robustheits-Eigenschaften:**
+- Datei fehlt → Defaults
+- Datei kaputt → Defaults + `Write-Warning`
+- Schema-Version niedriger → durchläuft `_Migrate-Config` (Framework für künftige Versionen, V1 ist erste)
+- Geladene Werte mergen rekursiv mit Defaults; überzählige User-Keys bleiben erhalten (Forward-Kompat)
+- `Save-Config` schreibt erst `.tmp`, dann Rename — kein halb-geschriebenes File bei Abbruch
+
+**Quality-Stand:** Parse 25/25 clean · PSSA 0 Findings · Pester 23/23 grün auf PS 7 und PS 5.1.
+
 ---
 
 ## Zusätzliche Setup-Arbeiten (außerhalb der nummerierten APs)
@@ -61,6 +90,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 11 | `20260515-1421` | `1c3d67c` | ✓ | chore | Commit-Log-Eintrag 10 mit finalem Hash nachgetragen |
 | 12 | `20260515-1435` | `_pending_` | — | fix | `build_docs.py` UTF-8-safe Output + Python-Mindestversion-Check (3.10); `luscreen-docs/run.ps1` PS-Wrapper mit `.venv-docs`-Management, Python-Detection, Build/Serve/Clean/Menu; Haupt-`run.ps1` `Action-DocsBuild` ruft Wrapper, neue Taste `D` für Live-Server; `run_luscreen_docs.sh` (bash) gelöscht; Playbook-Abschnitt 11 um Option-2-Regel (Hash nicht backfillen) ergänzt |
 | 13 | `20260515-1440` | `_pending_` | — | fix | `zensical.toml: use_directory_urls = false` damit Doku-Site aus `file://` direkt klickbar ist (statt Verzeichnis-Listing) |
+| 14 | `20260515-1446` | `_pending_` | — | AP 1 | Config-Backend: `src/core/config.psm1` (Get-DefaultConfig, Get-ConfigPath, Read-Config mit Defaults-Merge und Migration, Save-Config atomar). 13 Pester-Tests. Bootstrap in `src/LucentScreen.ps1` laedt Config nach Logging. Pflicht-Path: `%APPDATA%/LucentScreen/config.json`. WPF-Konfig-Dialog folgt nach AP 2. |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

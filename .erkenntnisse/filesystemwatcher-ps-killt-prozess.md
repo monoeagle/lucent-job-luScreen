@@ -1,0 +1,5 @@
+# `FileSystemWatcher` mit direktem PowerShell-ScriptBlock-Handler kann den Prozess **silent killen** — kein Dispatcher- oder AppDomain-Exception-Log.
+
+**Warum:** FSW-Events feuern auf einem Worker-Thread. PowerShell-ScriptBlock-Handler (`$fsw.add_Created({...})`) laufen dann in einem Nicht-STA-Thread. Sobald in dem Handler eine PowerShell-Engine-Operation eine Exception oder ein StrictMode-Problem ausloest — selbst wenn der Code nur `Dispatcher.BeginInvoke` aufruft — kann der Prozess sterben, ohne dass `DispatcherUnhandledException` oder `AppDomain.UnhandledException` greifen. Bei AP 8 starb die App nach jedem Loeschen-Klick, das App-Log endete unauffaellig.
+
+**Wie anwenden:** Fuer WPF + PowerShell **kein** `FileSystemWatcher` mit ScriptBlock-Handler. Stattdessen `DispatcherTimer`-Polling — auch mit 1–2 s Latenz reicht das fuer Ordner mit hunderten Dateien und laeuft komplett im UI-Thread. Snapshot-Signatur als `"<count>|<latest-LastWriteTime-Ticks>"` vergleichen und nur bei Aenderung refreshen. Falls FSW unverzichtbar: ueber `Register-ObjectEvent` + `Get-Event` in den PS-Event-Loop marshallen, nie direkt `add_*({ ... })`.

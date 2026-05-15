@@ -46,6 +46,7 @@ function Show-EditorWindow {
 
     $xamlPath = Join-Path $PSScriptRoot '..\views\editor-window.xaml'
     $win = Load-Xaml -Path $xamlPath
+    Set-AppWindowIcon -Window $win
     if ($Owner) { $win.Owner = $Owner }
 
     $names = @('BtnSave', 'BtnFit', 'BtnZoom100', 'BtnZoomIn', 'BtnZoomOut', 'BtnClose',
@@ -883,7 +884,26 @@ function Show-EditorWindow {
                 $rtb = New-Object System.Windows.Media.Imaging.RenderTargetBitmap (
                     $w, $h, $dpiX, $dpiY,
                     [System.Windows.Media.PixelFormats]::Pbgra32)
-                $rtb.Render($c.StageRoot)
+
+                # WICHTIG: $rtb.Render($c.StageRoot) wuerde StageRoot mit seinem
+                # Layout-Offset rendern. Da StageRoot HorizontalAlignment="Center"
+                # / VerticalAlignment="Center" im ScrollViewer hat, ist im Fit-Zoom
+                # ein X/Y-Offset > 0 -- das Bild rutscht ins Render-Ergebnis
+                # verschoben rein, oben/links bleibt schwarz.
+                # Workaround: VisualBrush auf einem DrawingVisual bei (0,0) malen.
+                $dv = New-Object System.Windows.Media.DrawingVisual
+                $ctx = $dv.RenderOpen()
+                try {
+                    $brush = New-Object System.Windows.Media.VisualBrush ($c.StageRoot)
+                    $brush.Stretch = [System.Windows.Media.Stretch]::None
+                    $brush.AlignmentX = [System.Windows.Media.AlignmentX]::Left
+                    $brush.AlignmentY = [System.Windows.Media.AlignmentY]::Top
+                    $rect = New-Object System.Windows.Rect (0.0, 0.0, [double]$w, [double]$h)
+                    $ctx.DrawRectangle($brush, $null, $rect)
+                } finally {
+                    $ctx.Close()
+                }
+                $rtb.Render($dv)
                 $rtb.Freeze()
             } finally {
                 $c.StageScale.ScaleX = $origScale

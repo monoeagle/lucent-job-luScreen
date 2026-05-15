@@ -73,10 +73,11 @@ Describe 'hotkeys: Register/Unregister' {
     }
 
     It 'registriert eine vollstaendige Default-Map mit Thread-HWND' {
-        $r = Register-AllHotkeys -Hwnd ([IntPtr]::Zero) -HotkeyMap (Get-DefaultConfig).Hotkeys -Callbacks @{}
-        $r.Registered.Count | Should -Be 5
+        $defaults = (Get-DefaultConfig).Hotkeys
+        $r = Register-AllHotkeys -Hwnd ([IntPtr]::Zero) -HotkeyMap $defaults -Callbacks @{}
+        $r.Registered.Count | Should -Be $defaults.Count
         # IDs sind eindeutig
-        @($r.Registered | ForEach-Object { $_.Id } | Sort-Object -Unique).Count | Should -Be 5
+        @($r.Registered | ForEach-Object { $_.Id } | Sort-Object -Unique).Count | Should -Be $defaults.Count
     }
 
     It 'Unregister-AllHotkeys leert die Registry' {

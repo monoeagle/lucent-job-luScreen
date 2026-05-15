@@ -20,6 +20,14 @@ Describe 'config: defaults' {
         $d.Hotkeys.Keys | Should -Contain 'TrayMenu'
     }
 
+    It 'HistoryIconSize Default ist 20 (Range 16-32)' {
+        $d = Get-DefaultConfig
+        $d.HistoryIconSize | Should -BeOfType [int]
+        $d.HistoryIconSize | Should -BeGreaterOrEqual 16
+        $d.HistoryIconSize | Should -BeLessOrEqual 32
+        $d.HistoryIconSize | Should -Be 20
+    }
+
     It 'Default-Hotkey "Region" ist Ctrl+Shift+D1' {
         $d = Get-DefaultConfig
         $d.Hotkeys.Region.Modifiers | Should -Contain 'Control'
@@ -230,5 +238,78 @@ Describe 'config: Test-ConfigValid' {
         $r = Test-ConfigValid -Config $c
         $r.IsValid | Should -BeFalse
         ($r.Errors -join ' ') | Should -Match 'Konflikt'
+    }
+    It 'HistoryIconSize ausserhalb 16-32 wird gefangen' {
+        $c = Get-DefaultConfig
+        $c.HistoryIconSize = 99
+        $r = Test-ConfigValid -Config $c
+        $r.IsValid | Should -BeFalse
+        ($r.Errors -join ' ') | Should -Match 'Iconsize'
+    }
+    It 'Migration 1 -> 2: HistoryIconSize wird ergaenzt wenn fehlt' {
+        # Read-Config triggert Migration intern. Hier per Save+Read durch.
+        $tmp = Join-Path $TestDrive 'mig.json'
+        @{ SchemaVersion = 1; OutputDir = 'C:/X' } | ConvertTo-Json | Set-Content -LiteralPath $tmp -Encoding UTF8
+        $cfg = Read-Config -Path $tmp
+        $cfg.SchemaVersion    | Should -BeGreaterOrEqual 2
+        $cfg.HistoryIconSize | Should -Be 20
+    }
+    It 'Migration 2 -> 3 -> 5: LucentScreen_-Default wird kettenmigriert zum aktuellen Default' {
+        # Read-Config laeuft die ganze Migrationskette: 2->3 entfernt LucentScreen_-Praefix,
+        # 4->5 wandelt das resultierende dash-Format in yyyyMMdd_HHmm um.
+        $tmp = Join-Path $TestDrive 'mig23.json'
+        @{
+            SchemaVersion  = 2
+            OutputDir      = 'C:/X'
+            FileNameFormat = 'LucentScreen_yyyy-MM-dd_HH-mm-ss_{mode}.png'
+        } | ConvertTo-Json | Set-Content -LiteralPath $tmp -Encoding UTF8
+        $cfg = Read-Config -Path $tmp
+        $cfg.SchemaVersion   | Should -BeGreaterOrEqual 5
+        $cfg.FileNameFormat | Should -Be 'yyyyMMdd_HHmm_{mode}.png'
+    }
+    It 'Migration 2 -> 3: vom User angepasstes Format bleibt unangetastet' {
+        $tmp = Join-Path $TestDrive 'mig23-custom.json'
+        @{
+            SchemaVersion  = 2
+            OutputDir      = 'C:/X'
+            FileNameFormat = 'meinprefix_yyyy-MM-dd_{mode}.png'
+        } | ConvertTo-Json | Set-Content -LiteralPath $tmp -Encoding UTF8
+        $cfg = Read-Config -Path $tmp
+        $cfg.FileNameFormat | Should -Be 'meinprefix_yyyy-MM-dd_{mode}.png'
+    }
+    It 'Migration 3 -> 4: DelayReset + DelayPlus5 Hotkeys werden ergaenzt' {
+        $tmp = Join-Path $TestDrive 'mig34.json'
+        @{
+            SchemaVersion = 3
+            OutputDir     = 'C:/X'
+            Hotkeys       = @{
+                Region = @{ Modifiers = @('Control', 'Shift'); Key = 'D1' }
+            }
+        } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $tmp -Encoding UTF8
+        $cfg = Read-Config -Path $tmp
+        $cfg.SchemaVersion        | Should -BeGreaterOrEqual 4
+        $cfg.Hotkeys.DelayReset.Key | Should -Be 'R'
+        $cfg.Hotkeys.DelayPlus5.Key | Should -Be 'T'
+    }
+    It 'Migration 4 -> 5: alter dash-getrennter Default wird zu yyyyMMdd_HHmm' {
+        $tmp = Join-Path $TestDrive 'mig45.json'
+        @{
+            SchemaVersion  = 4
+            OutputDir      = 'C:/X'
+            FileNameFormat = 'yyyy-MM-dd_HH-mm-ss_{mode}.png'
+        } | ConvertTo-Json | Set-Content -LiteralPath $tmp -Encoding UTF8
+        $cfg = Read-Config -Path $tmp
+        $cfg.SchemaVersion   | Should -BeGreaterOrEqual 5
+        $cfg.FileNameFormat | Should -Be 'yyyyMMdd_HHmm_{mode}.png'
+    }
+    It 'Migration 4 -> 5: vom User angepasstes Format bleibt unangetastet' {
+        $tmp = Join-Path $TestDrive 'mig45-custom.json'
+        @{
+            SchemaVersion  = 4
+            OutputDir      = 'C:/X'
+            FileNameFormat = 'snap_yyyy_{mode}.png'
+        } | ConvertTo-Json | Set-Content -LiteralPath $tmp -Encoding UTF8
+        $cfg = Read-Config -Path $tmp
+        $cfg.FileNameFormat | Should -Be 'snap_yyyy_{mode}.png'
     }
 }

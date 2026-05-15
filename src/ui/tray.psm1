@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 Set-StrictMode -Version Latest
 
 # ---------------------------------------------------------------
@@ -33,6 +33,32 @@ function _New-MenuItem {
     return $item
 }
 
+function _New-TrayIcon {
+    <#
+    .SYNOPSIS
+        Erzeugt ein System.Drawing.Icon aus einem ICO oder PNG.
+    .DESCRIPTION
+        NotifyIcon.Icon nimmt nur Icon. Fuer ICO -> direktes Laden.
+        Fuer PNG (alpha-faehig, hoehere Aufloesung) -> via Bitmap.GetHicon().
+    #>
+    param([Parameter(Mandatory)][string]$Path)
+    Add-Type -AssemblyName System.Drawing | Out-Null
+    $ext = [System.IO.Path]::GetExtension($Path).ToLowerInvariant()
+    if ($ext -eq '.ico') {
+        return New-Object System.Drawing.Icon $Path
+    }
+    # PNG / andere Bitmap -> via HICON. Der HICON-Handle bleibt fuer Lebens-
+    # zeit der App gueltig; Tray-Dispose ruft Icon.Dispose, das das HICON
+    # freigibt.
+    $bmp = New-Object System.Drawing.Bitmap $Path
+    try {
+        $hicon = $bmp.GetHicon()
+        return [System.Drawing.Icon]::FromHandle($hicon)
+    } finally {
+        $bmp.Dispose()
+    }
+}
+
 function _New-Separator {
     return New-Object System.Windows.Forms.ToolStripSeparator
 }
@@ -57,7 +83,7 @@ function Initialize-Tray {
     Add-Type -AssemblyName System.Drawing | Out-Null
 
     $tray = New-Object System.Windows.Forms.NotifyIcon
-    $tray.Icon = New-Object System.Drawing.Icon $Icon
+    $tray.Icon = _New-TrayIcon -Path $Icon
     $tray.Visible = $true
     $tray.Text = "LucentScreen $Version"
 
@@ -69,9 +95,13 @@ function Initialize-Tray {
         @{ Text = 'Monitor (Maus)'; Key = 'Monitor' },
         @{ Text = 'Alle Monitore'; Key = 'AllMonitors' },
         @{ Separator = $true },
-        @{ Text = 'Verlauf oeffnen'; Key = 'History' },
+        @{ Text = 'Verzögerung Reset'; Key = 'DelayReset' },
+        @{ Text = 'Verzögerung +5 Sek'; Key = 'DelayPlus5' },
+        @{ Separator = $true },
+        @{ Text = 'Verlauf öffnen'; Key = 'History' },
+        @{ Separator = $true },
         @{ Text = 'Konfiguration...'; Key = 'Config' },
-        @{ Text = 'Ueber...'; Key = 'About' },
+        @{ Text = 'Über...'; Key = 'About' },
         @{ Separator = $true },
         @{ Text = 'Beenden'; Key = 'Exit' }
     )

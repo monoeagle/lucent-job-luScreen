@@ -84,4 +84,46 @@ function Get-XamlControls {
     return $map
 }
 
-Export-ModuleMember -Function Load-Xaml, Get-XamlControls
+$script:DefaultWindowIconPath = $null
+
+function Set-AppDefaultIcon {
+    <#
+    .SYNOPSIS
+        Setzt den Default-Pfad fuer Window-Titelleisten-Icons in dieser Session.
+    .DESCRIPTION
+        Einmal beim App-Bootstrap aufrufen. Show-* Funktionen rufen
+        Set-AppWindowIcon ohne Pfad und nutzen automatisch den Default.
+    #>
+    [CmdletBinding()]
+    param([Parameter(Mandatory)][string]$Path)
+    $script:DefaultWindowIconPath = $Path
+}
+
+function Set-AppWindowIcon {
+    <#
+    .SYNOPSIS
+        Setzt das Window.Icon fuer die Titelleiste eines WPF-Fensters.
+    .DESCRIPTION
+        Ohne -Path wird der via Set-AppDefaultIcon hinterlegte Default genutzt.
+        Akzeptiert ICO und PNG (BitmapImage handhabt beides).
+        Stiller Fail wenn kein gueltiger Pfad -- Icon ist Schmuck, kein Pflicht.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][System.Windows.Window]$Window,
+        [string]$Path
+    )
+    $usePath = if ($Path) { $Path } else { $script:DefaultWindowIconPath }
+    if (-not $usePath -or -not (Test-Path -LiteralPath $usePath)) { return }
+    try {
+        $bmp = New-Object System.Windows.Media.Imaging.BitmapImage
+        $bmp.BeginInit()
+        $bmp.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+        $bmp.UriSource = New-Object System.Uri ($usePath, [System.UriKind]::Absolute)
+        $bmp.EndInit()
+        $bmp.Freeze()
+        $Window.Icon = $bmp
+    } catch { $null = $_ }
+}
+
+Export-ModuleMember -Function Load-Xaml, Get-XamlControls, Set-AppDefaultIcon, Set-AppWindowIcon

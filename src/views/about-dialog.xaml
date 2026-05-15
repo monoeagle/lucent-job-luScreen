@@ -1,42 +1,116 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Ueber LucentScreen"
-        Width="420" Height="280"
+        Title="Über LucentScreen"
+        Width="640" Height="600"
+        MinWidth="520" MinHeight="420"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
+        ShowInTaskbar="False"
         FontFamily="Segoe UI" FontSize="13">
-    <Grid Margin="22">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <DockPanel Margin="22,18,22,14">
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
-            <Image x:Name="ImgIcon" Width="48" Height="48" Margin="0,0,14,0"/>
+        <!-- Buttons unten -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button x:Name="BtnOk" Content="Schließen" MinWidth="100" Height="28" IsDefault="True" IsCancel="True"/>
+        </StackPanel>
+
+        <!-- Header: Icon + Titel -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,14">
+            <Image x:Name="ImgHeader" Width="64" Height="64" Margin="0,0,16,0" VerticalAlignment="Center"/>
             <StackPanel VerticalAlignment="Center">
-                <TextBlock x:Name="TxtName" Text="LucentScreen" FontSize="20" FontWeight="SemiBold"/>
-                <TextBlock x:Name="TxtVersion" Foreground="#666"/>
+                <TextBlock Text="LucentScreen" FontSize="22" FontWeight="SemiBold"/>
+                <TextBlock x:Name="LblVersion" FontSize="13" Foreground="#666"/>
+                <TextBlock Text="Windows-Screenshot-Tool · Tray · Hotkeys · Editor · Verlauf"
+                           FontSize="12" Margin="0,2,0,0" Foreground="#666"/>
             </StackPanel>
         </StackPanel>
 
-        <Separator Grid.Row="1" Margin="0,4,0,12"/>
+        <!-- Body: TabControl -->
+        <TabControl x:Name="Tabs" Background="Transparent">
 
-        <StackPanel Grid.Row="2">
-            <TextBlock Text="Windows-Screenshot-Tool mit Tray, Hotkeys, Editor und Verlauf."
-                       TextWrapping="Wrap" Margin="0,0,0,10"/>
-            <TextBlock Foreground="#555" FontSize="11.5">
-                <Run Text="Stack: PowerShell 5.1 + WPF + GDI+"/>
-                <LineBreak/>
-                <Run Text="Verteilung: signiertes Bundle, vom Softwareverteilteam als MSI paketiert"/>
-                <LineBreak/>
-                <Run Text="Lizenz: intern"/>
-            </TextBlock>
-        </StackPanel>
+            <TabItem Header="Info">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled" Padding="8,10,8,8">
+                    <StackPanel>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="BtnOk" Content="Schliessen" Width="100" Height="28" IsDefault="True" IsCancel="True"/>
-        </StackPanel>
-    </Grid>
+                        <!-- System -->
+                        <TextBlock Text="System" FontSize="13" FontWeight="SemiBold"
+                                   Margin="0,0,0,6" Foreground="#2563EB"/>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="PowerShell:" Margin="0,2" Foreground="#666"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="LblPwsh" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="OS:" Margin="0,2" Foreground="#666"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="LblOs" Margin="0,2" TextWrapping="Wrap"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="DPI-Awareness:" Margin="0,2" Foreground="#666"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="LblDpi" Margin="0,2"/>
+                        </Grid>
+
+                        <!-- Projekt -->
+                        <TextBlock Text="Projekt" FontSize="13" FontWeight="SemiBold"
+                                   Margin="0,0,0,6" Foreground="#2563EB"/>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="130"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Entwickler:" Margin="0,2" Foreground="#666"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="LblDeveloper" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="E-Mail:" Margin="0,2" Foreground="#666"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="LblEmail" Margin="0,2"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Repository:" Margin="0,2" Foreground="#666"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="LblRepo" Margin="0,2" TextWrapping="Wrap"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="App-Pfad:" Margin="0,2" Foreground="#666"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="LblAppPath" Margin="0,2" TextWrapping="Wrap"/>
+                        </Grid>
+
+                        <!-- Komponenten -->
+                        <TextBlock Text="Komponenten" FontSize="13" FontWeight="SemiBold"
+                                   Margin="0,0,0,6" Foreground="#2563EB"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="#666" FontSize="12">
+                            · Capture-Engine: GDI+ via System.Drawing (Region · Aktives Fenster · Monitor · Alle Monitore)<LineBreak/>
+                            · Globale Hotkeys via RegisterHotKey + WM_HOTKEY-Hook<LineBreak/>
+                            · Tray-Icon mit Kontextmenü (System.Windows.Forms.NotifyIcon)<LineBreak/>
+                            · Editor: WPF + LayoutTransform-Zoom + Vektor-Annotations + CroppedBitmap<LineBreak/>
+                            · Verlauf: Live-Polling, Thumbnails via BitmapFrame + TransformedBitmap<LineBreak/>
+                            · Konfiguration: JSON + Schema-Migration in %APPDATA%\LucentScreen<LineBreak/>
+                            · PSScriptAnalyzer 1.25 (gebundelt) + Pester 5 (gebundelt)
+                        </TextBlock>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Changelog">
+                <ScrollViewer x:Name="ChangelogScroll" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled" Padding="8,10,8,8">
+                    <TextBlock x:Name="LblChangelog" FontFamily="Cascadia Mono, Consolas, Courier New"
+                               FontSize="11.5" TextWrapping="Wrap"/>
+                </ScrollViewer>
+            </TabItem>
+
+        </TabControl>
+    </DockPanel>
 </Window>

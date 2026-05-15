@@ -177,8 +177,34 @@ Import-Module (Join-Path $uiDir 'editor-window.psm1') -Force
 Import-Module (Join-Path $uiDir 'tray.psm1') -Force
 
 $assetsDir = Join-Path $rootDir '..\assets'
-$iconPath = Resolve-Path (Join-Path $assetsDir 'luscreen.ico')
-$appVersion = '0.1.0'
+# Zwei Icon-Pfade: ICO fuer scharfe Tray-/Window-Titelleisten-Anzeige,
+# PNG fuer den hochaufloesenden About-Dialog-Header.
+# ICO-Auswahl: bevorzugt 'luscreen.ico'. Falls nicht vorhanden, suche nach
+# *.ico mit groesster Aufloesung (Tray skaliert ggf. runter).
+$iconPath = $null
+$preferred = Join-Path $assetsDir 'luscreen.ico'
+if (Test-Path -LiteralPath $preferred) {
+    $iconPath = (Resolve-Path $preferred).Path
+} else {
+    # Fallback: groesste *.ico waehlen (Heuristik: Dateiname mit groessten
+    # Pixel-Dimensionen, sonst die groesste Datei).
+    $icoFiles = Get-ChildItem -LiteralPath $assetsDir -Filter '*.ico' -File -EA SilentlyContinue
+    if ($icoFiles) {
+        $sizeFromName = { param($f) if ($f.BaseName -match '(\d+)x\d+') { [int]$Matches[1] } else { 0 } }
+        $sortBySize = @{ Expression = $sizeFromName; Descending = $true }
+        $sortByLen = @{ Expression = 'Length'; Descending = $true }
+        $picked = $icoFiles | Sort-Object -Property $sortBySize, $sortByLen | Select-Object -First 1
+        $iconPath = $picked.FullName
+    }
+}
+if (-not $iconPath) {
+    throw "Kein Icon gefunden in $assetsDir (weder luscreen.ico noch sonstiges *.ico)."
+}
+$iconPngPath = Join-Path $assetsDir 'icon.png'
+if (Test-Path -LiteralPath $iconPngPath) { $iconPngPath = (Resolve-Path $iconPngPath).Path } else { $iconPngPath = $null }
+# Default-Window-Icon fuer alle Dialoge (Konfig/Editor/Verlauf/About-Titelleiste)
+Set-AppDefaultIcon -Path $iconPath
+$appVersion = '0.2.0'
 
 $script:TrayDispose = $null
 
@@ -219,7 +245,7 @@ $invokeCapture = {
             $tmpl = if ($script:Config.ContainsKey('FileNameFormat') -and $script:Config.FileNameFormat) {
                 $script:Config.FileNameFormat
             } else {
-                'LucentScreen_yyyyMMdd-HHmmss_{mode}.png'
+                'yyyyMMdd_HHmm_{mode}.png'
             }
             $save = Save-Capture -Bitmap $r.Bitmap -Mode $mode `
                 -OutputDir $script:Config.OutputDir -Template $tmpl
@@ -255,7 +281,9 @@ $callbacks = @{
         Write-LsLog -Level Info -Source 'tray' -Message 'Verlauf geoeffnet'
         try {
             $postfix = if ($script:Config.ContainsKey('EditPostfix') -and $script:Config.EditPostfix) { $script:Config.EditPostfix } else { '_edited' }
-            Show-HistoryWindow -OutputDir $script:Config.OutputDir -EditPostfix $postfix
+            $iconSize = if ($script:Config.ContainsKey('HistoryIconSize')) { [int]$script:Config.HistoryIconSize } else { 20 }
+            Write-LsLog -Level Info -Source 'tray' -Message ("Verlauf: IconSize={0}" -f $iconSize)
+            Show-HistoryWindow -OutputDir $script:Config.OutputDir -EditPostfix $postfix -IconSize $iconSize
         } catch {
             Write-LsLog -Level Error -Source 'tray' -Message ("Verlauf fehlgeschlagen: " + $_.Exception.Message)
         }
@@ -267,8 +295,12 @@ $callbacks = @{
         if ($null -ne $updated) {
             $r = Save-Config -Config $updated
             if ($r.Success) {
-                $script:Config = $updated
-                Write-LsLog -Level Info -Source 'tray' -Message 'Konfig gespeichert'
+                # Inplace-Update der bestehenden Hashtable -- $script:Config = $updated
+                # wuerde im .GetNewClosure()-Closure in einen isolierten Scope schreiben,
+                # andere Closures saehen den alten Wert weiter. Reference bleibt erhalten.
+                foreach ($k in @($script:Config.Keys)) { $script:Config.Remove($k) }
+                foreach ($k in $updated.Keys) { $script:Config[$k] = $updated[$k] }
+                Write-LsLog -Level Info -Source 'tray' -Message ("Konfig gespeichert (HistoryIconSize={0})" -f $script:Config.HistoryIconSize)
                 if ($script:HotkeyHwnd -and $script:HotkeyHwnd -ne [IntPtr]::Zero) {
                     $hkResult = Register-AllHotkeys -Hwnd $script:HotkeyHwnd -HotkeyMap $script:Config.Hotkeys -Callbacks $callbacks
                     Write-LsLog -Level Info -Source 'hotkey' -Message ("Re-registriert: {0}, Konflikte: {1}" -f $hkResult.Registered.Count, $hkResult.Conflicts.Count)
@@ -280,7 +312,33 @@ $callbacks = @{
     }.GetNewClosure()
 
     About = {
-        Show-AboutDialog -Version $appVersion -IconPath $iconPath.Path
+        # Header-Icon = PNG (gross + alpha), Window-Titel-Icon = ICO (multi-size)
+        $hdr = if ($iconPngPath) { $iconPngPath } else { $iconPath }
+        Show-AboutDialog -Version $appVersion -IconPath $hdr -WindowIconPath $iconPath
+    }.GetNewClosure()
+
+    DelayReset = {
+        $script:Config.DelaySeconds = 0
+        $r = Save-Config -Config $script:Config
+        if ($r.Success) {
+            Write-LsLog -Level Info -Source 'tray' -Message 'Verzoegerung -> 0'
+            try { Show-CaptureToast -Title 'Verzoegerung zurueckgesetzt' -Subtitle '0 Sek' -Glyph "$([char]0xE777)" } catch { $null = $_ }
+        } else {
+            Write-LsLog -Level Error -Source 'tray' -Message ("DelayReset Save fehlgeschlagen: " + $r.Message)
+        }
+    }.GetNewClosure()
+
+    DelayPlus5 = {
+        $cur = if ($script:Config.ContainsKey('DelaySeconds')) { [int]$script:Config.DelaySeconds } else { 0 }
+        $new = [math]::Min(30, $cur + 5)
+        $script:Config.DelaySeconds = $new
+        $r = Save-Config -Config $script:Config
+        if ($r.Success) {
+            Write-LsLog -Level Info -Source 'tray' -Message ("Verzoegerung {0} -> {1}" -f $cur, $new)
+            try { Show-CaptureToast -Title ("Verzoegerung {0} Sek" -f $new) -Subtitle ("vorher {0}" -f $cur) -Glyph "$([char]0xE916)" } catch { $null = $_ }
+        } else {
+            Write-LsLog -Level Error -Source 'tray' -Message ("DelayPlus5 Save fehlgeschlagen: " + $r.Message)
+        }
     }.GetNewClosure()
 
     Exit = {
@@ -289,7 +347,7 @@ $callbacks = @{
     }.GetNewClosure()
 }
 
-$trayResult = Initialize-Tray -Icon $iconPath.Path -Version $appVersion -Callbacks $callbacks
+$trayResult = Initialize-Tray -Icon $iconPath -Version $appVersion -Callbacks $callbacks
 $script:TrayDispose = $trayResult.Dispose
 Write-LsLog -Level Info -Source 'boot' -Message 'Tray-Icon aktiv'
 

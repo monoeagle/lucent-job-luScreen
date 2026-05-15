@@ -1,7 +1,8 @@
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="LucentScreen — Konfiguration"
-        Width="640" Height="640"
+        Width="640"
+        SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         FontFamily="Segoe UI" FontSize="13">
@@ -37,8 +38,8 @@
                        TextWrapping="Wrap" Margin="0,4,0,0"/>
         </StackPanel>
 
-        <!-- Inhalt -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <!-- Inhalt (Window haengt durch SizeToContent=Height an der Inhalts-Hoehe) -->
+        <Grid Grid.Row="1">
             <StackPanel>
 
                 <GroupBox Header="Speicherort &amp; Dateinamen" Padding="10" Margin="0,0,0,12">
@@ -86,6 +87,20 @@
                     </Grid>
                 </GroupBox>
 
+                <GroupBox Header="Verlaufsfenster" Padding="10" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Content="Toolbar-Icon-Groesse:"/>
+                        <Slider x:Name="SldIconSize" Grid.Column="1" Minimum="16" Maximum="32" TickFrequency="2"
+                                IsSnapToTickEnabled="True" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBox x:Name="TxtIconSize" Grid.Column="2" TextAlignment="Center"/>
+                    </Grid>
+                </GroupBox>
+
                 <GroupBox Header="Hotkeys (in Feld klicken, dann Tastenkombination druecken)" Padding="10" Margin="0,0,0,4">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -94,6 +109,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -120,10 +137,18 @@
                         <Label Grid.Row="4" Grid.Column="0" Content="Tray-Menue oeffnen:"/>
                         <TextBox x:Name="HkTrayMenu" Grid.Row="4" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
                         <Button x:Name="HkTrayMenuClear" Grid.Row="4" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+
+                        <Label Grid.Row="5" Grid.Column="0" Content="Verzoegerung Reset:"/>
+                        <TextBox x:Name="HkDelayReset" Grid.Row="5" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
+                        <Button x:Name="HkDelayResetClear" Grid.Row="5" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+
+                        <Label Grid.Row="6" Grid.Column="0" Content="Verzoegerung +5 Sek:"/>
+                        <TextBox x:Name="HkDelayPlus5" Grid.Row="6" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
+                        <Button x:Name="HkDelayPlus5Clear" Grid.Row="6" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
                     </Grid>
                 </GroupBox>
             </StackPanel>
-        </ScrollViewer>
+        </Grid>
 
         <!-- Validation-Bereich -->
         <Border Grid.Row="2" Margin="0,8,0,0" Padding="10,8" Background="#FFFBEB" BorderBrush="#FACC15" BorderThickness="1"

@@ -24,7 +24,7 @@ Set-StrictMode -Version Latest
 #      bekommen den Default, ueberzaehlige Keys bleiben erhalten.
 # ---------------------------------------------------------------
 
-$script:CurrentSchemaVersion = 1
+$script:CurrentSchemaVersion = 5
 
 function Get-ConfigPath {
     [CmdletBinding()]
@@ -45,17 +45,20 @@ function Get-DefaultConfig {
     $outputDir = Join-Path $pics 'LucentScreen'
 
     return @{
-        SchemaVersion  = $script:CurrentSchemaVersion
-        OutputDir      = $outputDir
-        DelaySeconds   = 0
-        FileNameFormat = 'LucentScreen_yyyy-MM-dd_HH-mm-ss_{mode}.png'
-        EditPostfix    = '_edited'
-        Hotkeys        = @{
+        SchemaVersion    = $script:CurrentSchemaVersion
+        OutputDir        = $outputDir
+        DelaySeconds     = 0
+        FileNameFormat   = 'yyyyMMdd_HHmm_{mode}.png'
+        EditPostfix      = '_edited'
+        HistoryIconSize  = 20    # Toolbar-Icon-Groesse im Verlaufsfenster (16-32 pt)
+        Hotkeys          = @{
             Region       = @{ Modifiers = @('Control', 'Shift'); Key = 'D1' }
             ActiveWindow = @{ Modifiers = @('Control', 'Shift'); Key = 'D2' }
             Monitor      = @{ Modifiers = @('Control', 'Shift'); Key = 'D3' }
             AllMonitors  = @{ Modifiers = @('Control', 'Shift'); Key = 'D4' }
             TrayMenu     = @{ Modifiers = @('Control', 'Shift'); Key = 'D0' }
+            DelayReset   = @{ Modifiers = @('Control', 'Shift'); Key = 'R' }
+            DelayPlus5   = @{ Modifiers = @('Control', 'Shift'); Key = 'T' }
         }
     }
 }
@@ -129,11 +132,43 @@ function _Migrate-Config {
     $to = $script:CurrentSchemaVersion
 
     while ($from -lt $to) {
-        # Beispiel fuer kuenftige Versions-Migration:
-        # if ($from -eq 1) {
-        #     $Config['NewField'] = 'default'
-        #     $Config['SchemaVersion'] = 2
-        # }
+        if ($from -eq 1) {
+            # Schema 2: HistoryIconSize fuer konfigurierbare Toolbar-Icon-Groesse
+            # im Verlaufsfenster.
+            if (-not $Config.ContainsKey('HistoryIconSize')) {
+                $Config['HistoryIconSize'] = 20
+            }
+        }
+        if ($from -eq 2) {
+            # Schema 3: 'LucentScreen_'-Praefix aus dem Default-FileNameFormat
+            # entfernen. Nur ersetzen, wenn der User exakt das alte Default
+            # eingestellt hat -- bewusst angepasste Templates bleiben unangetastet.
+            if ($Config.ContainsKey('FileNameFormat') -and
+                $Config['FileNameFormat'] -eq 'LucentScreen_yyyy-MM-dd_HH-mm-ss_{mode}.png') {
+                $Config['FileNameFormat'] = 'yyyy-MM-dd_HH-mm-ss_{mode}.png'
+            }
+        }
+        if ($from -eq 3) {
+            # Schema 4: zwei neue Hotkey-Slots (Verzoegerung-Reset, +5sek).
+            # Nur ergaenzen wenn nicht schon vom User gesetzt.
+            if ($Config.ContainsKey('Hotkeys') -and ($Config['Hotkeys'] -is [hashtable])) {
+                if (-not $Config['Hotkeys'].ContainsKey('DelayReset')) {
+                    $Config['Hotkeys']['DelayReset'] = @{ Modifiers = @('Control', 'Shift'); Key = 'R' }
+                }
+                if (-not $Config['Hotkeys'].ContainsKey('DelayPlus5')) {
+                    $Config['Hotkeys']['DelayPlus5'] = @{ Modifiers = @('Control', 'Shift'); Key = 'T' }
+                }
+            }
+        }
+        if ($from -eq 4) {
+            # Schema 5: kompakteres Default-FileNameFormat (yyyyMMdd_HHmm_{mode}.png
+            # statt yyyy-MM-dd_HH-mm-ss_{mode}.png). Nur das alte Default ersetzen,
+            # eigene Templates bleiben erhalten.
+            if ($Config.ContainsKey('FileNameFormat') -and
+                $Config['FileNameFormat'] -eq 'yyyy-MM-dd_HH-mm-ss_{mode}.png') {
+                $Config['FileNameFormat'] = 'yyyyMMdd_HHmm_{mode}.png'
+            }
+        }
         $from++
     }
     $Config['SchemaVersion'] = $to
@@ -329,6 +364,13 @@ function Test-ConfigValid {
         $errors.Add('Dateinamen-Schema darf nicht leer sein.')
     } elseif ($Config.FileNameFormat -notmatch '\{mode\}') {
         $errors.Add('Dateinamen-Schema muss den Platzhalter "{mode}" enthalten.')
+    }
+
+    if ($Config.ContainsKey('HistoryIconSize')) {
+        $s = $Config.HistoryIconSize
+        if (-not ($s -is [int] -or $s -is [long]) -or $s -lt 16 -or $s -gt 32) {
+            $errors.Add('Verlauf-Iconsize muss eine ganze Zahl zwischen 16 und 32 sein.')
+        }
     }
 
     if ($Config.ContainsKey('Hotkeys') -and ($Config.Hotkeys -is [hashtable])) {

@@ -67,7 +67,8 @@ function Show-HistoryWindow {
     param(
         [Parameter(Mandatory)][string]$OutputDir,
         [System.Windows.Window]$Owner,
-        [string]$EditPostfix = '_edited'
+        [string]$EditPostfix = '_edited',
+        [int]$IconSize = 20    # Toolbar-Icon-Groesse, 16-32 pt (Config.HistoryIconSize)
     )
 
     if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
@@ -76,6 +77,7 @@ function Show-HistoryWindow {
 
     $xamlPath = Join-Path $PSScriptRoot '..\views\history-window.xaml'
     $win = Load-Xaml -Path $xamlPath
+    Set-AppWindowIcon -Window $win
     if ($Owner) { $win.Owner = $Owner }
 
     # Wunschgroesse: 5 Spalten x 5 Zeilen (Item ~212x212 inkl. Margin),
@@ -89,9 +91,21 @@ function Show-HistoryWindow {
     $win.Height = [math]::Min($desiredH, [int]($wa.Height - 40))
 
     $names = @('LstItems', 'TxtFolder', 'TxtStatus', 'TxtSelection',
-        'BtnOpen', 'BtnReveal', 'BtnCopy', 'BtnDelete', 'BtnRefresh',
+        'BtnView', 'BtnEdit', 'BtnDelete', 'BtnReveal', 'BtnCopy', 'BtnCopyMulti', 'BtnRefresh',
         'MiEdit', 'MiOpen', 'MiReveal', 'MiCopy', 'MiDelete')
     $c = Get-XamlControls -Root $win -Names $names
+
+    # Toolbar-Icon-Groesse aus Config (clamped auf 16-32 pt). Buttons sind
+    # quadratisch: Width = Height = FontSize + 14 (passt zu MDL2-Glyphen).
+    $is = $IconSize
+    if ($is -lt 16) { $is = 16 }
+    if ($is -gt 32) { $is = 32 }
+    $btnDim = [double]($is + 14)
+    foreach ($btn in @($c.BtnView, $c.BtnEdit, $c.BtnDelete, $c.BtnReveal, $c.BtnCopy, $c.BtnCopyMulti, $c.BtnRefresh)) {
+        $btn.FontSize = [double]$is
+        $btn.Width = $btnDim
+        $btn.Height = $btnDim
+    }
 
     $c.TxtFolder.Text = "Ordner: $OutputDir"
 
@@ -254,6 +268,14 @@ function Show-HistoryWindow {
                 'LucentScreen',
                 [System.Windows.MessageBoxButton]::OK,
                 [System.Windows.MessageBoxImage]::Warning) | Out-Null
+            return
+        }
+        # Toast mit Copy-Glyph (Segoe MDL2 0xE8C8) -- gleicher Look wie nach
+        # Editor-Save. Show-CaptureToast ist modulweit ueber LucentScreen.ps1
+        # importiert.
+        if (Get-Command Show-CaptureToast -ErrorAction SilentlyContinue) {
+            $copyGlyph = "$([char]0xE8C8)"
+            Show-CaptureToast -Title 'In Zwischenablage kopiert' -Subtitle $sel[0].FileName -Glyph $copyGlyph
         }
     }.GetNewClosure()
 
@@ -287,10 +309,36 @@ function Show-HistoryWindow {
 
     $cmdRefresh = { & $refresh }.GetNewClosure()
 
-    $c.BtnOpen.Add_Click($cmdOpen)
+    # Multi-Copy: Datei-Liste als FileDropList ins Clipboard. Word/Outlook/Mail-
+    # Programme fuegen so alle Bilder ein, Explorer behandelt es als 'Kopieren'.
+    $cmdCopyMulti = {
+        $sel = @($c.LstItems.SelectedItems)
+        if ($sel.Count -eq 0) { return }
+        try {
+            $files = New-Object System.Collections.Specialized.StringCollection
+            foreach ($entry in $sel) { [void]$files.Add($entry.FullName) }
+            [System.Windows.Clipboard]::SetFileDropList($files)
+        } catch {
+            [System.Windows.MessageBox]::Show(
+                ("Datei-Liste in Zwischenablage fehlgeschlagen:`n" + $_.Exception.Message),
+                'LucentScreen',
+                [System.Windows.MessageBoxButton]::OK,
+                [System.Windows.MessageBoxImage]::Warning) | Out-Null
+            return
+        }
+        if (Get-Command Show-CaptureToast -ErrorAction SilentlyContinue) {
+            $copyGlyph = "$([char]0xE8C8)"
+            $sub = if ($sel.Count -eq 1) { $sel[0].FileName } else { ("{0} Dateien" -f $sel.Count) }
+            Show-CaptureToast -Title 'Datei-Liste kopiert' -Subtitle $sub -Glyph $copyGlyph
+        }
+    }.GetNewClosure()
+
+    $c.BtnView.Add_Click($cmdOpen)
+    $c.BtnEdit.Add_Click($cmdEdit)
+    $c.BtnDelete.Add_Click($cmdDelete)
     $c.BtnReveal.Add_Click($cmdReveal)
     $c.BtnCopy.Add_Click($cmdCopy)
-    $c.BtnDelete.Add_Click($cmdDelete)
+    $c.BtnCopyMulti.Add_Click($cmdCopyMulti)
     $c.BtnRefresh.Add_Click($cmdRefresh)
     $c.MiEdit.Add_Click($cmdEdit)
     $c.MiOpen.Add_Click($cmdOpen)

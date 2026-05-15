@@ -223,7 +223,7 @@ function Save-Capture {
         [Parameter(Mandatory)][System.Drawing.Bitmap]$Bitmap,
         [Parameter(Mandatory)][string]$Mode,
         [Parameter(Mandatory)][string]$OutputDir,
-        [string]$Template = 'LucentScreen_yyyyMMdd-HHmmss_{mode}.png',
+        [string]$Template = 'yyyyMMdd_HHmm_{mode}.png',
         [string]$Postfix = ''
     )
 

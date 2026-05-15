@@ -72,7 +72,8 @@
       "PowerShell(& powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\core.hotkeys.Tests.ps1 -Output Minimal\" 2>&1 | Select-Object -Last 4)",
       "PowerShell(& powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 3; \"\"; & powershell.exe -NoProfile -File .\\\\run.ps1 l 2>&1 | Select-Object -Last 2; Get-Content reports\\\\pssa\\\\pssa-report.md -TotalCount 6)",
       "PowerShell(& powershell.exe -NoProfile -File .\\\\run.ps1 l 2>&1 | Select-Object -Last 2; Get-Content reports\\\\pssa\\\\pssa-report.md -TotalCount 6; \"\"; & powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 3)",
-      "PowerShell(& powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\core.capture.Tests.ps1 -Output Minimal\" 2>&1 | Select-Object -Last 4)"
+      "PowerShell(& powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\core.capture.Tests.ps1 -Output Minimal\" 2>&1 | Select-Object -Last 4)",
+      "PowerShell(Get-Item *)"
     ]
   }
 }

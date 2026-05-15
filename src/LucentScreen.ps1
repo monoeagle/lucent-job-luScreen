@@ -157,6 +157,7 @@ Import-Module (Join-Path $uiDir 'about-dialog.psm1') -Force
 Import-Module (Join-Path $uiDir 'config-dialog.psm1') -Force
 Import-Module (Join-Path $uiDir 'region-overlay.psm1') -Force
 Import-Module (Join-Path $uiDir 'countdown-overlay.psm1') -Force
+Import-Module (Join-Path $uiDir 'capture-toast.psm1') -Force
 Import-Module (Join-Path $uiDir 'tray.psm1') -Force
 
 $assetsDir = Join-Path $rootDir '..\assets'
@@ -208,6 +209,8 @@ $invokeCapture = {
                 -OutputDir $script:Config.OutputDir -Template $tmpl
             if ($save.Success) {
                 Write-LsLog -Level Info -Source 'capture' -Message ("OK: {0} ({1}x{2}) -> {3}" -f $mode, $r.Width, $r.Height, $save.Path)
+                $fname = [System.IO.Path]::GetFileName($save.Path)
+                Show-CaptureToast -Title 'Aufgenommen' -Subtitle ("{0}  {1}x{2}" -f $fname, $r.Width, $r.Height)
             } else {
                 Write-LsLog -Level Error -Source 'capture' -Message ("Speichern fehlgeschlagen: " + $save.Message)
             }

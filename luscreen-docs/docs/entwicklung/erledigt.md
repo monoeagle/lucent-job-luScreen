@@ -25,6 +25,17 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 **Quality-Stand:** Parse 19/19 clean · PSSA 0 Findings · Pester 10/10 grün auf PS 7 und PS 5.1.
 
+### Polish — Capture-Toast — abgeschlossen `20260515-1650`
+
+User-Wunsch nach AP 5: kurzer Visual-Hinweis oben rechts nach erfolgreichem Capture („Foto gemacht"-Effekt).
+
+- [x] `src/views/capture-toast.xaml`: 220×62, Kamera-Glyph aus Segoe MDL2 Assets (`&#xE722;`), abgerundete Border, FadeIn (150 ms) + FadeOut (800 ms — auf User-Wunsch verlangsamt) per Storyboard
+- [x] `src/ui/capture-toast.psm1` — `Show-CaptureToast -Title -Subtitle [-DurationMs]`, non-blocking; verwendet `WS_EX_TRANSPARENT|NOACTIVATE|TOOLWINDOW` (Click-Through, kein Fokus-Diebstahl); Auto-Close via DispatcherTimer + FadeOut-Storyboard
+- [x] State `$script:CurrentToast`: alter Toast wird beim nächsten Aufruf gecancelt, damit sich Toasts nicht stapeln
+- [x] In `$invokeCapture` nach `Save-Capture` (nur bei Erfolg): Titel „Aufgenommen", Subtitle = Dateiname + `<W>×<H>`
+
+**Quality-Stand:** Parse 53/53 clean · PSSA 0 Findings · Pester 76/76 grün (1 skipped).
+
 ### AP 5 — Countdown-Overlay — abgeschlossen `20260515-1632`
 
 - [x] WPF-Fenster: randlos, `Topmost`, `ShowInTaskbar=False`, `AllowsTransparency=True`
@@ -275,6 +286,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 22 | `20260515-1616` | `_pending_` | — | AP 6 | Dateinamen-Schema: `Format-CaptureFilename` mit Tokens `{mode}`, `{postfix}`, yyyy/yy/MM/dd/HH/mm/ss (case-sensitive `-creplace`, Reihenfolge: lange Tokens zuerst). `Resolve-UniqueFilename` hängt -2/-3/... an. `_Test-DirectoryWritable` macht Probe-Write vor `Bitmap.Save` (klare PermissionDenied-Meldung). `Save-Capture` nimmt jetzt `-Template`/`-Postfix`. `LucentScreen.ps1` reicht `$Config.FileNameFormat` durch. 10 neue Tests. Smoke-Test mit 5 Captures in 2 Sekunden zeigt -2/-3-Suffixe. |
 | 23 | `20260515-1624` | `_pending_` | — | AP 7 | Zwischenablage: `src/core/clipboard.psm1` mit `Convert-BitmapToBitmapSource` (PNG-Roundtrip + Frozen) und `Set-ClipboardImage` (STA-Guard, Retry-Backoff 50→100→200→400→800ms, max 5 Versuche). 3 Tests (1 skipped wegen MTA). `LucentScreen.ps1` kopiert das Bild nach jedem Capture in die Zwischenablage. Verlaufsfenster-Hook bleibt als einziger Sub-Punkt offen und wandert zu AP 8. |
 | 24 | `20260515-1632` | `_pending_` | — | AP 5 | Countdown-Overlay: `src/views/countdown-overlay.xaml` + `src/ui/countdown-overlay.psm1` mit `Show-CountdownOverlay`. Click-through über `SetWindowLong(GWL_EXSTYLE)` mit `WS_EX_TRANSPARENT \| WS_EX_NOACTIVATE \| WS_EX_TOOLWINDOW`. Modale Schleife via `DispatcherFrame` (statt `ShowDialog`, weil `NoActivate` Fokus-Probleme macht). `native.psm1` erweitert um WindowLong-P/Invoke. In `$invokeCapture` vor `Invoke-Capture` eingehängt; Delay wird im Overlay statt im Capture verbraten, ESC bricht ab. Smoke mit DelaySeconds=3 zeigt 3-Sekunden-Latenz und sauberes Verschwinden des Overlays vor Screenshot. |
+| 25 | `20260515-1650` | `_pending_` | — | polish | Capture-Toast: `src/views/capture-toast.xaml` + `src/ui/capture-toast.psm1` mit `Show-CaptureToast` (non-blocking, Kamera-Glyph, FadeIn 150ms + FadeOut 800ms, Click-Through, NoActivate). `$script:CurrentToast` cancelt vorherigen Toast vor Anzeige des neuen. In `$invokeCapture` nach erfolgreichem Save aufgerufen. FadeOut-Dauer auf User-Wunsch von 250ms auf 800ms verlängert. |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

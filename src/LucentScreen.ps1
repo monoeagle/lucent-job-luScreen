@@ -152,6 +152,7 @@ $app.add_Exit({
 $uiDir = Join-Path $rootDir 'ui'
 Import-Module (Join-Path $coreDir 'hotkeys.psm1') -Force
 Import-Module (Join-Path $coreDir 'capture.psm1') -Force
+Import-Module (Join-Path $coreDir 'clipboard.psm1') -Force
 Import-Module (Join-Path $uiDir 'about-dialog.psm1') -Force
 Import-Module (Join-Path $uiDir 'config-dialog.psm1') -Force
 Import-Module (Join-Path $uiDir 'region-overlay.psm1') -Force
@@ -195,6 +196,13 @@ $invokeCapture = {
                 Write-LsLog -Level Info -Source 'capture' -Message ("OK: {0} ({1}x{2}) -> {3}" -f $mode, $r.Width, $r.Height, $save.Path)
             } else {
                 Write-LsLog -Level Error -Source 'capture' -Message ("Speichern fehlgeschlagen: " + $save.Message)
+            }
+
+            $clip = Set-ClipboardImage -Bitmap $r.Bitmap
+            if ($clip.Success) {
+                Write-LsLog -Level Debug -Source 'capture' -Message ("Clipboard: " + $clip.Message)
+            } else {
+                Write-LsLog -Level Warn -Source 'capture' -Message ("Clipboard fehlgeschlagen: " + $clip.Message)
             }
         } finally {
             if ($r.Bitmap) { $r.Bitmap.Dispose() }

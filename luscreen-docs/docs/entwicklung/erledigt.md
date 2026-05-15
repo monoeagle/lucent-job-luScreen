@@ -25,6 +25,27 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 **Quality-Stand:** Parse 19/19 clean · PSSA 0 Findings · Pester 10/10 grün auf PS 7 und PS 5.1.
 
+### AP 7 — Zwischenablage — abgeschlossen `20260515-1624`
+
+- [x] Helper „Bitmap → Clipboard" via `Clipboard.SetImage(BitmapSource)` mit STA-Guard
+- [x] Nach jedem Capture: aktuelles Bild in die Zwischenablage
+- [x] Robust gegen Clipboard-Locks (Retry mit exponentiellem Backoff: 50/100/200/400/800ms, max. 5 Versuche)
+- [ ] „STRG+C im Verlaufsfenster" — verschoben zu AP 8 (Verlauf existiert noch nicht)
+
+**Artefakte:**
+- `src/core/clipboard.psm1` — `Convert-BitmapToBitmapSource` (PNG-Roundtrip via MemoryStream, liefert Frozen-Source), `Set-ClipboardImage` mit STA-Check + Retry-Backoff
+- `tests/core.clipboard.Tests.ps1` — 3 Tests (BitmapSource-Dimensionen, Frozen-Flag, MTA-NotSta-Guard)
+- `src/LucentScreen.ps1` — `$invokeCapture` ruft `Set-ClipboardImage` nach `Save-Capture`, Result wird geloggt
+
+**Implementierungs-Detail:**
+- BitmapSource-Konvertierung über `MemoryStream` + `BitmapImage.CacheOption=OnLoad` + `Freeze()` — vermeidet HBITMAP-Leak und macht das Bild Cross-Thread-fähig
+- Pester läuft in MTA → STA-Test wird übersprungen (`Set-ItResult -Skipped`)
+
+**Interaktiver Smoke-Test:**
+- `Ctrl+Shift+3` → PNG gespeichert + Bild in Clipboard → `Strg+V` in Bildbetrachter zeigt Screenshot
+
+**Quality-Stand:** Parse 49/49 clean · PSSA 0 Findings · Pester 76/76 grün, 1 skipped (STA-Guard).
+
 ### AP 6 — Dateinamen-Schema — abgeschlossen `20260515-1616`
 
 - [x] `FileNameFormat` aus Config respektieren mit Tokens `{mode}`, `{postfix}`, `yyyy`, `yy`, `MM`, `dd`, `HH`, `mm`, `ss`
@@ -229,6 +250,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 20 | `20260515-1602` | `_pending_` | — | AP 4 | Capture-Engine: `src/core/capture.psm1` mit `Invoke-Capture` für vier Modi (Monitor/AllMonitors/ActiveWindow/Region), GDI+ `Graphics.CopyFromScreen`, DWM-Frame-Bounds für ActiveWindow mit `GetWindowRect`-Fallback. Region-Overlay (`src/views/region-overlay.xaml` + `src/ui/region-overlay.psm1`) mit Drag-Selection und ESC-Cancel. `native.psm1` erweitert (GetForegroundWindow, GetWindowRect, DwmGetWindowAttribute, GetCursorPos, POINT-Struct). 11 neue Tests. `LucentScreen.ps1`: $invokeCapture ersetzt die Placeholder-MessageBox; Screenshots landen in `$Config.OutputDir` mit `LucentScreen_YYYYMMDD-HHmmss_<Mode>.png` (volles Schema folgt mit AP 6). Interaktiver Test: Monitor- und ActiveWindow-Captures erzeugt valide PNGs. |
 | 21 | `20260515-1608` | `_pending_` | — | chore | todo.md aufgeräumt: erledigte Sub-Items aus AP 5 (Delay aus Config) und AP 6 (Auto-Mkdir, Bitmap.Save, OutputDir-Lazy) entfernt, weil von AP 4 abgedeckt. AP-Beschreibungen oben jeweils mit Hinweis ergänzt was schon erledigt ist. |
 | 22 | `20260515-1616` | `_pending_` | — | AP 6 | Dateinamen-Schema: `Format-CaptureFilename` mit Tokens `{mode}`, `{postfix}`, yyyy/yy/MM/dd/HH/mm/ss (case-sensitive `-creplace`, Reihenfolge: lange Tokens zuerst). `Resolve-UniqueFilename` hängt -2/-3/... an. `_Test-DirectoryWritable` macht Probe-Write vor `Bitmap.Save` (klare PermissionDenied-Meldung). `Save-Capture` nimmt jetzt `-Template`/`-Postfix`. `LucentScreen.ps1` reicht `$Config.FileNameFormat` durch. 10 neue Tests. Smoke-Test mit 5 Captures in 2 Sekunden zeigt -2/-3-Suffixe. |
+| 23 | `20260515-1624` | `_pending_` | — | AP 7 | Zwischenablage: `src/core/clipboard.psm1` mit `Convert-BitmapToBitmapSource` (PNG-Roundtrip + Frozen) und `Set-ClipboardImage` (STA-Guard, Retry-Backoff 50→100→200→400→800ms, max 5 Versuche). 3 Tests (1 skipped wegen MTA). `LucentScreen.ps1` kopiert das Bild nach jedem Capture in die Zwischenablage. Verlaufsfenster-Hook bleibt als einziger Sub-Punkt offen und wandert zu AP 8. |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

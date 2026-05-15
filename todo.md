@@ -26,12 +26,11 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 - [ ] Abbruch per ESC während Countdown
 - [ ] In `$invokeCapture` einbinden: bei `DelaySeconds > 0` Overlay vor `Invoke-Capture` zeigen, dann verbergen, dann capturen
 
-## AP 7 — Zwischenablage
+## AP 7 — Zwischenablage (Rest)
 
-- [ ] Helper „Bitmap → Clipboard" via `System.Windows.Clipboard.SetImage(BitmapSource)` — STA beachten
-- [ ] Nach jedem Capture: aktuellstes Bild in Clipboard
-- [ ] Im Verlaufsfenster: STRG+C kopiert selektiertes Bild in Clipboard
-- [ ] Robust gegen Clipboard-Locks (Retry mit Backoff, Logging)
+> Bitmap→Clipboard-Helper + automatisches Kopieren nach Capture + Retry-Backoff sind durch AP 7 fertig. Offen ist nur noch der Verlaufsfenster-Hook (gehört eigentlich zu AP 8).
+
+- [ ] Im Verlaufsfenster: STRG+C kopiert selektiertes Bild in Clipboard (folgt mit AP 8)
 
 ## AP 8 — Verlaufsfenster (Bildliste)
 

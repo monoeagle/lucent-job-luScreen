@@ -60,7 +60,13 @@
       "PowerShell(& powershell.exe -NoProfile -File .\\\\tools\\\\Install-PSScriptAnalyzer-Offline.ps1 -Url 'https://www.powershellgallery.com/api/v2/package/PSScriptAnalyzer/1.25.0' 2>&1 | Select-Object -Last 6)",
       "PowerShell(& powershell.exe -NoProfile -File .\\\\run.ps1 p 2>&1 | Select-Object -Last 2; & powershell.exe -NoProfile -File .\\\\run.ps1 l 2>&1 | Select-Object -Last 2; Get-Content reports\\\\pssa\\\\pssa-report.md -TotalCount 6)",
       "PowerShell(& powershell.exe -NoProfile -File .\\\\run.ps1 t 2>&1 | Select-Object -Last 4)",
-      "PowerShell(& powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 4)"
+      "PowerShell(& powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 4)",
+      "PowerShell(& powershell.exe -NoProfile -File .\\\\tools\\\\Make-Icon.ps1 2>&1 | Select-Object -Last 5; ls assets)",
+      "PowerShell(& powershell.exe -NoProfile -File .\\\\tools\\\\Make-Icon.ps1 2>&1 | Select-Object -Last 3; ls assets)",
+      "PowerShell(& powershell.exe -NoProfile -File .\\\\tools\\\\Make-Icon.ps1 2>&1 | Select-Object -First 25)",
+      "PowerShell(& powershell.exe -NoProfile -File .\\\\tools\\\\Make-Icon.ps1 2>&1 | Select-Object -First 30)",
+      "PowerShell(& powershell.exe -NoProfile -Command \"Add-Type -AssemblyName System.Drawing; \\\\$ico = [System.Drawing.Icon]::new\\(\\(Resolve-Path .\\\\assets\\\\luscreen.ico\\).Path\\); \\\\\"Icon OK: \\\\$\\(\\\\$ico.Width\\)x\\\\$\\(\\\\$ico.Height\\)\\\\\"; \\\\$ico.Dispose\\(\\)\" 2>&1)",
+      "PowerShell(& powershell.exe -NoProfile -Command \"Import-Module '$\\(\\(Resolve-Path .\\\\_deps\\\\Pester\\\\5.7.1\\\\Pester.psd1\\).Path\\)' -Force; Invoke-Pester -Path .\\\\tests\\\\ -Output Minimal\" 2>&1 | Select-Object -Last 3)"
     ]
   }
 }

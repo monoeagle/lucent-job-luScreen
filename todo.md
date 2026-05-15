@@ -29,22 +29,6 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 
 ## AP 2 — Tray-Icon & Kontextmenü
 
-- [ ] `System.Windows.Forms.NotifyIcon` mit Programm-Icon (ICO in `assets/`)
-- [ ] Tooltip (Programmname + Version)
-- [ ] Kontextmenü (`ContextMenuStrip`)
-  - [ ] „Bereich aufnehmen"
-  - [ ] „Aktives Fenster aufnehmen"
-  - [ ] „Monitor (Maus)"
-  - [ ] „Alle Monitore"
-  - [ ] Trenner
-  - [ ] „Verlauf öffnen"
-  - [ ] „Konfiguration…"
-  - [ ] „Über…"
-  - [ ] Trenner
-  - [ ] „Beenden" (ruft `Application.Current.Shutdown()`)
-- [ ] „Über"-Dialog als WPF-Fenster (Name, Version, Autor, Lizenz)
-- [ ] Sauberes Dispose des NotifyIcon beim Beenden (sonst bleibt Icon bis Hover hängen)
-
 ## AP 3 — Globale Hotkeys
 
 - [ ] P/Invoke für `RegisterHotKey` / `UnregisterHotKey` (user32.dll) via `Add-Type`

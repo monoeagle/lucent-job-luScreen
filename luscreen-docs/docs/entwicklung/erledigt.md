@@ -25,6 +25,30 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 **Quality-Stand:** Parse 19/19 clean · PSSA 0 Findings · Pester 10/10 grün auf PS 7 und PS 5.1.
 
+### AP 2 — Tray-Icon & Kontextmenü — abgeschlossen `20260515-1529`
+
+- [x] `System.Windows.Forms.NotifyIcon` mit Programm-Icon (`assets/luscreen.ico`, multi-res 16/32/48/64)
+- [x] Tooltip (Programmname + Version)
+- [x] Kontextmenü (`ContextMenuStrip`): Bereich, Aktives Fenster, Monitor, Alle Monitore, Verlauf, Konfiguration…, Über…, Beenden
+- [x] „Über"-Dialog als WPF-Fenster (`src/views/about-dialog.xaml`, `src/ui/about-dialog.psm1`)
+- [x] Sauberes `Dispose` beim `Application.Exit` (verhindert Hänge-Icon)
+
+**Artefakte:**
+- `assets/luscreen.ico` (3.2 KB, 4 Auflösungen) + `tools/Make-Icon.ps1` (Generator)
+- `src/ui/tray.psm1` — `Initialize-Tray` mit Callbacks-Hashtable, Doppelklick-Hook auf „Region", Dispose-Closure-Result
+- `src/views/about-dialog.xaml`, `src/ui/about-dialog.psm1` — `Show-AboutDialog -Version -IconPath -Owner`
+- `src/LucentScreen.ps1` — Tray nach Config-Load initialisieren, Capture-Aktionen als Placeholder (MessageBox + Log) bis AP 4
+
+**Capture-Stubs:** Region/ActiveWindow/Monitor/AllMonitors zeigen aktuell eine MessageBox „Capture-Engine kommt mit AP 4". Verlauf-Stub analog für AP 8. Konfiguration… öffnet den AP 1-Dialog und persistiert per `Save-Config`.
+
+**Interaktiver Smoke-Test:**
+- Tray-Icon sichtbar, Tooltip „LucentScreen 0.1.0"
+- Rechtsklick → vollständiges Menü
+- „Konfiguration…" öffnet den Dialog, Speichern → `Save-Config` ok
+- „Beenden" → `Application.Shutdown()` → `Application.Exit`-Handler → Tray-Dispose → kein Ghost-Icon
+
+**Quality-Stand:** Parse 35/35 clean · PSSA 0 Findings · Pester 37/37 grün unter PS 5.1.
+
 ### AP 1 (Teil 2) — Konfig-Dialog (WPF) — abgeschlossen `20260515-1458`
 
 - [x] Konfig-Dialog als WPF-Fenster (XAML)
@@ -117,6 +141,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 14 | `20260515-1446` | `_pending_` | — | AP 1 | Config-Backend: `src/core/config.psm1` (Get-DefaultConfig, Get-ConfigPath, Read-Config mit Defaults-Merge und Migration, Save-Config atomar). 13 Pester-Tests. Bootstrap in `src/LucentScreen.ps1` laedt Config nach Logging. Pflicht-Path: `%APPDATA%/LucentScreen/config.json`. WPF-Konfig-Dialog folgt nach AP 2. |
 | 15 | `20260515-1458` | `_pending_` | — | AP 1 | Konfig-Dialog (WPF): `src/views/config-dialog.xaml`, `src/ui/config-dialog.psm1` mit `Show-ConfigDialog` (Hotkey-Capture via PreviewKeyDown, FolderBrowserDialog, Slider/Textbox-Sync, Live-Validation). `core/config.psm1` um `Format-Hotkey`/`ConvertFrom-HotkeyString`/`Test-ConfigValid`/`Test-HotkeyConflict` ergänzt + 14 neue Tests (jetzt 37/37 grün). `tools/Show-ConfigDialog.ps1` STA-Launcher und `run.ps1 cfg`-Task. |
 | 16 | `20260515-1513` | `_pending_` | — | compat | PS 7-Support entfernt — PS 5.1 ist einziges Target. `$script:PSShell`-Detection raus aus `run.ps1`, Self-Relaunch in `LucentScreen.ps1` direkt mit `powershell.exe`, `$IsLinux`/`$IsMacOS` aus `luscreen-docs/run.ps1`. CLAUDE.md mit „Future"-Note (PS 7 später evtl. wieder). PSSA-Bundle `1.25.0` in `_deps/` via neuem `-Url`-Mode (Invoke-WebRequest, kein NuGet). `Install-{PSScriptAnalyzer,Pester}-Offline.ps1` speichern nupkg als `.zip` (PS-5.1-Expand-Archive akzeptiert nur `.zip`). |
+| 17 | `20260515-1529` | `_pending_` | — | AP 2 | Tray-Icon mit Kontextmenü + About-Dialog. `assets/luscreen.ico` via `tools/Make-Icon.ps1` (multi-res, manuelles ICO-Binärformat statt BinaryWriter wegen PS-5.1-ctor-Mucken). `src/ui/tray.psm1` `Initialize-Tray` mit 8 Menü-Einträgen, Doppelklick-Hook, Dispose-Closure. `src/{views,ui}/about-dialog.*`. `LucentScreen.ps1` wired alles; Capture-Aktionen vorerst MessageBox-Stubs bis AP 4. Interaktiver Smoke-Test passed (User hat Tray-Menü inkl. Konfig-Dialog und Beenden geklickt, Tray sauber disposed). |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

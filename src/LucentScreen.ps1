@@ -136,16 +136,83 @@ $app.add_DispatcherUnhandledException({
 
 $app.add_Exit({
         Write-LsLog -Level Info -Source 'shutdown' -Message 'Application.Exit-Event'
+        if ($script:TrayDispose) {
+            try { $script:TrayDispose.Invoke() } catch { $null = $_ }
+        }
         try { $script:InstanceMutex.ReleaseMutex() } catch { $null = $_ }
         try { $script:InstanceMutex.Dispose() } catch { $null = $_ }
     })
 
+# ---------------------------------------------------------------
+# 8) Tray-Icon + Kontextmenue
+# ---------------------------------------------------------------
+$uiDir = Join-Path $rootDir 'ui'
+Import-Module (Join-Path $uiDir 'about-dialog.psm1') -Force
+Import-Module (Join-Path $uiDir 'config-dialog.psm1') -Force
+Import-Module (Join-Path $uiDir 'tray.psm1') -Force
+
+$assetsDir = Join-Path $rootDir '..\assets'
+$iconPath = Resolve-Path (Join-Path $assetsDir 'luscreen.ico')
+$appVersion = '0.1.0'
+
+$script:TrayDispose = $null
+
+$capturePlaceholder = {
+    param($mode)
+    Write-LsLog -Level Info -Source 'tray' -Message "Capture angefordert: $mode (AP 4 -- noch nicht implementiert)"
+    [System.Windows.MessageBox]::Show(
+        "Capture-Engine kommt mit AP 4.`nModus: $mode",
+        'LucentScreen',
+        [System.Windows.MessageBoxButton]::OK,
+        [System.Windows.MessageBoxImage]::Information) | Out-Null
+}
+
+$callbacks = @{
+    Region       = { $capturePlaceholder.Invoke('Region') }.GetNewClosure()
+    ActiveWindow = { $capturePlaceholder.Invoke('ActiveWindow') }.GetNewClosure()
+    Monitor      = { $capturePlaceholder.Invoke('Monitor') }.GetNewClosure()
+    AllMonitors  = { $capturePlaceholder.Invoke('AllMonitors') }.GetNewClosure()
+
+    History = {
+        Write-LsLog -Level Info -Source 'tray' -Message 'Verlauf angefordert (AP 8 -- noch nicht implementiert)'
+        [System.Windows.MessageBox]::Show(
+            'Verlauf folgt mit AP 8.',
+            'LucentScreen',
+            [System.Windows.MessageBoxButton]::OK,
+            [System.Windows.MessageBoxImage]::Information) | Out-Null
+    }.GetNewClosure()
+
+    Config = {
+        Write-LsLog -Level Info -Source 'tray' -Message 'Konfig-Dialog geoeffnet'
+        $updated = Show-ConfigDialog -Config $script:Config
+        if ($null -ne $updated) {
+            $r = Save-Config -Config $updated
+            if ($r.Success) {
+                $script:Config = $updated
+                Write-LsLog -Level Info -Source 'tray' -Message 'Konfig gespeichert (Hotkey-Re-Apply folgt mit AP 3)'
+            } else {
+                Write-LsLog -Level Error -Source 'tray' -Message ("Konfig-Speichern fehlgeschlagen: " + $r.Message)
+            }
+        }
+    }.GetNewClosure()
+
+    About = {
+        Show-AboutDialog -Version $appVersion -IconPath $iconPath.Path
+    }.GetNewClosure()
+
+    Exit = {
+        Write-LsLog -Level Info -Source 'tray' -Message 'Beenden ueber Tray-Menue'
+        [System.Windows.Application]::Current.Shutdown()
+    }.GetNewClosure()
+}
+
+$trayResult = Initialize-Tray -Icon $iconPath.Path -Version $appVersion -Callbacks $callbacks
+$script:TrayDispose = $trayResult.Dispose
+Write-LsLog -Level Info -Source 'boot' -Message 'Tray-Icon aktiv'
+
 Write-LsLog -Level Info -Source 'boot' -Message 'Bootstrap abgeschlossen, App-Loop startet'
 
 # ---------------------------------------------------------------
-# 8) Message-Loop
-#    AP 0: keine UI -> Application.Run() ohne MainWindow blockiert
-#    bis Shutdown() explizit aufgerufen wird (oder Ctrl+C / Stop-Process).
-#    AP 2 (Tray-Icon) wird vor diesem Aufruf das NotifyIcon initialisieren.
+# 9) Message-Loop
 # ---------------------------------------------------------------
 [void]$app.Run()

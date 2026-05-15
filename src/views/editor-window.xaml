@@ -89,6 +89,7 @@
                     <RadioButton x:Name="ToolArrow"     Style="{StaticResource ToolBtn}" GroupName="Tool" Content="Pfeil (A)"/>
                     <RadioButton x:Name="ToolBar"       Style="{StaticResource ToolBtn}" GroupName="Tool" Content="Balken (B)"/>
                     <RadioButton x:Name="ToolMarker"    Style="{StaticResource ToolBtn}" GroupName="Tool" Content="Marker (M)"/>
+                    <RadioButton x:Name="ToolEraser"    Style="{StaticResource ToolBtn}" GroupName="Tool" Content="Radierer (E)"/>
                     <RadioButton x:Name="ToolCrop"      Style="{StaticResource ToolBtn}" GroupName="Tool" Content="Zuschneiden (C)"/>
 
                     <TextBlock Text="Farbe" FontWeight="SemiBold" Margin="0,12,0,6"/>
@@ -110,7 +111,7 @@
                         <Slider x:Name="SldStroke" Minimum="1" Maximum="20" Value="3" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,0,6,0"/>
                     </DockPanel>
 
-                    <TextBlock Text="Tipp: Strg+Z/Y, V/R/L/A/B/M/C, Enter=Crop anwenden" FontSize="11" Foreground="#888" TextWrapping="Wrap" Margin="0,18,0,0"/>
+                    <TextBlock Text="Tipp: Strg+Z/Y, V/R/L/A/B/M/E/C, Enter=Crop anwenden, Entf=loescht selektierte Shape" FontSize="11" Foreground="#888" TextWrapping="Wrap" Margin="0,18,0,0"/>
                 </StackPanel>
             </Border>
 

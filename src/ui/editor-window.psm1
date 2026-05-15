@@ -53,7 +53,7 @@ function Show-EditorWindow {
         'BtnUndo', 'BtnRedo', 'BtnCropApply', 'BtnCropCancel',
         'Scroller', 'StageRoot', 'StageScale', 'ImgBitmap', 'ShapeLayer',
         'TxtStatus', 'TxtZoom',
-        'ToolSelect', 'ToolRectangle', 'ToolLine', 'ToolArrow', 'ToolBar', 'ToolMarker', 'ToolCrop',
+        'ToolSelect', 'ToolRectangle', 'ToolLine', 'ToolArrow', 'ToolBar', 'ToolMarker', 'ToolEraser', 'ToolCrop',
         'ClrRed', 'ClrOrange', 'ClrYellow', 'ClrGreen', 'ClrBlue', 'ClrMagenta', 'ClrBlack', 'ClrWhite',
         'CurrentColor', 'SldStroke', 'TxtStroke')
     $c = Get-XamlControls -Root $win -Names $names
@@ -119,8 +119,9 @@ function Show-EditorWindow {
         Bitmap     = $bitmap
         Saved      = $false
         SavedPath  = $null
+        IsDirty    = $false   # ungespeicherte Aenderungen seit letzter Save
         Zoom       = 1.0
-        Tool       = 'Select'         # Select|Rectangle|Line|Arrow|Bar|Marker|Crop
+        Tool       = 'Select'         # Select|Rectangle|Line|Arrow|Bar|Marker|Eraser|Crop
         Color      = [System.Windows.Media.Colors]::Red
         Stroke     = 3.0
         # Undo/Redo speichern Hashtables mit dispatch-Key 'Kind'='Shape'|'Crop'.
@@ -132,6 +133,10 @@ function Show-EditorWindow {
         Dragging   = $false
         StartPoint = $null
         Preview    = $null
+        # Selection-Adorner (nur Tool=Select aktiv):
+        Selected   = $null    # selektierte Shape (Rectangle/Line/Polyline)
+        Adorner    = $null    # gestricheltes Bounding-Box-Rectangle in ShapeLayer
+        SelDrag    = @{ Active = $false; StartPt = $null; TotalDx = 0.0; TotalDy = 0.0 }
         Crop       = @{
             Rect      = $null    # @{X=;Y=;W=;H=} in ShapeLayer-Koordinaten
             Overlay   = $null    # Canvas-Container im ShapeLayer
@@ -273,6 +278,102 @@ function Show-EditorWindow {
         }
     }.GetNewClosure()
 
+    # Verschiebt nur EINE Shape um (Dx, Dy). Wird beim Selection-Drag und beim
+    # ShapeMove-Undo/Redo aufgerufen. Gleicher Code wie $translateShapes, nur
+    # auf ein einzelnes Element.
+    $moveOneShape = {
+        param($Shape, [double]$Dx, [double]$Dy)
+        if ($Shape -is [System.Windows.Shapes.Line]) {
+            $Shape.X1 += $Dx; $Shape.Y1 += $Dy
+            $Shape.X2 += $Dx; $Shape.Y2 += $Dy
+        } elseif ($Shape -is [System.Windows.Shapes.Polyline]) {
+            $newPts = New-Object System.Windows.Media.PointCollection
+            foreach ($p in $Shape.Points) {
+                $newPts.Add((New-Object System.Windows.Point (($p.X + $Dx), ($p.Y + $Dy))))
+            }
+            $Shape.Points = $newPts
+        } elseif ($Shape -is [System.Windows.Shapes.Rectangle]) {
+            $oldX = [System.Windows.Controls.Canvas]::GetLeft($Shape)
+            $oldY = [System.Windows.Controls.Canvas]::GetTop($Shape)
+            if ([double]::IsNaN($oldX)) { $oldX = 0 }
+            if ([double]::IsNaN($oldY)) { $oldY = 0 }
+            [System.Windows.Controls.Canvas]::SetLeft($Shape, $oldX + $Dx)
+            [System.Windows.Controls.Canvas]::SetTop($Shape, $oldY + $Dy)
+        }
+    }.GetNewClosure()
+
+    # Bounding-Box einer Shape (X,Y,W,H) -- fuer Selection-Adorner.
+    $getShapeBounds = {
+        param($Shape)
+        if ($Shape -is [System.Windows.Shapes.Line]) {
+            $x = [math]::Min($Shape.X1, $Shape.X2)
+            $y = [math]::Min($Shape.Y1, $Shape.Y2)
+            return @{
+                X = $x; Y = $y
+                W = [math]::Abs($Shape.X2 - $Shape.X1)
+                H = [math]::Abs($Shape.Y2 - $Shape.Y1)
+            }
+        }
+        if ($Shape -is [System.Windows.Shapes.Polyline]) {
+            $minX = [double]::MaxValue; $minY = [double]::MaxValue
+            $maxX = [double]::MinValue; $maxY = [double]::MinValue
+            foreach ($p in $Shape.Points) {
+                if ($p.X -lt $minX) { $minX = $p.X }
+                if ($p.Y -lt $minY) { $minY = $p.Y }
+                if ($p.X -gt $maxX) { $maxX = $p.X }
+                if ($p.Y -gt $maxY) { $maxY = $p.Y }
+            }
+            return @{ X = $minX; Y = $minY; W = $maxX - $minX; H = $maxY - $minY }
+        }
+        # Rectangle / Bar / Marker
+        $x = [System.Windows.Controls.Canvas]::GetLeft($Shape)
+        $y = [System.Windows.Controls.Canvas]::GetTop($Shape)
+        if ([double]::IsNaN($x)) { $x = 0 }
+        if ([double]::IsNaN($y)) { $y = 0 }
+        return @{ X = $x; Y = $y; W = [double]$Shape.Width; H = [double]$Shape.Height }
+    }.GetNewClosure()
+
+    # Selektion entfernen: Adorner-Rect aus dem Layer raus, $state.Selected = $null.
+    $clearSelection = {
+        if ($null -ne $state.Adorner) {
+            try { $c.ShapeLayer.Children.Remove($state.Adorner) } catch { $null = $_ }
+            $state.Adorner = $null
+        }
+        $state.Selected = $null
+    }.GetNewClosure()
+
+    # Adorner an die aktuell selektierte Shape neu anpassen. Wird nach jedem
+    # Drag-Move-Schritt aufgerufen. Wenn keine Shape selektiert -> nichts.
+    $updateSelectionAdorner = {
+        if ($null -eq $state.Selected -or $null -eq $state.Adorner) { return }
+        $b = & $getShapeBounds $state.Selected
+        $pad = 4.0
+        [System.Windows.Controls.Canvas]::SetLeft($state.Adorner, $b.X - $pad)
+        [System.Windows.Controls.Canvas]::SetTop($state.Adorner, $b.Y - $pad)
+        $state.Adorner.Width = [math]::Max(1.0, $b.W + 2 * $pad)
+        $state.Adorner.Height = [math]::Max(1.0, $b.H + 2 * $pad)
+    }.GetNewClosure()
+
+    # Selektiert eine Shape: Adorner als gestricheltes blaues Rect ueber die
+    # Bounding-Box zeichnen. IsHitTestVisible=false damit Klicks weiter zur
+    # Shape darunter durchgehen.
+    $selectShape = {
+        param($Shape)
+        & $clearSelection
+        if ($null -eq $Shape) { return }
+        $state.Selected = $Shape
+        $rect = New-Object System.Windows.Shapes.Rectangle
+        $rect.Stroke = New-Object System.Windows.Media.SolidColorBrush ([System.Windows.Media.Color]::FromArgb(0xFF, 0x25, 0x63, 0xEB))
+        $rect.StrokeThickness = 1.5
+        $rect.StrokeDashArray = New-Object System.Windows.Media.DoubleCollection (@(4.0, 3.0))
+        $rect.Fill = $null
+        $rect.IsHitTestVisible = $false
+        [System.Windows.Controls.Panel]::SetZIndex($rect, 9998)
+        [void]$c.ShapeLayer.Children.Add($rect)
+        $state.Adorner = $rect
+        & $updateSelectionAdorner
+    }.GetNewClosure()
+
     # Wendet die Bitmap-Seite eines Crop-Eintrags an: setzt Bitmap + ImgBitmap +
     # ShapeLayer-Masse. Wird bei cropApply (vorwaerts), Crop-Undo (rueckwaerts)
     # und Crop-Redo (vorwaerts) genutzt -- jeweils mit der passenden Bitmap.
@@ -290,6 +391,7 @@ function Show-EditorWindow {
         param([hashtable]$Entry)
         $state.UndoStack.Push($Entry) | Out-Null
         $state.RedoStack.Clear()
+        $state.IsDirty = $true
         & $updateUndoButtons
     }.GetNewClosure()
 
@@ -299,6 +401,17 @@ function Show-EditorWindow {
         switch ($top.Kind) {
             'Shape' {
                 $c.ShapeLayer.Children.Remove($top.Element)
+            }
+            'ShapeRemove' {
+                # Radierer rueckgaengig: die geloeschte Shape wieder einsetzen.
+                [void]$c.ShapeLayer.Children.Add($top.Element)
+            }
+            'ShapeMove' {
+                # Selection-Drag rueckgaengig: gegenlaeufig verschieben.
+                $undoDx = 0.0 - [double]$top.Dx
+                $undoDy = 0.0 - [double]$top.Dy
+                & $moveOneShape $top.Element $undoDx $undoDy
+                & $updateSelectionAdorner
             }
             'Crop' {
                 # Rueckwaerts: Shapes zurueck-translatieren, alte Bitmap+Masse wiederherstellen
@@ -319,6 +432,15 @@ function Show-EditorWindow {
         switch ($top.Kind) {
             'Shape' {
                 [void]$c.ShapeLayer.Children.Add($top.Element)
+            }
+            'ShapeRemove' {
+                # Radierer wiederholen: das wiederhergestellte Element erneut entfernen.
+                $c.ShapeLayer.Children.Remove($top.Element)
+            }
+            'ShapeMove' {
+                # Selection-Drag wiederholen: gleicher Vektor erneut.
+                & $moveOneShape $top.Element ([double]$top.Dx) ([double]$top.Dy)
+                & $updateSelectionAdorner
             }
             'Crop' {
                 # Vorwaerts: Shapes wieder verschieben, neue Bitmap+Masse setzen
@@ -614,6 +736,7 @@ function Show-EditorWindow {
         Arrow     = $c.ToolArrow
         Bar       = $c.ToolBar
         Marker    = $c.ToolMarker
+        Eraser    = $c.ToolEraser
         Crop      = $c.ToolCrop
     }
     foreach ($kv in $toolButtons.GetEnumerator()) {
@@ -649,6 +772,8 @@ function Show-EditorWindow {
                 # Mauszeiger ueber dem Canvas spiegelt das Tool
                 $c.ShapeLayer.Cursor = if ($state.Tool -eq 'Select') {
                     [System.Windows.Input.Cursors]::Arrow
+                } elseif ($state.Tool -eq 'Eraser') {
+                    [System.Windows.Input.Cursors]::Hand
                 } elseif ($state.Tool -eq 'Crop') {
                     [System.Windows.Input.Cursors]::Cross
                 } else {
@@ -716,7 +841,39 @@ function Show-EditorWindow {
                 return
             }
 
-            if ($state.Tool -eq 'Select') { return }
+            if ($state.Tool -eq 'Select') {
+                # Klick auf Shape -> selektieren + Drag-Move starten.
+                # Klick auf Background -> Selection aufheben.
+                $hit = $e.OriginalSource
+                if ($hit -is [System.Windows.Shapes.Shape] -and $c.ShapeLayer.Children.Contains($hit) -and $hit -ne $state.Adorner) {
+                    & $selectShape $hit
+                    $state.SelDrag.Active = $true
+                    $state.SelDrag.StartPt = $pt
+                    $state.SelDrag.TotalDx = 0.0
+                    $state.SelDrag.TotalDy = 0.0
+                    [void]$c.ShapeLayer.CaptureMouse()
+                    $e.Handled = $true
+                } else {
+                    & $clearSelection
+                }
+                return
+            }
+
+            if ($state.Tool -eq 'Eraser') {
+                # Click auf eine Shape -> entfernen + Undo-Eintrag.
+                # OriginalSource ist das tatsaechlich getroffene Element. Wenn
+                # auf den ShapeLayer-Background geklickt wird, ist es der Layer
+                # selbst -- dann nichts tun. Crop-Overlay ($state.Crop.Overlay)
+                # ueberspringen wir, weil der Crop-Modus eigene Aktionen hat.
+                $hit = $e.OriginalSource
+                if ($hit -is [System.Windows.Shapes.Shape] -and $c.ShapeLayer.Children.Contains($hit)) {
+                    $c.ShapeLayer.Children.Remove($hit)
+                    & $pushUndo @{ Kind = 'ShapeRemove'; Element = $hit }
+                }
+                $e.Handled = $true
+                return
+            }
+
             $state.StartPoint = $pt
             $state.Dragging = $true
             $state.Preview = & $createShape $state.Tool
@@ -770,12 +927,38 @@ function Show-EditorWindow {
                 return
             }
 
+            if ($state.Tool -eq 'Select' -and $state.SelDrag.Active) {
+                $dx = $pt.X - $state.SelDrag.StartPt.X
+                $dy = $pt.Y - $state.SelDrag.StartPt.Y
+                if ($dx -ne 0 -or $dy -ne 0) {
+                    & $moveOneShape $state.Selected $dx $dy
+                    $state.SelDrag.TotalDx += $dx
+                    $state.SelDrag.TotalDy += $dy
+                    $state.SelDrag.StartPt = $pt
+                    & $updateSelectionAdorner
+                }
+                return
+            }
+
             if (-not $state.Dragging -or $null -eq $state.Preview) { return }
             & $updateShape $state.Preview $state.StartPoint $pt
         }.GetNewClosure())
 
     $c.ShapeLayer.Add_MouseLeftButtonUp({
             param($s, $e)
+
+            if ($state.Tool -eq 'Select' -and $state.SelDrag.Active) {
+                $state.SelDrag.Active = $false
+                $c.ShapeLayer.ReleaseMouseCapture()
+                $tdx = [double]$state.SelDrag.TotalDx
+                $tdy = [double]$state.SelDrag.TotalDy
+                if ($tdx -ne 0 -or $tdy -ne 0) {
+                    & $pushUndo @{ Kind = 'ShapeMove'; Element = $state.Selected; Dx = $tdx; Dy = $tdy }
+                }
+                $e.Handled = $true
+                return
+            }
+
             if (-not $state.Dragging) { return }
             $end = $e.GetPosition($c.ShapeLayer)
 
@@ -866,6 +1049,8 @@ function Show-EditorWindow {
     $cmdSave = {
         param($s, $e)
         try {
+            # Selection-Adorner sollte NICHT im PNG landen.
+            & $clearSelection
             $w = [int]$state.Bitmap.PixelWidth
             $h = [int]$state.Bitmap.PixelHeight
             $dpiX = $state.Bitmap.DpiX
@@ -920,6 +1105,7 @@ function Show-EditorWindow {
             }
             $state.Saved = $true
             $state.SavedPath = $r.Path
+            $state.IsDirty = $false
             $c.TxtStatus.Text = "Gespeichert: $($r.Path)"
 
             try { [System.Windows.Clipboard]::SetImage($rtb) } catch { $null = $_ }
@@ -961,8 +1147,12 @@ function Show-EditorWindow {
             # Wenn Fokus in einem Eingabefeld liegt (z.B. Slider), nicht stehlen
             switch ($e.Key) {
                 'Escape' {
+                    # Crop hat eigene Cancel-Logik. Selection -> nur deselect,
+                    # nicht das Fenster schliessen.
                     if ($state.Tool -eq 'Crop' -and $null -ne $state.Crop.Rect) {
                         & $cropCancel
+                    } elseif ($null -ne $state.Selected) {
+                        & $clearSelection
                     } else {
                         $win.Close()
                     }
@@ -974,6 +1164,19 @@ function Show-EditorWindow {
                 }
                 'Return' {
                     if ($state.Tool -eq 'Crop') { & $cropApply; $e.Handled = $true }
+                    break
+                }
+                'Delete' {
+                    # Selektierte Shape loeschen + Undo-Eintrag.
+                    if ($null -ne $state.Selected) {
+                        $sh = $state.Selected
+                        & $clearSelection
+                        if ($c.ShapeLayer.Children.Contains($sh)) {
+                            $c.ShapeLayer.Children.Remove($sh)
+                            & $pushUndo @{ Kind = 'ShapeRemove'; Element = $sh }
+                        }
+                        $e.Handled = $true
+                    }
                     break
                 }
                 default {
@@ -1005,6 +1208,7 @@ function Show-EditorWindow {
                             'A' { $c.ToolArrow.IsChecked = $true; $e.Handled = $true }
                             'B' { $c.ToolBar.IsChecked = $true; $e.Handled = $true }
                             'M' { $c.ToolMarker.IsChecked = $true; $e.Handled = $true }
+                            'E' { $c.ToolEraser.IsChecked = $true; $e.Handled = $true }
                             'C' { $c.ToolCrop.IsChecked = $true; $e.Handled = $true }
                         }
                     }
@@ -1016,6 +1220,22 @@ function Show-EditorWindow {
     $win.Add_Loaded({
             param($s, $e)
             & $fitToWindow
+        }.GetNewClosure())
+
+    # Confirm bei ungespeicherten Aenderungen -- faengt ESC, X-Button und
+    # Code-Aufrufe von $win.Close() gleichermassen ueber Window.Closing.
+    $win.Add_Closing({
+            param($s, $e)
+            if ($state.IsDirty -and -not $state.Saved) {
+                $r = [System.Windows.MessageBox]::Show(
+                    'Ungespeicherte Aenderungen verwerfen?',
+                    'LucentScreen -- Editor schliessen',
+                    [System.Windows.MessageBoxButton]::YesNo,
+                    [System.Windows.MessageBoxImage]::Question)
+                if ($r -ne [System.Windows.MessageBoxResult]::Yes) {
+                    $e.Cancel = $true
+                }
+            }
         }.GetNewClosure())
 
     $sizeText = ("  ({0}x{1})" -f $bitmap.PixelWidth, $bitmap.PixelHeight)

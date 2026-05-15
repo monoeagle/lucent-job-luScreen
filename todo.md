@@ -12,13 +12,14 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 
 
 
-## AP 9 — Mini-Editor
+## AP 9 — Mini-Editor — abgeschlossen
 
-> Etappen 1 + 2a erledigt (siehe `luscreen-docs/docs/entwicklung/erledigt.md`). Offen fuer Etappe 2b/3:
+> Alle Etappen erledigt: 1 (Geruest+Save), 2a (Tools+Crop), 2b (Radierer + Selection-Adorner + Move + Delete), 3 (Crop-Undo + ESC-Confirm).
+> Details siehe `luscreen-docs/docs/entwicklung/erledigt.md` Eintraege #28-#32.
 
-- [ ] Radierer (entfernt Objekte aus Vektor-Layer — kein Pixel-Erase)
-- [ ] Auswaehlen / Verschieben / Loeschen einzelner Shapes (HitTest, Adorner fuer Selection)
-- [ ] ESC = Schliessen mit Nachfrage bei ungespeicherten Aenderungen
+- [x] Radierer (entfernt Objekte aus Vektor-Layer — kein Pixel-Erase)
+- [x] Auswaehlen / Verschieben / Loeschen einzelner Shapes (HitTest, Adorner fuer Selection)
+- [x] ESC = Schliessen mit Nachfrage bei ungespeicherten Aenderungen
 
 ## AP 10 — Integration & Politur
 

@@ -10,6 +10,43 @@ Chronologisches Logbuch über bereits abgeschlossene Arbeitspakete und alle Comm
 
 ## Arbeitspakete
 
+### AP 9 Etappe 2a — Editor-Tools, Color/Stroke, Undo/Redo — abgeschlossen `20260515-1850`
+
+- [x] Tool-Palette als Side-Panel links (170 px): RadioButtons fuer Auswahl/Rahmen/Linie/Pfeil/Balken/Marker mit eigener Styled-Template (Selected = blauer Hintergrund)
+- [x] Rahmen: `System.Windows.Shapes.Rectangle` mit Stroke, kein Fill
+- [x] Linie: `System.Windows.Shapes.Line` mit `StrokeStartLineCap=Round`/`EndLineCap=Round`
+- [x] Pfeil: `System.Windows.Shapes.Polyline` mit 5 Punkten (Schaft + 2 Spitzen-Schenkel); Geometrie aus `core/editor.psm1::Get-ArrowGeometry` (HeadSize skaliert mit `Stroke*4`)
+- [x] Balken: gefuelltes Rectangle ohne Stroke (Redact/Schwaerzen)
+- [x] Marker: gefuelltes Rectangle mit Alpha 0x66 (40 %) auf die gewaehlte Farbe -- Look wie ein Textmarker, darunterliegende Bildinhalte bleiben sichtbar
+- [x] Zuschnitt-Tool (`C`): Drag-to-Select erzeugt initiales Rechteck, danach 8 Handles (4 Ecken + 4 Kanten) zum Justieren plus Drag-im-Inneren zum Verschieben. Dimmer-Overlay zeigt den abgeschnittenen Bereich abgedunkelt. `Enter` bzw. Toolbar-Button schneidet, `Esc` bzw. Toolbar-Button bricht ab. Beim Anwenden werden alle bestehenden Shapes mit `-CropOffset` translatiert; Undo/Redo-Stacks werden geleert (Translation invalidiert die alten Visual-Positionen).
+- [x] Color-Palette: 8 Swatches (Rot/Orange/Gelb/Gruen/Blau/Magenta/Schwarz/Weiss) + `CurrentColor`-Anzeige
+- [x] Strichstaerken-Slider 1–20 px mit Live-Label
+- [x] Vektor-Layer: WPF-Shapes direkt in `ShapeLayer.Children` (Canvas-Position via `Canvas.SetLeft`/`SetTop` fuer Rectangles, X1/Y1/X2/Y2 fuer Lines, `PointCollection` fuer Polyline)
+- [x] Maus-Drawing: `Add_MouseLeftButtonDown/Move/Up` auf `ShapeLayer` mit `CaptureMouse`/`ReleaseMouseCapture`; Mini-Shapes (Drag < 3 px) werden verworfen statt commited; `LostMouseCapture` raeumt Preview auf
+- [x] Undo/Redo via zwei `Stack[UIElement]`-Instances; Strg+Z entfernt letzte Shape, Strg+Y stellt wieder her; jeder neue Stroke clearet Redo-Stack; Toolbar-Buttons `BtnUndo`/`BtnRedo` mit Enabled-State-Sync
+- [x] Tastatur-Tools: V/R/L/A/B/M/C schalten Tool um (nur wenn Strg nicht gedrueckt — sonst kollidiert es mit Strg+V usw.)
+- [x] Save-Render mit Shape-Layer: Zoom temporaer auf 1.0 zuruecksetzen, `StageRoot.UpdateLayout()`, dann `RenderTargetBitmap.Render($StageRoot)`. Anschliessend Zoom wiederherstellen. Damit landen Bitmap + Annotations in Original-Aufloesung im PNG, ohne dass ein Offscreen-Klon der Shapes gebaut werden muss.
+
+**Artefakte:**
+- `src/core/editor.psm1` — neu: `Get-ArrowGeometry -X1 -Y1 -X2 -Y2 [-HeadSize] [-HeadAngleDeg]` mit 5 Pester-Tests (5-Punkt-Reihenfolge, Spitzen-Symmetrie, Degenerate-Case bei Start==End, HeadSize-Skalierung)
+- `src/views/editor-window.xaml` — Side-Panel mit Tool-RadioButtons, Color-Swatches, Stroke-Slider; Top-Toolbar erweitert um `BtnUndo`/`BtnRedo`; Window-Default-Groesse 1240x820
+- `src/ui/editor-window.psm1` — Tool-State-Block, Helper-ScriptBlocks (`$createShape`, `$updateShape`, `$pushUndo`, `$doUndo`/`$doRedo`, `$applyColor`, `$brushFromColor`, `$updateUndoButtons`); Mouse-Drawing-Pipeline; Save-Pipeline gerendert ueber `$StageRoot` mit Zoom-Reset
+- `tests/core.editor.Tests.ps1` — 5 neue Tests fuer `Get-ArrowGeometry`
+
+**Implementierungs-Detail:**
+- **Save ohne Offscreen-Klon:** Statt einen Klon des Stage-Inhalts (Bitmap + Shapes) offscreen aufzubauen, wird der **echte** `StageRoot` gerendert. Damit das nicht im aktuellen Zoom landet (Aufloesungs-Verlust), wird `StageScale.ScaleX`/`Y` temporaer auf 1.0 gesetzt, `UpdateLayout()` aufgerufen, RTB rendert, dann Zoom zurueck. Kein Klonen, kein doppelter Parent-Konflikt.
+- **Mini-Shape-Verwerfen:** Bei `Klick ohne Drag` (∆x, ∆y < 3 px) wird die Preview-Shape verworfen statt commited — sonst entstehen Pixel-grosse Geister-Shapes.
+- **`LostMouseCapture` als Sicherheits-Netz:** Falls der User Alt-Tab/Modal-Dialog auslost waehrend des Dragging, fangen wir das ab und raeumen den unvollstaendigen Shape auf.
+- **Tool-Shortcut nur ohne Strg:** Wuerde sonst `Strg+V` (geplant: Paste in Etappe 3) den Tool-Modus auf 'Select' schalten.
+
+**Quality-Stand:** Parse 65/65 clean · PSSA 0 Findings · Pester 101/101 gruen (1 skipped — STA-Guard).
+
+**Offen fuer Etappe 2b/3:**
+- Selection mit HitTest + Adorner (verschieben, loeschen einzelner Shapes)
+- Radierer-Tool
+- ESC-Confirm bei ungespeicherten Aenderungen
+- Crop-Undo (Snapshot-basiert; aktuell loescht Crop die Annotation-Undo-Stacks)
+
 ### AP 9 Etappe 1 — Mini-Editor (Geruest + Save) — abgeschlossen `20260515-1828`
 
 - [x] Hook aus Verlaufsfenster: Doppelklick / Enter / Kontextmenue „Editieren" oeffnet den Editor; bestehendes „Oeffnen" bleibt fuer die Default-App
@@ -354,6 +391,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 26 | `20260515-1810` | `_pending_` | — | AP 8 | Verlaufsfenster: `src/core/history.psm1` (Get-HistoryItems, Open/Reveal/Remove via Microsoft.VisualBasic-Recycle-Bin, Copy-HistoryFileToClipboard wiederverwendet `Set-ClipboardImage`). `src/views/history-window.xaml` + `src/ui/history-window.psm1` mit `Show-HistoryWindow`. INPC-Klasse `LucentScreen.HistoryEntry` via Add-Type fuer Thumbnail-Binding. ListBox+WrapPanel+VirtualizingPanel-Recycling, DataTemplate mit `BitmapFrame.Create`+`TransformedBitmap` (Downscale auf 200 px) — `BitmapImage`+`DecodePixelWidth` lieferte leere Tiles. Live-Update via `DispatcherTimer`-Polling (2 s, Snapshot-Signatur) — `FileSystemWatcher` mit PS-ScriptBlock-Handlern killte den Prozess silent vom Worker-Thread aus. Fenster 1110×1080 (Workarea-clamped, 5×5-Layout). Toolbar + Kontextmenü + Statusbar; PreviewKeyDown fuer Strg+C/Entf/Enter/F5/Esc. Selektions-Erhalt nach Refresh ueber FullName-Set. Helper als ScriptBlock-Variablen (Modul-private Underscore-Funktionen wurden aus `GetNewClosure`-Bloecken nicht aufgeloest). 14 neue Pester-Tests. `LucentScreen.ps1` History-Callback ruft `Show-HistoryWindow`; `DispatcherUnhandledException` jetzt mit Stack-Trace + InnerException-Chain. |
 | 27 | `20260515-1810` | `_pending_` | — | fix | `run.ps1` Switch case-sensitiv (`switch -CaseSensitive ($Code)`) — vorher feuerten `s`/`S`, `l`/`L`, `d`/`D`, `t`/`T` beide Branches in einem Aufruf (App startete und stoppte sofort, PSSA lief zweimal, Docs Build und Serve gleichzeitig). |
 | 28 | `20260515-1828` | `_pending_` | — | AP 9 (1/3) | Mini-Editor Etappe 1: `src/core/editor.psm1` (Format-EditedFilename, Save-EditedImage via PngBitmapEncoder, Wiederverwendung Resolve-UniqueFilename) + 6 Pester-Tests. `src/views/editor-window.xaml` + `src/ui/editor-window.psm1`: ScrollViewer mit StageRoot-Grid (Image + Canvas-Shape-Layer), LayoutTransform-Zoom, Toolbar (Save/Fit/100%/+/-/Close), Mausrad-Zoom (Strg=fein), Strg+S/Strg+0/Strg++/-, ESC. Save baut Offscreen-Grid (kein Zoom-Aufploppen), schreibt `<name>_edited.png` (Postfix aus Config), legt das Resultat zusaetzlich ins Clipboard. Verlaufs-Hook: Doppelklick/Enter rufen jetzt den Editor, Kontextmenue um „Editieren" erweitert, „Oeffnen" bleibt fuer Default-App. Tools, Undo/Redo, ESC-Confirm folgen mit Etappe 2/3. |
+| 29 | `20260515-1905` | `_pending_` | — | AP 9 (2a/3) | Editor-Tools + Color/Stroke + Undo/Redo + Crop: Side-Panel mit Tool-RadioButtons (Auswahl/Rahmen/Linie/Pfeil/Balken/Marker/Zuschneiden), 8 Color-Swatches, Stroke-Slider 1-20. Marker = gefuelltes Rect mit 40% Alpha auf gewaehlte Farbe. Crop-Tool mit 8 Handles (4 Ecken + 4 Kanten) plus Move-im-Inneren, Dimmer-Overlay, Apply via Enter/Toolbar oder Cancel via Esc, bestehende Annotations werden mit-translatiert. Mouse-Drawing via Canvas.MouseLeftButtonDown/Move/Up mit CaptureMouse + Mini-Shape-Discard (< 3 px Drag). Vektor-Layer = WPF.Shapes direkt in ShapeLayer.Children. Pfeil-Geometrie aus core/editor.psm1::Get-ArrowGeometry (5 Punkte) + 5 Tests. Undo/Redo via zwei Stack[UIElement] mit Strg+Z/Y. Tool-Shortcuts V/R/L/A/B/M/C (nur ohne Strg). Save: temporaer Zoom auf 1.0, UpdateLayout, RenderTargetBitmap auf StageRoot, Zoom zurueck. Selection-Adorner, Radierer und ESC-Confirm folgen Etappe 2b/3. |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

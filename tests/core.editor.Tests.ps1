@@ -77,3 +77,43 @@ Describe 'editor: Save-EditedImage' {
         $r.Path    | Should -Be (Join-Path $script:EdDir 'orig_redacted.png')
     }
 }
+
+Describe 'editor: Get-ArrowGeometry' {
+    It 'liefert 5 Punkte fuer einen normalen Pfeil' {
+        $r = Get-ArrowGeometry -X1 0 -Y1 0 -X2 100 -Y2 0
+        $r.IsDegenerate    | Should -BeFalse
+        @($r.Points).Count | Should -Be 5
+    }
+
+    It 'Punkt[0] = Start, Punkt[1] = Ende' {
+        $r = Get-ArrowGeometry -X1 10 -Y1 20 -X2 110 -Y2 220
+        $r.Points[0].X | Should -Be 10
+        $r.Points[0].Y | Should -Be 20
+        $r.Points[1].X | Should -Be 110
+        $r.Points[1].Y | Should -Be 220
+    }
+
+    It 'Spitzen-Schenkel zeigen nach hinten (X < End.X bei waagrechtem Pfeil)' {
+        $r = Get-ArrowGeometry -X1 0 -Y1 0 -X2 100 -Y2 0 -HeadSize 20
+        # Schenkel-Endpunkte sind Index 2 und 4
+        $r.Points[2].X | Should -BeLessThan 100
+        $r.Points[4].X | Should -BeLessThan 100
+        # Symmetrie um die Y-Achse: einer ueber 0, einer drunter
+        ($r.Points[2].Y * $r.Points[4].Y) | Should -BeLessThan 0
+    }
+
+    It 'meldet IsDegenerate bei Start == End' {
+        $r = Get-ArrowGeometry -X1 50 -Y1 50 -X2 50 -Y2 50
+        $r.IsDegenerate | Should -BeTrue
+        @($r.Points).Count | Should -Be 1
+    }
+
+    It 'HeadSize skaliert die Schenkel-Laenge' {
+        $small = Get-ArrowGeometry -X1 0 -Y1 0 -X2 100 -Y2 0 -HeadSize 10
+        $big = Get-ArrowGeometry -X1 0 -Y1 0 -X2 100 -Y2 0 -HeadSize 40
+        # Abstand des Schenkel-Endpunkts vom End (100,0)
+        $dxSmall = 100 - $small.Points[2].X
+        $dxBig = 100 - $big.Points[2].X
+        $dxBig | Should -BeGreaterThan $dxSmall
+    }
+}

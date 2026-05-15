@@ -14,20 +14,10 @@ Reihenfolge: von unten nach oben aufbauend — erst Grundgerüst (Tray, Konfig),
 
 ## AP 9 — Mini-Editor
 
-> Etappe 1 (Geruest + Save) ist erledigt — siehe `luscreen-docs/docs/entwicklung/erledigt.md`. Offen:
+> Etappen 1 + 2a erledigt (siehe `luscreen-docs/docs/entwicklung/erledigt.md`). Offen fuer Etappe 2b/3:
 
-- [ ] Tool-Palette (XAML-Toolbar oder Side-Panel)
-  - [ ] Rahmen (Rechteck, Konturstärke + Farbe)
-  - [ ] Pfeil (Start–Ende, Spitze als Path/Polygon)
-  - [ ] Linie
-  - [ ] Balken (gefülltes Rechteck = Schwärzen/Redacten)
-  - [ ] Radierer (entfernt Objekte aus Vektor-Layer — kein Pixel-Erase)
-- [ ] Farb- und Strichstärken-Auswahl (ColorPicker, NumericUpDown / Slider)
-- [ ] Vektor-Layer-Modell (`ObservableCollection<Shape>` über Bitmap-Background)
-  - [ ] Undo/Redo (Command-Stack)
-  - [ ] Auswählen/Verschieben/Löschen einzelner Shapes (HitTest, Adorner für Selection)
-- [ ] Render mit Vektor-Layer in `RenderTargetBitmap` (in Etappe 1 wird aktuell nur das Original kopiert)
-- [ ] STRG+Z/Y fuer Undo/Redo
+- [ ] Radierer (entfernt Objekte aus Vektor-Layer — kein Pixel-Erase)
+- [ ] Auswaehlen / Verschieben / Loeschen einzelner Shapes (HitTest, Adorner fuer Selection)
 - [ ] ESC = Schliessen mit Nachfrage bei ungespeicherten Aenderungen
 
 ## AP 10 — Integration & Politur

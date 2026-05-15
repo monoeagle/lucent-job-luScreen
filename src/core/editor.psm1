@@ -94,4 +94,70 @@ function Save-EditedImage {
     }
 }
 
-Export-ModuleMember -Function Format-EditedFilename, Save-EditedImage
+function Get-ArrowGeometry {
+    <#
+    .SYNOPSIS
+        Berechnet die Polyline-Punkte fuer einen Pfeil von (X1,Y1) nach (X2,Y2).
+    .DESCRIPTION
+        Liefert ein Array aus 5 Punkten:
+          - Schenkel-Ende-1 -> Spitze (X2,Y2) -> Schenkel-Ende-2
+          - kombiniert mit dem Schaft (X1,Y1) -> (X2,Y2)
+        Reihenfolge fuer eine einzige Polyline:
+          [(X1,Y1), (X2,Y2), Spitze1, (X2,Y2), Spitze2]
+        Damit zeichnet eine einzige Polyline-Form sowohl den Schaft als auch
+        beide Spitzen-Schenkel. Bei Start == End wird nur (X1,Y1) zurueckgegeben.
+    .PARAMETER HeadSize
+        Laenge der Spitzen-Schenkel in Pixeln. Default 14.
+    .PARAMETER HeadAngleDeg
+        Winkel pro Schenkel relativ zum Schaft (in Grad). Default 25.
+    .OUTPUTS
+        hashtable @{ Points = @( @{X=;Y=}, ... ); IsDegenerate = $bool }
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)][double]$X1,
+        [Parameter(Mandatory)][double]$Y1,
+        [Parameter(Mandatory)][double]$X2,
+        [Parameter(Mandatory)][double]$Y2,
+        [double]$HeadSize = 14,
+        [double]$HeadAngleDeg = 25
+    )
+
+    $dx = $X2 - $X1
+    $dy = $Y2 - $Y1
+    $len = [math]::Sqrt($dx * $dx + $dy * $dy)
+
+    if ($len -lt 0.5) {
+        return @{
+            Points       = @(@{ X = $X1; Y = $Y1 })
+            IsDegenerate = $true
+        }
+    }
+
+    # Winkel des Schafts; Spitzen-Schenkel zeigen vom End-Punkt RUECKWAERTS
+    # ausgehend, jeweils um HeadAngleDeg vom Schaft weggedreht.
+    $angle = [math]::Atan2($dy, $dx)
+    $rad = [math]::PI * $HeadAngleDeg / 180.0
+
+    $a1 = $angle + [math]::PI - $rad   # zurueck minus Winkel
+    $a2 = $angle + [math]::PI + $rad   # zurueck plus Winkel
+
+    $hx1 = $X2 + $HeadSize * [math]::Cos($a1)
+    $hy1 = $Y2 + $HeadSize * [math]::Sin($a1)
+    $hx2 = $X2 + $HeadSize * [math]::Cos($a2)
+    $hy2 = $Y2 + $HeadSize * [math]::Sin($a2)
+
+    return @{
+        Points       = @(
+            @{ X = $X1; Y = $Y1 },
+            @{ X = $X2; Y = $Y2 },
+            @{ X = $hx1; Y = $hy1 },
+            @{ X = $X2; Y = $Y2 },
+            @{ X = $hx2; Y = $hy2 }
+        )
+        IsDegenerate = $false
+    }
+}
+
+Export-ModuleMember -Function Format-EditedFilename, Save-EditedImage, Get-ArrowGeometry

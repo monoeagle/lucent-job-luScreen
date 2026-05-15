@@ -43,7 +43,8 @@
       "PowerShell(try { pwsh -NoProfile -Command \"& '.\\\\luscreen-docs\\\\run.ps1' prereqs\" } catch {}; pwsh -NoProfile -Command \"& { try { & '.\\\\luscreen-docs\\\\run.ps1' prereqs } catch { Write-Host \\(`\"ERROR: `\" + `$_.Exception.Message\\) -ForegroundColor Red; Write-Host `$_.ScriptStackTrace -ForegroundColor DarkRed } }\" 2>&1)",
       "PowerShell(pwsh -NoProfile -File .\\\\luscreen-docs\\\\run.ps1 build 2>&1 | Select-Object -Last 30)",
       "PowerShell(pwsh -NoProfile -File .\\\\run.ps1 p 2>&1 | Select-Object -Last 2; pwsh -NoProfile -File .\\\\run.ps1 l 2>&1 | Select-Object -Last 2; Get-Content reports\\\\pssa\\\\pssa-report.md -TotalCount 6; \"\"; \"=== PS5.1 parse check fuer luscreen-docs/run.ps1 ===\"; & powershell.exe -NoProfile -Command \"& { `$errs=`$null; [void][System.Management.Automation.Language.Parser]::ParseFile\\('C:\\\\_Projects\\\\lucent-job-luScreen\\\\luscreen-docs\\\\run.ps1', [ref]`$null, [ref]`$errs\\); if \\(`$errs.Count\\) { 'ERRORS:'; `$errs | Format-List Message } else { 'PARSE OK' } }\")",
-      "PowerShell(pwsh -NoProfile -File .\\\\run.ps1 l 2>&1 | Select-Object -Last 2; Get-Content reports\\\\pssa\\\\pssa-report.md -TotalCount 6)"
+      "PowerShell(pwsh -NoProfile -File .\\\\run.ps1 l 2>&1 | Select-Object -Last 2; Get-Content reports\\\\pssa\\\\pssa-report.md -TotalCount 6)",
+      "PowerShell(Select-String *)"
     ]
   }
 }

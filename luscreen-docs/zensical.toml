@@ -7,6 +7,12 @@ copyright        = "Copyright &copy; 2026"
 docs_dir = "docs"
 site_dir = "site"
 
+# Wichtig fuer file://-Aufrufe nach './run.ps1 d': baut <name>.html-Seiten
+# statt <name>/index.html-Verzeichnis-URLs. Sonst zeigt der Browser beim
+# Doppelklick eine Ordner-Liste statt der Seite. Beim Live-Server (D) waere
+# directory_urls schoener, aber wir wollen ein einziges Build-Resultat.
+use_directory_urls = false
+
 extra_css        = ["stylesheets/extra.css"]
 extra_javascript = []
 

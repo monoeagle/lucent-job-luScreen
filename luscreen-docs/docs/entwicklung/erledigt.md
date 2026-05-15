@@ -60,6 +60,7 @@ Tabelle pro Commit/Push. Eintrag VOR `git commit` ergänzen, Hash nach erfolgrei
 | 10 | `20260515-1421` | `9171d9b` | ✓ | chore | Commit-Log-Eintrag 9 mit finalem Hash nachgetragen |
 | 11 | `20260515-1421` | `1c3d67c` | ✓ | chore | Commit-Log-Eintrag 10 mit finalem Hash nachgetragen |
 | 12 | `20260515-1435` | `_pending_` | — | fix | `build_docs.py` UTF-8-safe Output + Python-Mindestversion-Check (3.10); `luscreen-docs/run.ps1` PS-Wrapper mit `.venv-docs`-Management, Python-Detection, Build/Serve/Clean/Menu; Haupt-`run.ps1` `Action-DocsBuild` ruft Wrapper, neue Taste `D` für Live-Server; `run_luscreen_docs.sh` (bash) gelöscht; Playbook-Abschnitt 11 um Option-2-Regel (Hash nicht backfillen) ergänzt |
+| 13 | `20260515-1440` | `_pending_` | — | fix | `zensical.toml: use_directory_urls = false` damit Doku-Site aus `file://` direkt klickbar ist (statt Verzeichnis-Listing) |
 
 **Regeln:**
 - **Datumsformat ist `YYYYMMDD-HHMM`** (z.B. `20260515-1412`).

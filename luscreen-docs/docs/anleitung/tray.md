@@ -42,6 +42,12 @@ Damit das LucentScreen-Icon dauerhaft sichtbar bleibt:
 
 Die Hotkey-Anzeige rechts neben den Einträgen spiegelt die aktuelle Konfiguration. Beim ersten App-Start mit den Defaults siehst du obige Werte. Nach Änderung im Konfig-Dialog wird die Anzeige beim nächsten App-Start aktualisiert; die Hotkey-Registrierung selbst geschieht sofort.
 
+## Über-Dialog
+
+Der Eintrag **Über…** öffnet ein Fenster mit Version, System-Infos, Projekt-Daten und einem Tab mit dem aktuellen Changelog.
+
+![Über-Dialog](../images/luscreen/0.2.0/about-dialog.png){ width=500 }
+
 ## Bestätigung dass die App läuft
 
 Falls Sie das Icon nicht finden: drücken Sie `Ctrl+Shift+3`. Wenn ein Screenshot in `~/Pictures/LucentScreen/` auftaucht, läuft die App.

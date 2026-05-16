@@ -35,6 +35,8 @@ Doppelklick auf ein Bild öffnet den **Editor**.
 
 ## 4. Editor-Basics
 
+![Editor frisch geöffnet](../images/luscreen/0.2.0/editor-empty.png){ width=600 }
+
 | Werkzeug | Tastenkürzel |
 |---|---|
 | Auswahl | `V` |

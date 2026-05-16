@@ -27,6 +27,8 @@ sequenceDiagram
 - **Verzögerung**: wenn `DelaySeconds > 0` (siehe [Konfiguration](../referenz/konfiguration.md)), zeigt LucentScreen vor jeder Aufnahme einen Countdown-Overlay. Praktisch z.B. um vorher noch ein Menü aufzuklappen, das bei Tastendruck verschwindet.
 - **Zwischenablage**: das Bild liegt sofort als Image im Clipboard — direkt in Word/Outlook/Teams einfügbar.
 
+![Capture-Toast](../images/luscreen/0.2.0/toast-capture.png){ width=300 }
+
 ## Speicherort
 
 `%USERPROFILE%\Pictures\LucentScreen\<yyyyMMdd>_<HHmm>_Region.png`

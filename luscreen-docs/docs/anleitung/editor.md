@@ -62,6 +62,8 @@ Der Selection-Adorner ist ein gestricheltes blaues Bounding-Box-Rectangle. Beim 
 3. Bild landet zusätzlich in der Zwischenablage
 4. **Editor schließt automatisch** + Toast „Gespeichert + kopiert" oben rechts
 
+![Save-Toast](../images/luscreen/0.2.0/toast-saved.png){ width=300 }
+
 ## ESC bei ungespeicherten Änderungen
 
 Wenn `IsDirty` (mindestens eine Aktion auf dem Undo-Stack), zeigt der Editor beim Schließen einen Confirm-Dialog: „Ungespeicherte Änderungen verwerfen? — Ja / Nein". Bei „Nein" bleibt der Editor offen.

@@ -6,17 +6,19 @@
 
 ## Toolbar
 
-7 Icon-Buttons (Segoe MDL2). Die Größe ist konfigurierbar (Konfig → Toolbar-Icon-Größe, 16–32 pt).
+Icon-Buttons (Segoe MDL2). Die Größe ist konfigurierbar (Konfig → Toolbar-Icon-Größe, 16–32 pt).
 
 | Icon | Aktion | Was es macht |
 |---|---|---|
 | 👁 | **Anzeigen** | Bild im Standard-Bildbetrachter (Default-App) |
 | ✎ | **Bearbeiten** | Editor öffnen (= Doppelklick / `Enter`) |
 | 🗑 | **Löschen** | Markierte Bilder in den Papierkorb |
+| ✏ | **Umbenennen** | Markierte Datei neu benennen (`F2`) |
 | 📂 | **Speicherort** | Explorer öffnet, Datei markiert |
 | 📋 | **Zwischenablage** | Markiertes Bild als Image ins Clipboard (`Strg+C`) |
 | 📑 | **Zwischenablage (Liste)** | Mehrere Dateien als Datei-Liste — Word/Outlook fügt alle ein |
 | ↻ | **Aktualisieren** | Verlauf neu einlesen (`F5`) |
+| 🖨 | **Druck** | Bild aus der Zwischenablage als PNG speichern (`Strg+V`; aktiv sobald Druck/Snipping/Copy ein Bild abgelegt hat) |
 
 ## Tastatur
 
@@ -24,6 +26,8 @@
 |---|---|
 | `Doppelklick` / `Enter` | Editor öffnen |
 | `Strg+C` | Single-Bild ins Clipboard |
+| `Strg+V` | Bild aus Zwischenablage speichern (Mode `DruckTaste`) |
+| `F2` | Markierte Datei umbenennen |
 | `Entf` | In Papierkorb |
 | `F5` | Refresh |
 | `Esc` | Verlauf schließen |
@@ -39,6 +43,7 @@ Rechtsklick auf ein Bild zeigt:
 - Im Ordner zeigen
 - In Zwischenablage kopieren
 - ─
+- Umbenennen…
 - In Papierkorb verschieben
 
 ## Live-Polling

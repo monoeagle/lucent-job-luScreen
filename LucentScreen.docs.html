@@ -97,6 +97,9 @@
   .note { border-left: 3px solid var(--accent); background: var(--accent-subtle); padding: 10px 16px; margin: 12px 0; border-radius: 0 var(--radius) var(--radius) 0; }
   .warn { border-left: 3px solid var(--warning); background: var(--warning-tint); padding: 10px 16px; margin: 12px 0; border-radius: 0 var(--radius) var(--radius) 0; }
   .imgph { background: var(--bg-card); border: 1px dashed var(--border); color: var(--text-sec); padding: 24px; text-align: center; border-radius: var(--radius); margin: 14px 0; font-size: 12px; font-style: italic; }
+  figure.shot { margin: 14px 0; text-align: center; }
+  figure.shot img { max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); }
+  figure.shot figcaption { color: var(--text-sec); font-size: 12px; margin-top: 6px; font-style: italic; }
   .mermaid { background: var(--bg-card); padding: 16px; border-radius: var(--radius); margin: 14px 0; text-align: center; }
   :root[data-theme="light"] .mermaid { background: #fff; }
 </style>
@@ -126,7 +129,6 @@
   <main>
     <h2 id="ueberblick">Überblick</h2>
     <p>LucentScreen ist ein leichtgewichtiges Windows-Screenshot-Tool mit Tray-Integration, globalen Hotkeys, Annotations-Editor und Verlauf. Es läuft als <strong>WPF-Anwendung in Windows PowerShell 5.1</strong> — kein Compile-Step, kein .NET-Runtime-Install, läuft auf jedem Windows 10/11.</p>
-    <p>Verteilung erfolgt als signiertes Bundle, das vom Softwareverteilteam in einen MSI-Installer verpackt wird.</p>
 
     <h2 id="schnellstart">Schnellstart</h2>
     <ol>
@@ -139,7 +141,7 @@
     <h2 id="tray">Tray-Icon</h2>
     <p>LucentScreen läuft im Hintergrund. Das Icon liegt im System-Tray (rechte untere Ecke der Taskleiste). Es öffnet sich kein Hauptfenster.</p>
     <p><strong>Wenn du das Icon nicht siehst:</strong> Klick auf den ↑-Pfeil im Tray-Bereich — Windows blendet selten genutzte Icons standardmäßig aus. Dauerhaft sichtbar machen: Rechtsklick auf die Taskleiste → Taskleisten-Einstellungen → Infobereich → LucentScreen auf <em>Ein</em>.</p>
-    <div class="imgph">[ Screenshot: Tray-Kontextmenü mit Hotkey-Anzeige ]</div>
+    <figure class="shot"><img src="luscreen-docs/docs/images/luscreen/0.2.0/tray-menu.png" alt="Tray-Kontextmenü mit Hotkey-Anzeige"><figcaption>Tray-Kontextmenü mit Hotkey-Anzeige</figcaption></figure>
     <h4>Bedienung</h4>
     <table>
       <tr><th>Aktion</th><th>Wirkung</th></tr>
@@ -216,7 +218,7 @@ sequenceDiagram
 
     <h2 id="editor">Editor</h2>
     <p>Mini-Editor für Annotations + Crop. Öffnet sich per Doppelklick (oder <code>Enter</code>) auf ein Bild im Verlaufsfenster.</p>
-    <div class="imgph">[ Screenshot: Editor mit Tools (Pfeil + Rahmen + Marker auf einem Bild) ]</div>
+    <figure class="shot"><img src="luscreen-docs/docs/images/luscreen/0.2.0/editor-tools.png" alt="Editor mit Pfeil + Rahmen + Marker auf einem Bild"><figcaption>Editor mit Pfeil + Rahmen + Marker auf einem Bild</figcaption></figure>
     <h4>Werkzeuge</h4>
     <table>
       <tr><th>Werkzeug</th><th>Taste</th><th>Was es macht</th></tr>
@@ -254,7 +256,7 @@ stateDiagram-v2
 
     <h2 id="verlauf">Verlauf</h2>
     <p>Übersicht aller Screenshots im Zielordner. Tray → Verlauf öffnen (oder <code>Strg+Shift+H</code>).</p>
-    <div class="imgph">[ Screenshot: Verlaufsfenster mit Toolbar + Thumbnails ]</div>
+    <figure class="shot"><img src="luscreen-docs/docs/images/luscreen/0.2.0/history-window.png" alt="Verlaufsfenster mit Toolbar + Thumbnails"><figcaption>Verlaufsfenster mit Toolbar + Thumbnails</figcaption></figure>
     <h4>Toolbar (7 Icon-Buttons, Größe konfigurierbar 16–32 pt)</h4>
     <table>
       <tr><th>Icon</th><th>Aktion</th></tr>
@@ -271,7 +273,7 @@ stateDiagram-v2
 
     <h2 id="konfiguration">Konfiguration</h2>
     <p>Datei: <code>%APPDATA%\LucentScreen\config.json</code>. Wird beim ersten Start angelegt, Schema-Versioniert mit Auto-Migration. Direktes Editieren erlaubt — bei Validation-Fehler greift Defaults-Fallback mit Warning.</p>
-    <div class="imgph">[ Screenshot: Konfig-Dialog mit allen Slots ]</div>
+    <figure class="shot"><img src="luscreen-docs/docs/images/luscreen/0.2.0/config-dialog.png" alt="Konfig-Dialog mit allen Slots"><figcaption>Konfig-Dialog mit allen Slots</figcaption></figure>
     <h4>Schlüssel</h4>
     <table>
       <tr><th>Key</th><th>Default</th><th>Bedeutung</th></tr>
@@ -299,7 +301,8 @@ flowchart LR
     <p>Bei Filename-Migrationen wird <strong>nur</strong> das exakte alte Default ersetzt — vom User selbst angepasste Templates bleiben unangetastet.</p>
 
     <h2 id="architektur">Architektur</h2>
-    <p>Strikte Layer-Trennung. Kein Compile-Step, kein .NET-Runtime-Install.</p>
+    <p>Strikte Layer-Trennung. Kein Compile-Step, kein .NET-Runtime-Install. Zwei Sichten desselben Modells — UI-Schicht oben, Core-Schicht unten.</p>
+    <h4>UI-Schicht: Fenster + XAML</h4>
     <div class="mermaid">
 flowchart TB
     Boot["LucentScreen.ps1<br/>Bootstrap + App-Loop"]
@@ -309,22 +312,70 @@ flowchart TB
       History["history-window"]
       Config["config-dialog"]
       About["about-dialog"]
+      Region["region-overlay"]
+      Countdown["countdown-overlay"]
+      Toast["capture-toast"]
     end
-    subgraph Core["src/core/"]
-      Capture["capture (GDI+)"]
-      Hk["hotkeys"]
-      Cfg["config (JSON+Migration)"]
-      Log["logging"]
-      Native["native (P/Invoke)"]
+    subgraph Views["src/views/ (XAML)"]
+      XEditor["editor-window.xaml"]
+      XHistory["history-window.xaml"]
+      XConfig["config-dialog.xaml"]
+      XAbout["about-dialog.xaml"]
+      XRegion["region-overlay.xaml"]
+      XCountdown["countdown-overlay.xaml"]
+      XToast["capture-toast.xaml"]
     end
     Boot --> Tray
-    Boot --> Hk
-    Boot --> Cfg
     Tray --> Editor
     Tray --> History
     Tray --> Config
     Tray --> About
-    Editor --> Capture
+    Tray --> Region
+    Region --> Countdown
+    Editor --> Toast
+    History --> Toast
+    Editor --> XEditor
+    History --> XHistory
+    Config --> XConfig
+    About --> XAbout
+    Region --> XRegion
+    Countdown --> XCountdown
+    Toast --> XToast
+    </div>
+    <h4>Core-Schicht: Logik + UI-Anbindung</h4>
+    <div class="mermaid">
+flowchart TB
+    Boot["LucentScreen.ps1"]
+    subgraph UI["src/ui/ (Aufrufer)"]
+      UI_Editor["editor-window"]
+      UI_History["history-window"]
+      UI_Region["region-overlay"]
+      UI_Config["config-dialog"]
+    end
+    subgraph Core["src/core/"]
+      Capture["capture (GDI+)"]
+      EditorCore["editor"]
+      HistCore["history"]
+      Hk["hotkeys"]
+      Cfg["config (JSON+Migration)"]
+      Clip["clipboard"]
+      Log["logging"]
+      Native["native (P/Invoke)"]
+      XL["xaml-loader"]
+    end
+    Boot --> Hk
+    Boot --> Cfg
+    Boot --> Log
+    UI_Editor --> EditorCore
+    UI_Editor --> Clip
+    UI_Editor --> XL
+    UI_History --> HistCore
+    UI_History --> Clip
+    UI_History --> XL
+    UI_Region --> Capture
+    UI_Config --> Cfg
+    UI_Config --> XL
+    Capture --> Native
     Hk --> Native
     </div>
     <h4>Layer-Regeln</h4>

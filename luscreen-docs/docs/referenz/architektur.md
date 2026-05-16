@@ -4,6 +4,10 @@ LucentScreen ist eine **Windows-PowerShell-5.1-WPF-Anwendung** mit strikter Laye
 
 ## Layer-Modell
 
+Zwei Sichten desselben Modells — UI-Schicht (welches Fenster lädt welche XAML) und Core-Schicht (welche Logik-Module von UI angezogen werden).
+
+### UI-Schicht: Fenster + XAML
+
 ```mermaid
 flowchart TB
     Boot["LucentScreen.ps1<br/>(Bootstrap + App-Loop)"]
@@ -20,13 +24,51 @@ flowchart TB
     end
 
     subgraph Views["src/views/ — XAML"]
-        XAML["editor / history / config / about / overlays"]
+        XEditor["editor-window.xaml"]
+        XHistory["history-window.xaml"]
+        XConfig["config-dialog.xaml"]
+        XAbout["about-dialog.xaml"]
+        XRegion["region-overlay.xaml"]
+        XCountdown["countdown-overlay.xaml"]
+        XToast["capture-toast.xaml"]
+    end
+
+    Boot --> Tray
+    Tray --> Editor
+    Tray --> History
+    Tray --> Config
+    Tray --> About
+    Tray --> Region
+    Region --> Countdown
+    Editor --> Toast
+    History --> Toast
+
+    Editor --> XEditor
+    History --> XHistory
+    Config --> XConfig
+    About --> XAbout
+    Region --> XRegion
+    Countdown --> XCountdown
+    Toast --> XToast
+```
+
+### Core-Schicht: Logik + UI-Anbindung
+
+```mermaid
+flowchart TB
+    Boot["LucentScreen.ps1"]
+
+    subgraph UI["src/ui/ (nur als Aufrufer)"]
+        UI_Editor["editor-window"]
+        UI_History["history-window"]
+        UI_Region["region-overlay"]
+        UI_Config["config-dialog"]
     end
 
     subgraph Core["src/core/ — Logik"]
         Capture["capture.psm1<br/>GDI+ Region · Window · Monitor"]
-        Editor2["editor.psm1"]
-        Hist2["history.psm1"]
+        EditorCore["editor.psm1"]
+        HistCore["history.psm1"]
         Hk["hotkeys.psm1<br/>(WM_HOTKEY)"]
         Cfg["config.psm1<br/>(JSON + Migration)"]
         Clip["clipboard.psm1"]
@@ -35,29 +77,22 @@ flowchart TB
         XL["xaml-loader.psm1"]
     end
 
-    Boot --> Tray
     Boot --> Hk
     Boot --> Cfg
     Boot --> Log
 
-    Tray --> Editor
-    Tray --> History
-    Tray --> Config
-    Tray --> About
-    Tray --> Region
+    UI_Editor --> EditorCore
+    UI_Editor --> Clip
+    UI_Editor --> XL
+    UI_History --> HistCore
+    UI_History --> Clip
+    UI_History --> XL
+    UI_Region --> Capture
+    UI_Config --> Cfg
+    UI_Config --> XL
 
-    Editor --> XAML
-    History --> XAML
-    Config --> XAML
-
-    Editor --> Editor2
-    History --> Hist2
-    Region --> Capture
     Capture --> Native
     Hk --> Native
-    Editor --> Clip
-    Editor --> Toast
-    History --> Toast
 ```
 
 ## Layer-Regeln

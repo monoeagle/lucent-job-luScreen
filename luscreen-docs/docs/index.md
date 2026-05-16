@@ -1,7 +1,6 @@
 # LucentScreen
 
 > Windows-Screenshot-Tool mit Tray, globalen Hotkeys, Editor und Verlauf.
-> Verteilung als signiertes Bundle → MSI durch das Softwareverteilteam.
 
 ## Was ist LucentScreen?
 
@@ -21,7 +20,7 @@ Ein leichtgewichtiges Tool, das im Hintergrund läuft und auf Hotkey-Druck einen
 |---|---|
 | **Grundlagen** | Installation, Schnellstart, unterstützte Windows-Versionen |
 | **Anleitungen** | Tray, Hotkeys, Bereich-Capture, Editor, Verlauf |
-| **Referenz** | Architektur, Konfiguration, Hotkey-System, Capture-Modi, Packaging |
+| **Referenz** | Architektur, Konfiguration, Hotkey-System, Capture-Modi |
 | **Entwicklung** | Projektstruktur, Tests, Stolpersteine, Changelog |
 
 ## Standalone-HTML-Doku

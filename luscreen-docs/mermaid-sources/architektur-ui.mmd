@@ -1,0 +1,48 @@
+flowchart TB
+    Boot["LucentScreen.ps1<br/>(Bootstrap + App-Loop)"]
+
+    subgraph UI["src/ui/ — WPF-Fenster + Tray"]
+        Tray["tray.psm1"]
+        Editor["editor-window.psm1"]
+        History["history-window.psm1"]
+        Config["config-dialog.psm1"]
+        About["about-dialog.psm1"]
+        Region["region-overlay.psm1"]
+        Countdown["countdown-overlay.psm1"]
+        Toast["capture-toast.psm1"]
+    end
+
+    subgraph Views["src/views/ — XAML"]
+        XEditor["editor-window.xaml"]
+        XHistory["history-window.xaml"]
+        XConfig["config-dialog.xaml"]
+        XAbout["about-dialog.xaml"]
+        XRegion["region-overlay.xaml"]
+        XCountdown["countdown-overlay.xaml"]
+        XToast["capture-toast.xaml"]
+    end
+
+    Boot --> Tray
+    Tray --> Editor
+    Tray --> History
+    Tray --> Config
+    Tray --> About
+    Tray --> Region
+    Region --> Countdown
+    Editor --> Toast
+    History --> Toast
+
+    Editor --> XEditor
+    History --> XHistory
+    Config --> XConfig
+    About --> XAbout
+    Region --> XRegion
+    Countdown --> XCountdown
+    Toast --> XToast
+
+    classDef boot fill:#fef3c7,stroke:#d97706,stroke-width:2px
+    classDef ui fill:#eff6ff,stroke:#2563eb
+    classDef views fill:#f3e8ff,stroke:#7c3aed
+    class Boot boot
+    class Tray,Editor,History,Config,About,Region,Countdown,Toast ui
+    class XEditor,XHistory,XConfig,XAbout,XRegion,XCountdown,XToast views

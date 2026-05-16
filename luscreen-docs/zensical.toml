@@ -35,7 +35,6 @@ nav = [
     { "Konfiguration"   = "referenz/konfiguration.md" },
     { "Hotkey-System"   = "referenz/hotkey-system.md" },
     { "Capture-Modi"    = "referenz/capture-modi.md" },
-    { "Packaging"       = "referenz/packaging.md" },
   ]},
   { "Entwicklung" = [
     { "Projektstruktur" = "entwicklung/projektstruktur.md" },

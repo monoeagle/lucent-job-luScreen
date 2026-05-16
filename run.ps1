@@ -322,6 +322,9 @@ function Action-Screenshots {
         Startet das Take-LuScreenshots.ps1-Skript fuer halbautomatische
         Screenshot-Generation. Iteriert ueber das manifest.json + fragt pro
         Item nach User-Setup.
+    .DESCRIPTION
+        Direkter Dot-Source-Aufruf statt Child-Process -- so sind alle
+        Skript-Errors + Output sofort im aktuellen Shell sichtbar.
     #>
     $script = Join-Path $root 'tools/Take-LuScreenshots.ps1'
     if (-not (Test-Path -LiteralPath $script)) {
@@ -330,7 +333,8 @@ function Action-Screenshots {
     }
     Write-Host "Starte Screenshot-Generator (Take-LuScreenshots.ps1) ..." -ForegroundColor Cyan
     Write-Host "  Hinweis: App muss laufen (./run.ps1 s) damit Tray + Hotkeys verfuegbar sind." -ForegroundColor DarkGray
-    & powershell.exe -NoProfile -STA -File $script
+    Write-Host ""
+    & $script
 }
 
 function Action-DocsBuild {

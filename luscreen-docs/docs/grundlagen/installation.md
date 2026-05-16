@@ -1,21 +1,17 @@
 # Installation
 
-> Stub — wird mit AP 9 (Packaging) gefüllt.
-
-## Per Softwareverteilung (Standardweg)
-
-Der MSI-Installer wird vom Softwareverteilteam paketiert und ausgerollt.
-
 ## Manueller Test-Install
 
 Voraussetzungen:
+
 - Windows 10 (1809+) oder Windows 11
-- PowerShell 7+ installiert (`pwsh.exe` im PATH)
+- Windows PowerShell 5.1 (vorinstalliert; kein PowerShell 7 nötig)
 
 Schritte:
+
 1. Transfer-ZIP entpacken nach `%LOCALAPPDATA%\Programs\LucentScreen\`
 2. Beim ersten Start kopiert die App `config.default.json` nach `%APPDATA%\LucentScreen\config.json`
-3. Optional: Startmenu-Verknüpfung anlegen auf `pwsh.exe -STA -File "%LOCALAPPDATA%\Programs\LucentScreen\LucentScreen.ps1"`
+3. Optional: Startmenü-Verknüpfung anlegen auf `powershell.exe -STA -File "%LOCALAPPDATA%\Programs\LucentScreen\LucentScreen.ps1"`
 
 ## Deinstallation
 

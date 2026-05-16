@@ -1,0 +1,46 @@
+flowchart TB
+    Boot["LucentScreen.ps1"]
+
+    subgraph UI["src/ui/ (nur als Aufrufer)"]
+        UI_Editor["editor-window"]
+        UI_History["history-window"]
+        UI_Region["region-overlay"]
+        UI_Config["config-dialog"]
+    end
+
+    subgraph Core["src/core/ — Logik"]
+        Capture["capture.psm1<br/>(GDI+ Region · Window · Monitor)"]
+        EditorCore["editor.psm1<br/>(Save · ArrowGeometry)"]
+        HistCore["history.psm1"]
+        Hk["hotkeys.psm1<br/>(WM_HOTKEY)"]
+        Cfg["config.psm1<br/>(JSON + Schema-Migration)"]
+        Clip["clipboard.psm1"]
+        Log["logging.psm1"]
+        Native["native.psm1<br/>(P/Invoke)"]
+        XL["xaml-loader.psm1<br/>(Load + Window-Icon)"]
+    end
+
+    Boot --> Hk
+    Boot --> Cfg
+    Boot --> Log
+    Boot --> Native
+
+    UI_Editor --> EditorCore
+    UI_Editor --> Clip
+    UI_Editor --> XL
+    UI_History --> HistCore
+    UI_History --> Clip
+    UI_History --> XL
+    UI_Region --> Capture
+    UI_Config --> Cfg
+    UI_Config --> XL
+
+    Capture --> Native
+    Hk --> Native
+
+    classDef boot fill:#fef3c7,stroke:#d97706,stroke-width:2px
+    classDef ui fill:#eff6ff,stroke:#2563eb
+    classDef core fill:#ecfdf5,stroke:#059669
+    class Boot boot
+    class UI_Editor,UI_History,UI_Region,UI_Config ui
+    class Capture,EditorCore,HistCore,Hk,Cfg,Clip,Log,Native,XL core

@@ -44,22 +44,72 @@ function _New-TrayIcon {
     .DESCRIPTION
         NotifyIcon.Icon nimmt nur Icon. Fuer ICO -> direktes Laden.
         Fuer PNG (alpha-faehig, hoehere Aufloesung) -> via Bitmap.GetHicon().
+        Mit -Invert wird das Icon farblich invertiert (Schwarz -> Weiss),
+        Alpha bleibt erhalten -- noetig fuer dunkle Taskleisten-Themes.
     #>
-    param([Parameter(Mandatory)][string]$Path)
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [switch]$Invert
+    )
     Add-Type -AssemblyName System.Drawing | Out-Null
     $ext = [System.IO.Path]::GetExtension($Path).ToLowerInvariant()
-    if ($ext -eq '.ico') {
-        return New-Object System.Drawing.Icon $Path
+
+    if (-not $Invert) {
+        if ($ext -eq '.ico') {
+            return New-Object System.Drawing.Icon $Path
+        }
+        # PNG / andere Bitmap -> via HICON. Der HICON-Handle bleibt fuer Lebens-
+        # zeit der App gueltig; Tray-Dispose ruft Icon.Dispose, das das HICON
+        # freigibt.
+        $bmp = New-Object System.Drawing.Bitmap $Path
+        try {
+            $hicon = $bmp.GetHicon()
+            return [System.Drawing.Icon]::FromHandle($hicon)
+        } finally {
+            $bmp.Dispose()
+        }
     }
-    # PNG / andere Bitmap -> via HICON. Der HICON-Handle bleibt fuer Lebens-
-    # zeit der App gueltig; Tray-Dispose ruft Icon.Dispose, das das HICON
-    # freigibt.
-    $bmp = New-Object System.Drawing.Bitmap $Path
+
+    # Invertierter Pfad: ICO/PNG nach Bitmap, ColorMatrix invertiert RGB,
+    # Alpha bleibt unangetastet -- danach via GetHicon zurueck.
+    $srcBmp = $null
+    $dstBmp = $null
+    $g = $null
+    $attrs = $null
     try {
-        $hicon = $bmp.GetHicon()
+        if ($ext -eq '.ico') {
+            $ico = New-Object System.Drawing.Icon $Path
+            try { $srcBmp = $ico.ToBitmap() } finally { $ico.Dispose() }
+        } else {
+            $srcBmp = New-Object System.Drawing.Bitmap $Path
+        }
+
+        $dstBmp = New-Object System.Drawing.Bitmap $srcBmp.Width, $srcBmp.Height
+        $g = [System.Drawing.Graphics]::FromImage($dstBmp)
+
+        $cm = New-Object System.Drawing.Imaging.ColorMatrix
+        $cm.Matrix00 = -1.0
+        $cm.Matrix11 = -1.0
+        $cm.Matrix22 = -1.0
+        $cm.Matrix33 = 1.0
+        $cm.Matrix44 = 1.0
+        $cm.Matrix40 = 1.0
+        $cm.Matrix41 = 1.0
+        $cm.Matrix42 = 1.0
+        $attrs = New-Object System.Drawing.Imaging.ImageAttributes
+        $attrs.SetColorMatrix($cm)
+
+        $rect = New-Object System.Drawing.Rectangle 0, 0, $srcBmp.Width, $srcBmp.Height
+        $g.DrawImage($srcBmp, $rect, 0, 0, $srcBmp.Width, $srcBmp.Height,
+            [System.Drawing.GraphicsUnit]::Pixel, $attrs)
+
+        $hicon = $dstBmp.GetHicon()
         return [System.Drawing.Icon]::FromHandle($hicon)
     } finally {
-        $bmp.Dispose()
+        if ($attrs) { $attrs.Dispose() }
+        if ($g) { $g.Dispose() }
+        if ($srcBmp) { $srcBmp.Dispose() }
+        if ($dstBmp) { $dstBmp.Dispose() }
     }
 }
 
@@ -78,7 +128,10 @@ function Initialize-Tray {
         # Wenn vorhanden, wird der Display-Text ('Strg+Shift+1' etc.) per
         # Format-Hotkey berechnet und als ShortcutKeyDisplayString rechts neben
         # dem Eintrag angezeigt.
-        [hashtable]$HotkeyMap
+        [hashtable]$HotkeyMap,
+        # Tray-Icon farblich invertieren (Schwarz -> Weiss). Default an, damit
+        # das Icon auf dunkler Taskleiste lesbar bleibt.
+        [bool]$InvertIcon = $true
     )
 
     if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
@@ -92,7 +145,7 @@ function Initialize-Tray {
     Add-Type -AssemblyName System.Drawing | Out-Null
 
     $tray = New-Object System.Windows.Forms.NotifyIcon
-    $tray.Icon = _New-TrayIcon -Path $Icon
+    $tray.Icon = _New-TrayIcon -Path $Icon -Invert:$InvertIcon
     $tray.Visible = $true
     $tray.Text = "LucentScreen $Version"
 

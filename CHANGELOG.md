@@ -6,6 +6,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/) · Versionierun
 
 (noch nichts)
 
+## [0.2.1] — 2026-05-16
+
+### Hinzugefügt
+
+- **Verlauf-Schloss pro Bild:** kleiner Toggle-Button rechts oben auf jedem Thumbnail. Offen = grün (Bild löschbar), zu = rot (vor versehentlichem Löschen geschützt). Default unsperrt. Persistiert als NTFS-`ReadOnly`-Attribut — überlebt App-Neustart, keine Sidecar-Datei. Im Dateisystem direkt gelöschte Bilder verschwinden weiterhin aus dem Verlauf, dort ist die Sperre nicht wirksam.
+- **Single-Instance für Dialoge:** Verlauf, Konfiguration und Über-Dialog öffnen nicht mehr mehrfach, wenn ein bereits offenes Fenster durch einen zweiten Tray-Klick erneut aufgerufen wird — der vorhandene Dialog wird stattdessen in den Vordergrund geholt.
+
+### Geändert
+
+- **Verlauf-Toolbar:** Löschen-Button vom Anfang ans Ende der Reihe verschoben und mit eigenem Trenner abgesetzt — verringert das Risiko, beim Klicken auf Anzeigen/Bearbeiten versehentlich zu löschen.
+- **Tray-Icon:** Farben werden beim Laden invertiert (Schwarz → Weiß) — bleibt auf dunkler Taskleiste lesbar. Per `Initialize-Tray -InvertIcon $false` abschaltbar.
+
+### Behoben
+
+- Single-Instance-Guard scheiterte beim ersten Aufruf an `Set-StrictMode -Version Latest`. Modul-Slot `$script:OpenWindow` wird jetzt zu Lade-Zeit initialisiert.
+
 ## [0.2.0] — 2026-05-16
 
 ### Hinzugefügt

@@ -1,6 +1,10 @@
 ﻿#Requires -Version 5.1
 Set-StrictMode -Version Latest
 
+# Single-Instance-Slot. Muss vor erstem Zugriff existieren, sonst meckert
+# StrictMode "Variable nicht festgelegt".
+$script:OpenWindow = $null
+
 # ---------------------------------------------------------------
 #  Verlaufsfenster
 #
@@ -52,6 +56,17 @@ namespace LucentScreen {
             }
         }
 
+        private bool _isLocked;
+        public bool IsLocked {
+            get { return _isLocked; }
+            set {
+                if (_isLocked != value) {
+                    _isLocked = value;
+                    OnPropertyChanged("IsLocked");
+                }
+            }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string name) {
             PropertyChangedEventHandler h = PropertyChanged;
@@ -74,6 +89,23 @@ function Show-HistoryWindow {
 
     if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
         throw 'Show-HistoryWindow benoetigt ein STA-Apartment.'
+    }
+
+    # Single-Instance: Wenn das Verlaufsfenster bereits offen ist, nur in den
+    # Vordergrund holen. ShowDialog laeuft in einem geschachtelten Dispatcher --
+    # ohne diesen Guard wuerde ein zweiter Tray-Klick eine weitere Instanz
+    # oben drauf legen.
+    if ($script:OpenWindow -and $script:OpenWindow.IsLoaded) {
+        try {
+            if ($script:OpenWindow.WindowState -eq [System.Windows.WindowState]::Minimized) {
+                $script:OpenWindow.WindowState = [System.Windows.WindowState]::Normal
+            }
+            $script:OpenWindow.Topmost = $true
+            [void]$script:OpenWindow.Activate()
+            $script:OpenWindow.Topmost = $false
+            [void]$script:OpenWindow.Focus()
+        } catch { $null = $_ }
+        return
     }
 
     $xamlPath = Join-Path $PSScriptRoot '..\views\history-window.xaml'
@@ -122,6 +154,7 @@ function Show-HistoryWindow {
         $e.SizeDisplay = $Item.SizeDisplay
         $e.LastWriteTime = $Item.LastWriteTime
         $e.TimeDisplay = $Item.TimeDisplay
+        if ($Item.ContainsKey('IsReadOnly')) { $e.IsLocked = [bool]$Item.IsReadOnly }
         return $e
     }
 
@@ -294,10 +327,27 @@ function Show-HistoryWindow {
     $cmdDelete = {
         $sel = @($c.LstItems.SelectedItems)
         if ($sel.Count -eq 0) { return }
-        $msg = if ($sel.Count -eq 1) {
-            "Datei '$($sel[0].FileName)' in den Papierkorb verschieben?"
+
+        # Gesperrte Eintraege (Schloss zu) ueberspringen.
+        $locked = @($sel | Where-Object { $_.IsLocked })
+        $candidates = @($sel | Where-Object { -not $_.IsLocked })
+
+        if ($candidates.Count -eq 0) {
+            [System.Windows.MessageBox]::Show(
+                'Alle ausgewaehlten Bilder sind gesperrt. Zum Loeschen erst das Schloss oeffnen.',
+                'LucentScreen -- Löschen',
+                [System.Windows.MessageBoxButton]::OK,
+                [System.Windows.MessageBoxImage]::Information) | Out-Null
+            return
+        }
+
+        $msg = if ($candidates.Count -eq 1) {
+            "Datei '$($candidates[0].FileName)' in den Papierkorb verschieben?"
         } else {
-            "$($sel.Count) Dateien in den Papierkorb verschieben?"
+            "$($candidates.Count) Dateien in den Papierkorb verschieben?"
+        }
+        if ($locked.Count -gt 0) {
+            $msg += "`n`n($($locked.Count) gesperrte Bilder werden uebersprungen.)"
         }
         $r = [System.Windows.MessageBox]::Show(
             $msg, 'LucentScreen -- Löschen',
@@ -305,7 +355,7 @@ function Show-HistoryWindow {
             [System.Windows.MessageBoxImage]::Question)
         if ($r -ne [System.Windows.MessageBoxResult]::OK) { return }
 
-        foreach ($entry in $sel) {
+        foreach ($entry in $candidates) {
             $del = Remove-HistoryItem -Path $entry.FullName
             if (-not $del.Success) {
                 [System.Windows.MessageBox]::Show(
@@ -414,6 +464,37 @@ function Show-HistoryWindow {
         }
     }.GetNewClosure()
 
+    # Schloss-Toggle im ItemTemplate. Button.Click bubbelt -- wir hoeren am
+    # ListBox-Level und filtern auf Name='BtnLock'. Lock-Zustand = NTFS-
+    # ReadOnly-Attribut: simpel, persistent, ueberlebt Refresh und Reload.
+    $lockClick = {
+        param($s, $e)
+        $btn = $e.OriginalSource
+        if ($btn -isnot [System.Windows.Controls.Button]) { return }
+        if ($btn.Name -ne 'BtnLock') { return }
+        $entry = $btn.Tag
+        if ($entry -isnot [LucentScreen.HistoryEntry]) { return }
+
+        $newLocked = -not $entry.IsLocked
+        try {
+            $fi = New-Object System.IO.FileInfo $entry.FullName
+            if ($fi.Exists) {
+                $fi.IsReadOnly = $newLocked
+                $entry.IsLocked = $newLocked
+            }
+        } catch {
+            [System.Windows.MessageBox]::Show(
+                ("Schloss umschalten fehlgeschlagen ($($entry.FileName)):`n" + $_.Exception.Message),
+                'LucentScreen',
+                [System.Windows.MessageBoxButton]::OK,
+                [System.Windows.MessageBoxImage]::Warning) | Out-Null
+        }
+        $e.Handled = $true
+    }.GetNewClosure()
+    $c.LstItems.AddHandler(
+        [System.Windows.Controls.Button]::ClickEvent,
+        [System.Windows.RoutedEventHandler]$lockClick)
+
     $c.BtnView.Add_Click($cmdOpen)
     $c.BtnEdit.Add_Click($cmdEdit)
     $c.BtnDelete.Add_Click($cmdDelete)
@@ -473,7 +554,10 @@ function Show-HistoryWindow {
             param($s, $e)
             $state.Closing = $true
             if ($state.DebounceTimer) { try { $state.DebounceTimer.Stop() } catch { $null = $_ } }
+            $script:OpenWindow = $null
         }.GetNewClosure())
+
+    $script:OpenWindow = $win
 
     # Erstbefuellung + Poller starten + Show
     & $refresh

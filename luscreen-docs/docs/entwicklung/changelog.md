@@ -6,7 +6,7 @@ Vollständige Tabelle aller Commits + AP-Einträge: [Erledigt](erledigt.md).
 
 ## Aktuelle Version
 
-**0.2.0** — siehe Über-Dialog (Tray → Über…) für die Live-Version.
+**0.2.1** — siehe Über-Dialog (Tray → Über…) für die Live-Version.
 
 ## Schema-Versionen
 

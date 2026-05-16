@@ -55,6 +55,7 @@ function New-HistoryItem {
         SizeDisplay   = (Format-FileSize -Bytes $File.Length)
         LastWriteTime = $File.LastWriteTime
         TimeDisplay   = $File.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss')
+        IsReadOnly    = [bool]$File.IsReadOnly
     }
 }
 

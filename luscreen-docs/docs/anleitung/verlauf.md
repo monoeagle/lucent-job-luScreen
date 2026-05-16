@@ -6,19 +6,30 @@
 
 ## Toolbar
 
-Icon-Buttons (Segoe MDL2). Die Größe ist konfigurierbar (Konfig → Toolbar-Icon-Größe, 16–32 pt).
+Icon-Buttons (Segoe MDL2). Die Größe ist konfigurierbar (Konfig → Toolbar-Icon-Größe, 16–32 pt). **Löschen** sitzt am rechten Rand hinter einem Trenner — damit klickt man beim Greifen nach Anzeigen / Bearbeiten nicht versehentlich darauf.
 
 | Icon | Aktion | Was es macht |
 |---|---|---|
 | 👁 | **Anzeigen** | Bild im Standard-Bildbetrachter (Default-App) |
 | ✎ | **Bearbeiten** | Editor öffnen (= Doppelklick / `Enter`) |
-| 🗑 | **Löschen** | Markierte Bilder in den Papierkorb |
 | ✏ | **Umbenennen** | Markierte Datei neu benennen (`F2`) |
 | 📂 | **Speicherort** | Explorer öffnet, Datei markiert |
 | 📋 | **Zwischenablage** | Markiertes Bild als Image ins Clipboard (`Strg+C`) |
 | 📑 | **Zwischenablage (Liste)** | Mehrere Dateien als Datei-Liste — Word/Outlook fügt alle ein |
 | ↻ | **Aktualisieren** | Verlauf neu einlesen (`F5`) |
+| ─ | *Trenner* | |
 | 🖨 | **Druck** | Bild aus der Zwischenablage als PNG speichern (`Strg+V`; aktiv sobald Druck/Snipping/Copy ein Bild abgelegt hat) |
+| ─ | *Trenner* | |
+| 🗑 | **Löschen** | Markierte Bilder in den Papierkorb (gesperrte Bilder werden übersprungen) |
+
+## Schloss pro Bild
+
+Jedes Thumbnail bekommt rechts oben einen kleinen Schloss-Button:
+
+- **Grün, offen** — Bild ist *nicht* gesperrt, Löschen ist erlaubt.
+- **Rot, zu** — Bild ist gesperrt, der Löschen-Button überspringt es.
+
+Klick auf das Schloss schaltet um. Default beim Speichern: offen. Der Lock-Zustand entspricht dem NTFS-`ReadOnly`-Attribut, überlebt also App-Neustarts ohne Sidecar-Datei. Wer ein gesperrtes Bild *im Dateisystem* löscht (Explorer, Shell), bekommt das Bild trotzdem aus dem Verlauf entfernt — die Sperre wirkt nur innerhalb der LucentScreen-UI.
 
 ## Tastatur
 

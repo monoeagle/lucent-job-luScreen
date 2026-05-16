@@ -204,7 +204,7 @@ $iconPngPath = Join-Path $assetsDir 'icon.png'
 if (Test-Path -LiteralPath $iconPngPath) { $iconPngPath = (Resolve-Path $iconPngPath).Path } else { $iconPngPath = $null }
 # Default-Window-Icon fuer alle Dialoge (Konfig/Editor/Verlauf/About-Titelleiste)
 Set-AppDefaultIcon -Path $iconPath
-$appVersion = '0.2.0'
+$appVersion = '0.2.1'
 
 $script:TrayDispose = $null
 

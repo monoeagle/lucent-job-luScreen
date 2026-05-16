@@ -1,6 +1,10 @@
 ﻿#Requires -Version 5.1
 Set-StrictMode -Version Latest
 
+# Single-Instance-Slot. Muss vor erstem Zugriff existieren, sonst meckert
+# StrictMode "Variable nicht festgelegt".
+$script:OpenWindow = $null
+
 # ---------------------------------------------------------------
 #  About-Dialog (Layout angelehnt an CodeSigningCommander)
 #
@@ -66,12 +70,29 @@ function Show-AboutDialog {
         throw 'Show-AboutDialog benoetigt ein STA-Apartment.'
     }
 
+    # Single-Instance: ShowDialog blockt in geschachteltem Dispatcher, ein
+    # zweiter Tray-Klick wuerde sonst eine weitere Instanz oeffnen.
+    if ($script:OpenWindow -and $script:OpenWindow.IsLoaded) {
+        try {
+            if ($script:OpenWindow.WindowState -eq [System.Windows.WindowState]::Minimized) {
+                $script:OpenWindow.WindowState = [System.Windows.WindowState]::Normal
+            }
+            $script:OpenWindow.Topmost = $true
+            [void]$script:OpenWindow.Activate()
+            $script:OpenWindow.Topmost = $false
+            [void]$script:OpenWindow.Focus()
+        } catch { $null = $_ }
+        return
+    }
+
     $xamlPath = Join-Path $PSScriptRoot '..\views\about-dialog.xaml'
     $win = Load-Xaml -Path $xamlPath
     # Window-Titelleisten-Icon: -WindowIconPath schlaegt den App-Default,
     # sonst greift Set-AppDefaultIcon aus dem Bootstrap.
     Set-AppWindowIcon -Window $win -Path $WindowIconPath
     if ($Owner) { $win.Owner = $Owner }
+    $script:OpenWindow = $win
+    $win.add_Closed({ param($s, $e); $script:OpenWindow = $null }.GetNewClosure())
 
     $names = @(
         'ImgHeader', 'LblVersion',

@@ -1,0 +1,23 @@
+{
+  "component": "LucentScreen",
+  "version": "0.2.0",
+  "capturedAt": null,
+  "tool": "tools/Take-LuScreenshots.ps1",
+  "resolution": "1920x1080",
+  "images": [
+    { "file": "tray-menu.png",       "view": "Tray-Kontextmenü",                   "description": "Rechtsklick auf das Tray-Icon -- alle Aktionen mit konfigurierten Hotkeys rechts daneben" },
+    { "file": "config-dialog.png",   "view": "Konfiguration",                      "description": "Tray → Konfiguration -- alle Slots inkl. Hotkeys + HistoryIconSize-Slider" },
+    { "file": "history-window.png",  "view": "Verlaufsfenster",                    "description": "Tray → Verlauf öffnen -- Toolbar + Thumbnails + Statusbar" },
+    { "file": "history-context.png", "view": "Verlauf-Kontextmenü",                "description": "Rechtsklick auf ein Bild im Verlauf -- Editieren / Öffnen / Im Ordner / Zwischenablage / Papierkorb" },
+    { "file": "editor-empty.png",    "view": "Editor (frisch geöffnet)",           "description": "Bild im Editor, keine Annotations, Auswahl-Tool aktiv" },
+    { "file": "editor-tools.png",    "view": "Editor mit Annotations",             "description": "Pfeil + Rahmen + Marker + Linie auf einem Bild" },
+    { "file": "editor-crop.png",     "view": "Editor: Crop-Modus",                 "description": "Crop-Tool aktiv, 8 blaue Handles + Dimmer" },
+    { "file": "editor-selection.png","view": "Editor: Selection-Adorner",          "description": "Eine Shape selektiert -- gestricheltes blaues Bounding-Box-Rectangle" },
+    { "file": "about-dialog.png",    "view": "Über-Dialog (Tab Info)",             "description": "Über LucentScreen -- Header mit Icon, System + Projekt + Komponenten" },
+    { "file": "about-changelog.png", "view": "Über-Dialog (Tab Changelog)",        "description": "Über LucentScreen -- Tab Changelog mit gerendertem CHANGELOG.md" },
+    { "file": "toast-saved.png",     "view": "Save-Toast",                         "description": "Toast oben rechts nach Editor-Save -- Copy-Glyph + Dateiname" },
+    { "file": "toast-capture.png",   "view": "Capture-Toast",                      "description": "Toast oben rechts nach erfolgreichem Capture -- Camera-Glyph" },
+    { "file": "region-overlay.png",  "view": "Region-Overlay",                     "description": "Vollbild-Overlay mit Crosshair während Region-Auswahl" },
+    { "file": "countdown.png",       "view": "Countdown-Overlay",                  "description": "Countdown vor Capture (DelaySeconds > 0)" }
+  ]
+}

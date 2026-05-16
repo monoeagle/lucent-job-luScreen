@@ -1,0 +1,18 @@
+sequenceDiagram
+    actor User
+    participant OS as Windows
+    participant Hidden as Hidden-Window<br/>(HwndSource)
+    participant Hk as hotkeys.psm1
+    participant LS as LucentScreen.ps1
+    participant Cap as Capture / History / Konfig
+
+    Note over Hidden,Hk: Bootstrap: Register-AllHotkeys<br/>für jeden Slot in $Config.Hotkeys
+    Hk->>OS: RegisterHotKey(hwnd, id, MOD, VK)
+
+    User->>OS: Strg+Shift+1
+    OS-->>Hidden: WM_HOTKEY (id=N)
+    Hidden->>Hk: Invoke-HotkeyById N
+    Hk->>LS: Callback aus Map (Region/HistoryOpen/...)
+    LS->>Cap: Aktion ausführen
+
+    Note over Hk,OS: Bei Konfig-Save:<br/>Unregister + Re-Register

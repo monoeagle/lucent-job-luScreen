@@ -21,16 +21,26 @@ Damit das LucentScreen-Icon dauerhaft sichtbar bleibt:
 
 ## Kontextmenü
 
-| Eintrag | Hotkey | Wirkung |
+![Tray-Kontextmenü](../images/luscreen/0.2.0/tray-menu.png){ width=400 }
+
+| Eintrag | Default-Hotkey | Wirkung |
 |---|---|---|
-| Bereich aufnehmen | `Ctrl+Shift+1` | Vollbild-Overlay, mit Maus Rechteck aufziehen |
-| Aktives Fenster aufnehmen | `Ctrl+Shift+2` | Vordergrundfenster ohne Schatten |
-| Monitor (Maus) | `Ctrl+Shift+3` | Bildschirm unter dem Cursor |
-| Alle Monitore | `Ctrl+Shift+4` | Gesamter virtueller Bildschirm |
-| Verlauf öffnen | — | (folgt mit Update) |
-| Konfiguration… | — | Hotkeys, Zielordner, Dateinamen-Format |
-| Über… | — | Versions-Infos |
+| Bereich aufnehmen | `Strg+Shift+1` | Vollbild-Overlay, mit Maus Rechteck aufziehen |
+| Aktives Fenster aufnehmen | `Strg+Shift+2` | Vordergrundfenster ohne Schatten |
+| Monitor (Maus) | `Strg+Shift+3` | Bildschirm unter dem Cursor |
+| Alle Monitore | `Strg+Shift+4` | Gesamter virtueller Bildschirm |
+| ─ | | |
+| Verzögerung Reset | `Strg+Shift+R` | DelaySeconds = 0 |
+| Verzögerung +5 Sek | `Strg+Shift+T` | DelaySeconds += 5 (max. 30) |
+| ─ | | |
+| Verlauf öffnen | `Strg+Shift+H` | [Verlaufsfenster](verlauf.md) |
+| ─ | | |
+| Konfiguration… | — | Hotkeys, Zielordner, Dateinamen-Format, Icon-Größe |
+| Über… | — | Version, System, Entwickler, Changelog |
+| ─ | | |
 | Beenden | — | App sauber beenden |
+
+Die Hotkey-Anzeige rechts neben den Einträgen spiegelt die aktuelle Konfiguration. Beim ersten App-Start mit den Defaults siehst du obige Werte. Nach Änderung im Konfig-Dialog wird die Anzeige beim nächsten App-Start aktualisiert; die Hotkey-Registrierung selbst geschieht sofort.
 
 ## Bestätigung dass die App läuft
 

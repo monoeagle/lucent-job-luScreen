@@ -1,0 +1,25 @@
+sequenceDiagram
+    autonumber
+    actor User
+    participant Tray as Tray-Icon
+    participant Hk as Hotkey-Hook
+    participant LS as LucentScreen.ps1
+    participant Region as Region-Overlay
+    participant Cap as capture.psm1
+    participant FS as Filesystem
+    participant CB as Clipboard
+    participant Toast as Capture-Toast
+
+    User->>Hk: Strg+Shift+1 (Region)
+    Hk->>LS: invokeCapture('Region')
+    LS->>Region: Show-RegionOverlay
+    Region->>User: Vollbild-Overlay mit Crosshair
+    User->>Region: Maus-Drag
+    Region->>LS: Rect{Left,Top,Width,Height}
+    LS->>Cap: Invoke-Capture -Mode Region -RegionRect …
+    Cap->>Cap: GDI+ CopyFromScreen
+    Cap->>FS: PNG speichern (yyyyMMdd_HHmm_Region.png)
+    Cap-->>LS: Bitmap + SavedPath
+    LS->>CB: Set-ClipboardImage (bgr → BitmapSource → SetImage)
+    LS->>Toast: Show-CaptureToast (Glyph 0xE722 Camera)
+    Toast-->>User: Fadeout 800 ms

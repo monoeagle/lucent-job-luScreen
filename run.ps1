@@ -285,6 +285,37 @@ function Action-EditorDebugTail {
     Get-Content -LiteralPath $editorDbgLog -Tail $Lines
 }
 
+function Action-MermaidRender {
+    <#
+    .SYNOPSIS
+        Rendert alle .mmd-Dateien aus luscreen-docs/mermaid-sources/ zu .svg
+        in luscreen-docs/docs/images/mermaid/. Braucht mmdc (Mermaid CLI).
+    .DESCRIPTION
+        Installation: 'npm i -g @mermaid-js/mermaid-cli' (braucht Node.js).
+        Wenn mmdc fehlt, wird eine Anleitung ausgegeben und kein Fehler geworfen.
+    #>
+    $srcDir = Join-Path $docsDir 'mermaid-sources'
+    $outDir = Join-Path $docsDir 'docs/images/mermaid'
+    if (-not (Test-Path -LiteralPath $srcDir)) {
+        Write-Host "Keine Mermaid-Quellen ($srcDir)." -ForegroundColor Yellow
+        return
+    }
+    $null = New-Item -ItemType Directory -Force -Path $outDir
+    $mmdc = Get-Command mmdc -ErrorAction SilentlyContinue
+    if (-not $mmdc) {
+        Write-Host "mmdc (Mermaid CLI) nicht gefunden." -ForegroundColor Yellow
+        Write-Host "  Installation: 'npm i -g @mermaid-js/mermaid-cli' (braucht Node.js)." -ForegroundColor DarkGray
+        Write-Host "  Alternativ: Mermaid Live Editor (https://mermaid.live) -- SVG export -> $outDir" -ForegroundColor DarkGray
+        return
+    }
+    Get-ChildItem -LiteralPath $srcDir -Filter '*.mmd' | ForEach-Object {
+        $svg = Join-Path $outDir ($_.BaseName + '.svg')
+        Write-Host ("Rendere {0} -> {1}" -f $_.Name, (Split-Path $svg -Leaf)) -ForegroundColor Cyan
+        & $mmdc.Source -i $_.FullName -o $svg -b transparent
+    }
+    Write-Host "Mermaid-Render fertig." -ForegroundColor Green
+}
+
 function Action-DocsBuild {
     $docsRun = Join-Path $docsDir 'run.ps1'
     if (-not (Test-Path -LiteralPath $docsRun)) {
@@ -384,6 +415,7 @@ function Show-Menu {
     Write-Host " --- Doku ---" -ForegroundColor DarkCyan
     Write-Host "  d) Zensical-Site bauen + im Standard-Browser oeffnen"
     Write-Host "  D) Doku-Live-Server starten (http://127.0.0.1:8000)"
+    Write-Host "  m) Mermaid-Diagramme rendern (.mmd -> .svg, braucht mmdc)"
     Write-Host "  h) HTML-Single-Page Status (LucentScreen.docs.html)"
     Write-Host ""
     Write-Host " --- Werkzeuge ---" -ForegroundColor DarkCyan
@@ -416,6 +448,7 @@ function Invoke-Action {
         'cfg' { Action-ConfigDialog }
         'prereqs' { Action-Prereqs }
         'd' { Action-DocsBuild }
+        'm' { Action-MermaidRender }
         'D' { Action-DocsServe }
         'h' { Action-HtmlDoc }
         'i' { Action-InstallPssa }

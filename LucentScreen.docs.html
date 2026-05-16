@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LucentScreen v0.1.0 – Dokumentation</title>
+<title>LucentScreen v0.2.0 – Dokumentation</title>
 <style>
-  /* Default = Dark, identische Brushes wie BoundaryManager (Lucent-Hub-Pattern) */
   :root {
     --bg:        #12141a;
     --bg-panel:  #1a1d26;
@@ -50,186 +49,65 @@
     --row-hover:     rgba(0,0,0,.03);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text-pri);
-    font-family: var(--font);
-    font-size: 15px;
-    line-height: 1.65;
-  }
+  body { background: var(--bg); color: var(--text-pri); font-family: var(--font); font-size: 15px; line-height: 1.65; }
   .layout { display: flex; min-height: 100vh; }
   nav {
-    width: 280px;
-    flex-shrink: 0;
-    background: var(--bg-panel);
-    border-right: 1px solid var(--border);
-    padding: 24px 0;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
+    width: 280px; flex-shrink: 0; background: var(--bg-panel);
+    border-right: 1px solid var(--border); padding: 24px 0;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
   }
-  nav h1 {
-    font-size: 16px;
-    color: var(--accent);
-    padding: 0 22px 4px;
-    letter-spacing: .02em;
-  }
-  nav .ver {
-    color: var(--text-sec);
-    font-size: 12px;
-    padding: 0 22px 18px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 10px;
-  }
-  nav ol {
-    list-style: none;
-    padding: 0;
-    counter-reset: nav-counter;
-  }
+  nav h1 { font-size: 16px; color: var(--accent); padding: 0 22px 4px; letter-spacing: .02em; }
+  nav .ver { color: var(--text-sec); font-size: 12px; padding: 0 22px 18px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+  nav ol { list-style: none; padding: 0; counter-reset: nav-counter; }
   nav ol li a {
-    display: block;
-    padding: 7px 22px;
-    color: var(--text-pri);
-    text-decoration: none;
-    font-size: 13px;
-    border-left: 3px solid transparent;
-    transition: all .12s;
-    counter-increment: nav-counter;
+    display: block; padding: 7px 22px; color: var(--text-pri);
+    text-decoration: none; font-size: 13px; border-left: 3px solid transparent;
+    transition: all .12s; counter-increment: nav-counter;
   }
-  nav ol li a::before {
-    content: counter(nav-counter) ". ";
-    color: var(--text-sec);
-    margin-right: 4px;
-  }
-  nav ol li a:hover {
-    background: var(--row-hover);
-    border-left-color: var(--accent);
-    color: var(--accent);
-  }
+  nav ol li a::before { content: counter(nav-counter) ". "; color: var(--text-sec); margin-right: 4px; }
+  nav ol li a:hover { background: var(--row-hover); border-left-color: var(--accent); color: var(--accent); }
   .theme-toggle {
-    position: absolute;
-    bottom: 18px;
-    left: 22px;
-    background: var(--bg-card);
-    color: var(--text-pri);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 6px 12px;
-    cursor: pointer;
-    font-size: 12px;
-    font-family: var(--font);
+    position: absolute; bottom: 18px; left: 22px; background: var(--bg-card);
+    color: var(--text-pri); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 6px 12px; cursor: pointer; font-size: 12px; font-family: var(--font);
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
-  main {
-    flex: 1;
-    padding: 40px 56px 80px;
-    max-width: 1080px;
-  }
+  main { flex: 1; padding: 40px 56px 80px; max-width: 1080px; }
   h2 {
-    color: var(--accent);
-    font-size: 22px;
-    font-weight: 600;
-    padding-top: 32px;
-    margin-bottom: 14px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 8px;
+    color: var(--accent); font-size: 22px; font-weight: 600;
+    padding-top: 32px; margin-bottom: 14px;
+    border-bottom: 1px solid var(--border); padding-bottom: 8px;
   }
   h2:first-child { padding-top: 0; }
-  h3 {
-    color: var(--text-pri);
-    font-size: 17px;
-    font-weight: 600;
-    margin: 24px 0 10px;
-  }
-  h4 {
-    font-size: 14px;
-    font-weight: 600;
-    margin: 18px 0 8px;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    color: var(--text-sec);
-  }
+  h3 { color: var(--text-pri); font-size: 17px; font-weight: 600; margin: 24px 0 10px; }
+  h4 { font-size: 14px; font-weight: 600; margin: 18px 0 8px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-sec); }
   p { margin-bottom: 12px; }
   ul, ol { padding-left: 22px; margin-bottom: 14px; }
   ul li, ol li { margin-bottom: 4px; }
   code {
-    font-family: var(--mono);
-    font-size: 13px;
-    background: var(--bg-input);
-    color: var(--accent);
-    padding: 2px 6px;
-    border-radius: 3px;
-    border: 1px solid var(--border);
+    font-family: var(--mono); font-size: 13px; background: var(--bg-input);
+    color: var(--accent); padding: 2px 6px; border-radius: 3px; border: 1px solid var(--border);
   }
-  pre {
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    overflow-x: auto;
-    margin: 12px 0 16px;
-  }
-  pre code {
-    background: transparent;
-    border: none;
-    padding: 0;
-    color: var(--text-pri);
-    font-size: 13px;
-    line-height: 1.55;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 12px 0 18px;
-    font-size: 14px;
-  }
-  th, td {
-    text-align: left;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-  }
-  th {
-    color: var(--text-sec);
-    font-weight: 600;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-  }
+  pre { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; overflow-x: auto; margin: 12px 0 16px; }
+  pre code { background: transparent; border: none; padding: 0; color: var(--text-pri); font-size: 13px; line-height: 1.55; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--text-sec); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
   tr:hover td { background: var(--row-hover); }
-  .note {
-    border-left: 3px solid var(--accent);
-    background: var(--accent-subtle);
-    padding: 10px 16px;
-    margin: 12px 0;
-    border-radius: 0 var(--radius) var(--radius) 0;
-  }
-  .warn {
-    border-left: 3px solid var(--warning);
-    background: var(--warning-tint);
-    padding: 10px 16px;
-    margin: 12px 0;
-    border-radius: 0 var(--radius) var(--radius) 0;
-  }
-  .stub {
-    background: var(--bg-card);
-    border: 1px dashed var(--border);
-    color: var(--text-sec);
-    padding: 14px 18px;
-    border-radius: var(--radius);
-    margin: 14px 0;
-    font-style: italic;
-  }
+  .note { border-left: 3px solid var(--accent); background: var(--accent-subtle); padding: 10px 16px; margin: 12px 0; border-radius: 0 var(--radius) var(--radius) 0; }
+  .warn { border-left: 3px solid var(--warning); background: var(--warning-tint); padding: 10px 16px; margin: 12px 0; border-radius: 0 var(--radius) var(--radius) 0; }
+  .imgph { background: var(--bg-card); border: 1px dashed var(--border); color: var(--text-sec); padding: 24px; text-align: center; border-radius: var(--radius); margin: 14px 0; font-size: 12px; font-style: italic; }
+  .mermaid { background: var(--bg-card); padding: 16px; border-radius: var(--radius); margin: 14px 0; text-align: center; }
+  :root[data-theme="light"] .mermaid { background: #fff; }
 </style>
 </head>
 <body>
 <div class="layout">
   <nav>
     <h1>LucentScreen</h1>
-    <div class="ver">v0.1.0 (Scaffolding)</div>
+    <div class="ver">v0.2.0</div>
     <ol>
       <li><a href="#ueberblick">Überblick</a></li>
-      <li><a href="#installation">Installation</a></li>
       <li><a href="#schnellstart">Schnellstart</a></li>
       <li><a href="#tray">Tray-Icon</a></li>
       <li><a href="#hotkeys">Hotkeys</a></li>
@@ -238,6 +116,7 @@
       <li><a href="#verlauf">Verlauf</a></li>
       <li><a href="#konfiguration">Konfiguration</a></li>
       <li><a href="#architektur">Architektur</a></li>
+      <li><a href="#stolpersteine">Stolpersteine</a></li>
       <li><a href="#troubleshooting">Troubleshooting</a></li>
       <li><a href="#changelog">Changelog</a></li>
     </ol>
@@ -246,85 +125,290 @@
 
   <main>
     <h2 id="ueberblick">Überblick</h2>
-    <p>LucentScreen ist ein leichtgewichtiges Windows-Screenshot-Tool mit Tray-Integration, globalen Hotkeys, Annotations-Editor und Verlauf. Es läuft als WPF-Anwendung in PowerShell&nbsp;7+.</p>
+    <p>LucentScreen ist ein leichtgewichtiges Windows-Screenshot-Tool mit Tray-Integration, globalen Hotkeys, Annotations-Editor und Verlauf. Es läuft als <strong>WPF-Anwendung in Windows PowerShell 5.1</strong> — kein Compile-Step, kein .NET-Runtime-Install, läuft auf jedem Windows 10/11.</p>
     <p>Verteilung erfolgt als signiertes Bundle, das vom Softwareverteilteam in einen MSI-Installer verpackt wird.</p>
 
-    <h2 id="installation">Installation</h2>
-    <div class="stub">Wird mit AP 9 (Packaging) gefüllt. Quelle: <code>luscreen-docs/docs/grundlagen/installation.md</code>.</div>
-
     <h2 id="schnellstart">Schnellstart</h2>
-    <div class="stub">Wird mit AP 2/3 (Tray + Hotkeys) gefüllt.</div>
+    <ol>
+      <li>App über die Softwareverteilung installieren lassen (oder portable: ZIP entpacken + <code>LucentScreen.exe</code> starten)</li>
+      <li>Tray-Icon erscheint in der Taskleiste (rechte untere Ecke, ggf. unter dem ↑-Pfeil)</li>
+      <li><code>Strg+Shift+1</code> drücken → Vollbild-Overlay → Maus-Drag → Region wird als PNG gespeichert + im Clipboard</li>
+      <li>Im <strong>Verlauf</strong> (<code>Strg+Shift+H</code>) Doppelklick auf ein Bild öffnet den <strong>Editor</strong></li>
+    </ol>
 
     <h2 id="tray">Tray-Icon</h2>
-    <div class="stub">Wird mit AP 2 (Tray-Icon &amp; Kontextmenü) gefüllt.</div>
+    <p>LucentScreen läuft im Hintergrund. Das Icon liegt im System-Tray (rechte untere Ecke der Taskleiste). Es öffnet sich kein Hauptfenster.</p>
+    <p><strong>Wenn du das Icon nicht siehst:</strong> Klick auf den ↑-Pfeil im Tray-Bereich — Windows blendet selten genutzte Icons standardmäßig aus. Dauerhaft sichtbar machen: Rechtsklick auf die Taskleiste → Taskleisten-Einstellungen → Infobereich → LucentScreen auf <em>Ein</em>.</p>
+    <div class="imgph">[ Screenshot: Tray-Kontextmenü mit Hotkey-Anzeige ]</div>
+    <h4>Bedienung</h4>
+    <table>
+      <tr><th>Aktion</th><th>Wirkung</th></tr>
+      <tr><td>Linke Maustaste (doppelt)</td><td>Bereichs-Capture starten (wie <code>Strg+Shift+1</code>)</td></tr>
+      <tr><td>Rechte Maustaste</td><td>Kontextmenü</td></tr>
+    </table>
+    <h4>Kontextmenü</h4>
+    <table>
+      <tr><th>Eintrag</th><th>Default-Hotkey</th></tr>
+      <tr><td>Bereich aufnehmen</td><td><code>Strg+Shift+1</code></td></tr>
+      <tr><td>Aktives Fenster aufnehmen</td><td><code>Strg+Shift+2</code></td></tr>
+      <tr><td>Monitor (Maus)</td><td><code>Strg+Shift+3</code></td></tr>
+      <tr><td>Alle Monitore</td><td><code>Strg+Shift+4</code></td></tr>
+      <tr><td>Verzögerung Reset</td><td><code>Strg+Shift+R</code></td></tr>
+      <tr><td>Verzögerung +5 Sek</td><td><code>Strg+Shift+T</code></td></tr>
+      <tr><td>Verlauf öffnen</td><td><code>Strg+Shift+H</code></td></tr>
+      <tr><td>Konfiguration…</td><td>—</td></tr>
+      <tr><td>Über…</td><td>—</td></tr>
+      <tr><td>Beenden</td><td>—</td></tr>
+    </table>
 
     <h2 id="hotkeys">Hotkeys</h2>
-    <h4>Default-Hotkeys</h4>
-    <table>
-      <thead><tr><th>Tastenkombination</th><th>Aktion</th></tr></thead>
-      <tbody>
-        <tr><td><code>Ctrl+Shift+1</code></td><td>Bereich aufnehmen</td></tr>
-        <tr><td><code>Ctrl+Shift+2</code></td><td>Aktives Fenster</td></tr>
-        <tr><td><code>Ctrl+Shift+3</code></td><td>Monitor unter Maus</td></tr>
-        <tr><td><code>Ctrl+Shift+4</code></td><td>Alle Monitore</td></tr>
-        <tr><td><code>Ctrl+Shift+0</code></td><td>Tray-Menü anzeigen</td></tr>
-      </tbody>
-    </table>
-    <div class="note">Hotkeys sind im Konfigurationsdialog anpassbar. Bei Konflikten zeigt LucentScreen einen Vorschlag für eine freie Kombination.</div>
+    <p>LucentScreen registriert globale Tastenkombinationen über die Windows-API <code>RegisterHotKey</code>. Sie funktionieren in jeder Anwendung — auch wenn LucentScreen kein Fokus-Fenster hat.</p>
+    <p><strong>Belegung ändern:</strong> Tray → Konfiguration… → GroupBox „Hotkeys" → in das Feld klicken und gewünschte Kombi drücken. <strong>Speichern</strong> registriert die Hotkeys live neu — kein App-Neustart nötig. (Die Tray-Menü-Anzeige aktualisiert sich erst beim nächsten App-Start.)</p>
+    <h4>Mechanik</h4>
+    <div class="mermaid">
+sequenceDiagram
+    actor User
+    participant OS as Windows
+    participant Hidden as Hidden-WPF-Window
+    participant LS as LucentScreen.ps1
+
+    Note over Hidden,LS: Bootstrap registriert pro Slot
+    Hidden->>OS: RegisterHotKey(hwnd, id, MOD, VK)
+    User->>OS: Strg+Shift+1
+    OS-->>Hidden: WM_HOTKEY (id)
+    Hidden->>LS: Invoke-HotkeyById id
+    LS->>LS: Callback aus Map
+    </div>
+    <p><strong>Konflikte mit anderen Apps</strong> sieht erst <code>RegisterHotKey</code> zur Laufzeit — der Slot landet in <code>Conflicts</code>, der Hotkey ist nicht aktiv, im Log steht die Win32-Fehlernummer.</p>
 
     <h2 id="capture">Capture-Modi</h2>
-    <h4>Bereich</h4>
-    <p>Ein Vollbild-Overlay erscheint über allen Monitoren. Mit gedrückter Maustaste ziehen Sie ein Rechteck. <kbd>ESC</kbd> bricht ab.</p>
-    <h4>Aktives Fenster</h4>
-    <p>Das aktuell aktive Fenster wird inklusive Frame, aber ohne Schlagschatten, aufgenommen.</p>
-    <h4>Monitor unter Maus</h4>
-    <p>Der Monitor, auf dem sich der Cursor befindet, wird vollständig aufgenommen.</p>
-    <h4>Alle Monitore</h4>
-    <p>Der virtuelle Gesamtbildschirm aller verbundenen Monitore.</p>
+    <table>
+      <tr><th>Modus</th><th>Hotkey</th><th>Was passiert</th></tr>
+      <tr><td>Region</td><td><code>Strg+Shift+1</code></td><td>Vollbild-Overlay → Maus-Drag wählt Rechteck</td></tr>
+      <tr><td>ActiveWindow</td><td><code>Strg+Shift+2</code></td><td>Vordergrundfenster (DWM-Frame ohne Schatten)</td></tr>
+      <tr><td>Monitor</td><td><code>Strg+Shift+3</code></td><td>Bildschirm unter dem Cursor</td></tr>
+      <tr><td>AllMonitors</td><td><code>Strg+Shift+4</code></td><td>Virtueller Gesamt-Bildschirm über alle Monitore</td></tr>
+    </table>
+    <h4>Pipeline</h4>
+    <div class="mermaid">
+sequenceDiagram
+    actor User
+    participant Hk as Hotkey-Hook
+    participant LS as LucentScreen.ps1
+    participant Region as Region-Overlay
+    participant Cap as capture.psm1
+    participant FS as Filesystem
+    participant CB as Clipboard
+    participant Toast as Capture-Toast
+
+    User->>Hk: Strg+Shift+1
+    Hk->>LS: invokeCapture('Region')
+    LS->>Region: Show-RegionOverlay
+    User->>Region: Maus-Drag
+    Region->>LS: Rect
+    LS->>Cap: Invoke-Capture -Mode Region
+    Cap->>Cap: GDI+ CopyFromScreen
+    Cap->>FS: PNG speichern
+    Cap-->>LS: Bitmap + Path
+    LS->>CB: Set-ClipboardImage
+    LS->>Toast: Show-CaptureToast
+    </div>
 
     <h2 id="editor">Editor</h2>
-    <div class="stub">Wird mit AP 6 (Editor) gefüllt.</div>
+    <p>Mini-Editor für Annotations + Crop. Öffnet sich per Doppelklick (oder <code>Enter</code>) auf ein Bild im Verlaufsfenster.</p>
+    <div class="imgph">[ Screenshot: Editor mit Tools (Pfeil + Rahmen + Marker auf einem Bild) ]</div>
+    <h4>Werkzeuge</h4>
+    <table>
+      <tr><th>Werkzeug</th><th>Taste</th><th>Was es macht</th></tr>
+      <tr><td>Auswahl</td><td><code>V</code></td><td>Shape selektieren (Adorner), Drag verschiebt, <code>Entf</code> löscht</td></tr>
+      <tr><td>Rahmen</td><td><code>R</code></td><td>Rechteck (nur Stroke)</td></tr>
+      <tr><td>Linie</td><td><code>L</code></td><td>Gerade mit abgerundeten Enden</td></tr>
+      <tr><td>Pfeil</td><td><code>A</code></td><td>Linie + Pfeilspitze</td></tr>
+      <tr><td>Balken</td><td><code>B</code></td><td>Gefülltes Rechteck (z.B. zum Schwärzen)</td></tr>
+      <tr><td>Marker</td><td><code>M</code></td><td>Highlighter — gefülltes Rechteck mit 40% Alpha</td></tr>
+      <tr><td>Radierer</td><td><code>E</code></td><td>Klick auf Shape entfernt sie</td></tr>
+      <tr><td>Zuschneiden</td><td><code>C</code></td><td>8-Handle-Crop mit Dimmer-Overlay</td></tr>
+    </table>
+    <h4>State-Modell</h4>
+    <div class="mermaid">
+stateDiagram-v2
+    [*] --> Select : Editor öffnet
+    Select --> Drawing : Tool R/L/A/B/M
+    Select --> Eraser  : Tool E
+    Select --> Cropping : Tool C
+    Select --> Selecting : Klick auf Shape
+    Drawing --> Select : MouseUp + pushUndo
+    Eraser --> Select : Klick + pushUndo
+    Cropping --> Select : Apply / Cancel
+    Selecting --> Selecting : Drag (pushUndo bei MouseUp)
+    Selecting --> Select : Background / Esc / Entf
+    Select --> Saved : Strg+S
+    Saved --> [*] : Editor schließt
+    Select --> Confirm : Esc bei IsDirty
+    Confirm --> Select : Nein
+    Confirm --> [*] : Ja (verwerfen)
+    </div>
+    <h4>Speichern</h4>
+    <p><code>Strg+S</code> rendert Bitmap + Annotations bei Zoom 1.0 in PNG-Auflösung, schreibt nach <code>&lt;original&gt;_edited.png</code>, kopiert das Bild ins Clipboard. <strong>Editor schließt automatisch</strong> + Toast „Gespeichert + kopiert".</p>
+    <p><strong>ESC bei ungespeicherten Änderungen</strong> zeigt einen Confirm-Dialog (Ja/Nein).</p>
 
     <h2 id="verlauf">Verlauf</h2>
-    <div class="stub">Wird mit AP 7 (Verlauf) gefüllt.</div>
+    <p>Übersicht aller Screenshots im Zielordner. Tray → Verlauf öffnen (oder <code>Strg+Shift+H</code>).</p>
+    <div class="imgph">[ Screenshot: Verlaufsfenster mit Toolbar + Thumbnails ]</div>
+    <h4>Toolbar (7 Icon-Buttons, Größe konfigurierbar 16–32 pt)</h4>
+    <table>
+      <tr><th>Icon</th><th>Aktion</th></tr>
+      <tr><td>👁</td><td>Anzeigen — Standard-Bildbetrachter</td></tr>
+      <tr><td>✎</td><td>Bearbeiten — Editor (= Doppelklick / <code>Enter</code>)</td></tr>
+      <tr><td>🗑</td><td>Löschen — Papierkorb</td></tr>
+      <tr><td>📂</td><td>Speicherort — Explorer öffnet, Datei markiert</td></tr>
+      <tr><td>📋</td><td>Zwischenablage — Single-Bild als Image (<code>Strg+C</code>)</td></tr>
+      <tr><td>📑</td><td>Zwischenablage (Liste) — mehrere Dateien als FileDropList</td></tr>
+      <tr><td>↻</td><td>Aktualisieren (<code>F5</code>)</td></tr>
+    </table>
+    <p><strong>Live-Polling</strong>: alle 2 Sekunden neue Captures automatisch eingelesen — kein manueller Refresh nötig.</p>
+    <p><strong>Multi-Auswahl</strong> (<code>Strg+Klick</code> / <code>Shift+Klick</code>) wirkt auf Löschen, Zwischenablage-Liste und Bearbeiten.</p>
 
     <h2 id="konfiguration">Konfiguration</h2>
-    <p>Die Konfigurationsdatei liegt unter <code>%APPDATA%\LucentScreen\config.json</code> und wird beim ersten Start aus <code>config.default.json</code> erzeugt.</p>
-    <div class="stub">Vollständiges Schema wird mit AP 1 (Konfiguration) dokumentiert.</div>
+    <p>Datei: <code>%APPDATA%\LucentScreen\config.json</code>. Wird beim ersten Start angelegt, Schema-Versioniert mit Auto-Migration. Direktes Editieren erlaubt — bei Validation-Fehler greift Defaults-Fallback mit Warning.</p>
+    <div class="imgph">[ Screenshot: Konfig-Dialog mit allen Slots ]</div>
+    <h4>Schlüssel</h4>
+    <table>
+      <tr><th>Key</th><th>Default</th><th>Bedeutung</th></tr>
+      <tr><td><code>SchemaVersion</code></td><td>6</td><td>Auto-migriert beim Lesen</td></tr>
+      <tr><td><code>OutputDir</code></td><td><code>%USERPROFILE%\Pictures\LucentScreen</code></td><td>Zielordner für PNGs</td></tr>
+      <tr><td><code>DelaySeconds</code></td><td>0</td><td>Countdown vor Capture (0–30)</td></tr>
+      <tr><td><code>FileNameFormat</code></td><td><code>yyyyMMdd_HHmm_{mode}.png</code></td><td>Token-Schema</td></tr>
+      <tr><td><code>EditPostfix</code></td><td><code>_edited</code></td><td>Postfix für Editor-Save</td></tr>
+      <tr><td><code>HistoryIconSize</code></td><td>20</td><td>Toolbar-Icon-Größe (16–32)</td></tr>
+      <tr><td><code>Hotkeys</code></td><td>(8 Slots)</td><td>Region/ActiveWindow/Monitor/AllMonitors/TrayMenu/DelayReset/DelayPlus5/HistoryOpen</td></tr>
+    </table>
+    <h4>Filename-Tokens</h4>
+    <p><code>yyyy</code> / <code>yy</code> / <code>MM</code> / <code>dd</code> / <code>HH</code> / <code>mm</code> / <code>ss</code> · <code>{mode}</code> · <code>{postfix}</code></p>
+    <h4>Schema-Migrationen</h4>
+    <div class="mermaid">
+flowchart LR
+    V1["v1<br/>Initial"]
+    V2["v2<br/>+ HistoryIconSize"]
+    V3["v3<br/>FileNameFormat:<br/>LucentScreen_-Präfix raus"]
+    V4["v4<br/>+ DelayReset/Plus5"]
+    V5["v5<br/>FileNameFormat:<br/>yyyyMMdd_HHmm"]
+    V6["v6<br/>+ HistoryOpen"]
+    V1 --> V2 --> V3 --> V4 --> V5 --> V6
+    </div>
+    <p>Bei Filename-Migrationen wird <strong>nur</strong> das exakte alte Default ersetzt — vom User selbst angepasste Templates bleiben unangetastet.</p>
 
     <h2 id="architektur">Architektur</h2>
-    <p>LucentScreen ist in drei Layer aufgebaut:</p>
+    <p>Strikte Layer-Trennung. Kein Compile-Step, kein .NET-Runtime-Install.</p>
+    <div class="mermaid">
+flowchart TB
+    Boot["LucentScreen.ps1<br/>Bootstrap + App-Loop"]
+    subgraph UI["src/ui/"]
+      Tray["tray"]
+      Editor["editor-window"]
+      History["history-window"]
+      Config["config-dialog"]
+      About["about-dialog"]
+    end
+    subgraph Core["src/core/"]
+      Capture["capture (GDI+)"]
+      Hk["hotkeys"]
+      Cfg["config (JSON+Migration)"]
+      Log["logging"]
+      Native["native (P/Invoke)"]
+    end
+    Boot --> Tray
+    Boot --> Hk
+    Boot --> Cfg
+    Tray --> Editor
+    Tray --> History
+    Tray --> Config
+    Tray --> About
+    Editor --> Capture
+    Hk --> Native
+    </div>
+    <h4>Layer-Regeln</h4>
+    <table>
+      <tr><th>Layer</th><th>Pfad</th><th>Darf</th><th>Darf nicht</th></tr>
+      <tr><td>core</td><td><code>src/core/</code></td><td>Logik, GDI+, P/Invoke, Konfig, Logging</td><td>WPF, XAML, Tray</td></tr>
+      <tr><td>ui</td><td><code>src/ui/</code></td><td>XAML laden, Fenster, NotifyIcon</td><td>Direkte Domain-Logik</td></tr>
+      <tr><td>views</td><td><code>src/views/</code></td><td>XAML-Markup</td><td>Code-Behind</td></tr>
+      <tr><td>main</td><td><code>LucentScreen.ps1</code></td><td>Bootstrap + App-Loop</td><td>Sonst nichts</td></tr>
+    </table>
+    <h4>Process-Modell</h4>
     <ul>
-      <li><strong>core</strong> — Domain-Logik, GDI+, P/Invoke. Keine WPF-Abhängigkeit.</li>
-      <li><strong>ui</strong> — XAML, WPF-Fenster, NotifyIcon, HwndSource-Hotkey-Hook.</li>
-      <li><strong>entry</strong> — <code>LucentScreen.ps1</code>: STA-Check, Single-Instance, DPI-Awareness, Application-Loop.</li>
+      <li><strong>Single-Instance</strong> via <code>System.Threading.Mutex</code> (<code>Global\LucentScreen.SingleInstance</code>)</li>
+      <li><strong>STA-Apartment</strong> zwingend für WPF + Clipboard — Self-Relaunch wenn nicht im STA</li>
+      <li><strong>DPI-Awareness</strong> PER_MONITOR_AWARE_V2 als allererster Schritt nach Logging</li>
     </ul>
-    <p>Details: <code>docs/Architektur.md</code> im Quellrepository.</p>
+
+    <h2 id="stolpersteine">Stolpersteine</h2>
+    <p>Auswahl der ärgerlichsten WPF-/PowerShell-5.1-Fallen, in die LucentScreen während der Entwicklung gelaufen ist. Ausführlicher Pool projektübergreifend in <code>_Projects/.erkenntnisse/wpf-powershell-gotchas.md</code>.</p>
+    <ul>
+      <li><strong>BitmapImage + DecodePixelWidth</strong> liefert leere Tiles → Workaround: <code>BitmapFrame.Create</code> + <code>TransformedBitmap</code></li>
+      <li><strong>FileSystemWatcher mit ScriptBlock-Handler</strong> killt den Prozess silent vom Worker-Thread → DispatcherTimer-Polling</li>
+      <li><strong>Modul-private <code>_Underscore</code>-Funktionen</strong> sind aus <code>.GetNewClosure()</code>-Closures unauffindbar → Helper als ScriptBlock-Variable</li>
+      <li><strong><code>$script:Variable = …</code> im Closure</strong> schreibt in einen anderen Scope → Hashtable-Slot oder Inplace-Update</li>
+      <li><strong>PS 5.1 liest psm1 ohne BOM als CP-1252</strong> → Umlaute werden Mojibake; mit BOM speichern</li>
+      <li><strong>Verschachtelte <code>@(@(...),@(...))</code> mit Operatoren</strong> werfen <code>op_Addition</code> auf [Object[]] → innere Arrays als Hashtables</li>
+      <li><strong><code>.GetNewClosure()</code> friert Forward-Refs als <code>$null</code></strong> → Slot via shared <code>$state</code></li>
+      <li><strong><code>$rtb.Render($visual)</code> rendert mit Layout-Offset</strong> → VisualBrush auf DrawingVisual bei (0,0)</li>
+    </ul>
 
     <h2 id="troubleshooting">Troubleshooting</h2>
+    <div class="warn"><strong>Tray-Icon nicht sichtbar:</strong> Klick auf den ↑-Pfeil neben der Uhr — Windows blendet selten genutzte Icons standardmäßig aus. Dauerhaft sichtbar: Taskleisten-Einstellungen → Infobereich → LucentScreen auf Ein.</div>
     <div class="warn"><strong>Tray-Icon bleibt nach Beenden sichtbar:</strong> Windows-Glitch. Über das Icon mit der Maus fahren, dann verschwindet es.</div>
-    <div class="warn"><strong>Hotkey funktioniert nicht:</strong> Andere Anwendung hat die Kombination bereits registriert. In der Konfiguration auf eine alternative Kombination wechseln.</div>
-    <div class="warn"><strong>Screenshot auf zweitem Monitor ist verschoben:</strong> DPI-Skalierungs-Mismatch — Windows-Display-Einstellungen prüfen, evtl. App neu starten.</div>
+    <div class="warn"><strong>Hotkey funktioniert nicht:</strong> Andere Anwendung hat die Kombination bereits registriert. Im App-Log <code>%LOCALAPPDATA%\LucentScreen\logs\app.log</code> steht die Win32-Fehlernummer. In der Konfig auf alternative Kombi wechseln.</div>
+    <div class="warn"><strong>Screenshot auf zweitem Monitor ist verschoben:</strong> DPI-Skalierungs-Mismatch — Windows-Display-Einstellungen prüfen, App neu starten. (DPI-Tests im Multi-Monitor-Setup sind AP 10.)</div>
+    <div class="warn"><strong>Konfig-Dialog Save scheint nichts zu tun:</strong> Inline-Validation-Box am unteren Rand prüfen. MessageBox erscheint zusätzlich bei Validation-Fehler oder Exception (mit Quellzeile).</div>
+    <div class="warn"><strong>Editor-Save speichert verschobenes Bild:</strong> behoben in v0.2.0 (VisualBrush-Workaround). Falls trotzdem Versatz: bitte Issue mit Screenshot.</div>
+    <div class="warn"><strong>App-Log:</strong> <code>%LOCALAPPDATA%\LucentScreen\logs\app.log</code> mit 7-Tage-Rotation. Editor-Debug-Log via <code>./run.ps1 sd</code> + <code>./run.ps1 lg</code>.</div>
 
     <h2 id="changelog">Changelog</h2>
-    <p>Vollständige Historie: <code>CHANGELOG.md</code>.</p>
-    <h4>v0.1.0 (geplant)</h4>
+    <p>Vollständige Historie: <code>CHANGELOG.md</code> im Repo-Root. Sichtbar auch im Über-Dialog (Tray → Über… → Tab Changelog).</p>
+    <h4>v0.2.0 (aktuell)</h4>
     <ul>
-      <li>Projekt-Scaffolding (Ordner, Agenten, PSSA-Setup, Doku-Gerüst)</li>
-      <li>App-Implementierung folgt nach <code>todo.md</code></li>
+      <li>AP 9 abgeschlossen: Mini-Editor mit Tools, Crop, Selection-Adorner, Move, Delete, Eraser, Undo/Redo, ESC-Confirm</li>
+      <li>Politur: Verlauf-Toolbar mit MDL2-Icon-Buttons + konfigurierbarer Größe (16–32 pt)</li>
+      <li>Konfig-Dialog: drei Bug-Fixes (Underscore-Helper, $script:DialogResult, $script:Config-Inplace-Update)</li>
+      <li>Filename-Schema: <code>yyyyMMdd_HHmm_{mode}.png</code></li>
+      <li>Tray-Menü mit Hotkey-Anzeige; HistoryOpen-Hotkey (Strg+Shift+H) konfigurierbar</li>
+      <li>About-Dialog im CSC-Stil (Tabs Info + Changelog, git-config-Entwickler)</li>
+      <li>App-Icon-Splitting: PNG für About-Header, ICO für Tray + Window-Titelleiste (zentral via xaml-loader)</li>
+      <li>Umlaute in allen UI-Strings + BOM auf psm1-Files</li>
+    </ul>
+    <h4>v0.1.0</h4>
+    <ul>
+      <li>AP 0–8: Bootstrap, Konfig, Capture-Engine (4 Modi), Clipboard, Verlaufsfenster, Editor Etappe 1</li>
     </ul>
   </main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script>
   function applyTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem('luscreen-doc-theme', t);
+    if (window.mermaid) {
+      mermaid.initialize({ startOnLoad: false, theme: t === 'dark' ? 'dark' : 'default' });
+      // Mermaid braucht Re-Render bei Theme-Wechsel: alle bereits gerenderten zurücksetzen
+      document.querySelectorAll('.mermaid').forEach(function (el) {
+        if (el.getAttribute('data-processed') === 'true') {
+          el.removeAttribute('data-processed');
+          el.innerHTML = el.dataset.src || el.innerText;
+        } else {
+          el.dataset.src = el.innerText;
+        }
+      });
+      mermaid.run();
+    }
   }
   function toggleTheme() {
     const cur = document.documentElement.getAttribute('data-theme') || 'dark';
     applyTheme(cur === 'dark' ? 'light' : 'dark');
   }
+  // Mermaid-Source vor dem ersten Render sichern (sonst kein Re-Render bei Theme-Wechsel)
+  document.querySelectorAll('.mermaid').forEach(function (el) { el.dataset.src = el.innerText; });
   (function init() {
     const saved = localStorage.getItem('luscreen-doc-theme') || 'dark';
     applyTheme(saved);

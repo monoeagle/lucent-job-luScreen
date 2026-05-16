@@ -1,0 +1,24 @@
+stateDiagram-v2
+    [*] --> Select : Editor öffnet
+
+    Select --> Drawing : Tool R/L/A/B/M
+    Select --> Eraser  : Tool E
+    Select --> Cropping : Tool C
+    Select --> Selecting : Klick auf Shape
+
+    Drawing --> Select : MouseUp + pushUndo (Kind=Shape)
+    Eraser --> Select : Klick entfernt + pushUndo (Kind=ShapeRemove)
+
+    Cropping --> CropDragging : MouseDown
+    CropDragging --> Cropping : MouseUp
+    Cropping --> Select : Apply (pushUndo Crop) / Cancel (Esc)
+
+    Selecting --> SelDragging : MouseDown auf Shape
+    SelDragging --> Selecting : MouseUp + pushUndo (Kind=ShapeMove)
+    Selecting --> Select : Background-Klick / Esc / Entf (+ ShapeRemove)
+
+    Select --> Saved : Strg+S
+    Saved --> [*] : Editor schließt
+    Select --> Confirm : Esc / X-Button bei IsDirty
+    Confirm --> Select : "Nein" (Cancel)
+    Confirm --> [*] : "Ja" (verwerfen)

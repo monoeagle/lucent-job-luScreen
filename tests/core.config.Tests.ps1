@@ -312,4 +312,17 @@ Describe 'config: Test-ConfigValid' {
         $cfg = Read-Config -Path $tmp
         $cfg.FileNameFormat | Should -Be 'snap_yyyy_{mode}.png'
     }
+    It 'Migration 5 -> 6: HistoryOpen-Hotkey wird ergaenzt' {
+        $tmp = Join-Path $TestDrive 'mig56.json'
+        @{
+            SchemaVersion = 5
+            OutputDir     = 'C:/X'
+            Hotkeys       = @{
+                Region = @{ Modifiers = @('Control', 'Shift'); Key = 'D1' }
+            }
+        } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $tmp -Encoding UTF8
+        $cfg = Read-Config -Path $tmp
+        $cfg.SchemaVersion         | Should -BeGreaterOrEqual 6
+        $cfg.Hotkeys.HistoryOpen.Key | Should -Be 'H'
+    }
 }

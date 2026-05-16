@@ -24,7 +24,7 @@ Set-StrictMode -Version Latest
 #      bekommen den Default, ueberzaehlige Keys bleiben erhalten.
 # ---------------------------------------------------------------
 
-$script:CurrentSchemaVersion = 5
+$script:CurrentSchemaVersion = 6
 
 function Get-ConfigPath {
     [CmdletBinding()]
@@ -59,6 +59,7 @@ function Get-DefaultConfig {
             TrayMenu     = @{ Modifiers = @('Control', 'Shift'); Key = 'D0' }
             DelayReset   = @{ Modifiers = @('Control', 'Shift'); Key = 'R' }
             DelayPlus5   = @{ Modifiers = @('Control', 'Shift'); Key = 'T' }
+            HistoryOpen  = @{ Modifiers = @('Control', 'Shift'); Key = 'H' }
         }
     }
 }
@@ -167,6 +168,14 @@ function _Migrate-Config {
             if ($Config.ContainsKey('FileNameFormat') -and
                 $Config['FileNameFormat'] -eq 'yyyy-MM-dd_HH-mm-ss_{mode}.png') {
                 $Config['FileNameFormat'] = 'yyyyMMdd_HHmm_{mode}.png'
+            }
+        }
+        if ($from -eq 5) {
+            # Schema 6: HistoryOpen-Hotkey ergaenzen (Default Strg+Shift+H).
+            if ($Config.ContainsKey('Hotkeys') -and ($Config['Hotkeys'] -is [hashtable])) {
+                if (-not $Config['Hotkeys'].ContainsKey('HistoryOpen')) {
+                    $Config['Hotkeys']['HistoryOpen'] = @{ Modifiers = @('Control', 'Shift'); Key = 'H' }
+                }
             }
         }
         $from++

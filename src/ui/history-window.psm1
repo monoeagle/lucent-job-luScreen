@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 Set-StrictMode -Version Latest
 
 # ---------------------------------------------------------------
@@ -288,7 +288,7 @@ function Show-HistoryWindow {
             "$($sel.Count) Dateien in den Papierkorb verschieben?"
         }
         $r = [System.Windows.MessageBox]::Show(
-            $msg, 'LucentScreen -- Loeschen',
+            $msg, 'LucentScreen -- Löschen',
             [System.Windows.MessageBoxButton]::OKCancel,
             [System.Windows.MessageBoxImage]::Question)
         if ($r -ne [System.Windows.MessageBoxResult]::OK) { return }
@@ -297,7 +297,7 @@ function Show-HistoryWindow {
             $del = Remove-HistoryItem -Path $entry.FullName
             if (-not $del.Success) {
                 [System.Windows.MessageBox]::Show(
-                    ("Loeschen fehlgeschlagen ($($entry.FileName)):`n" + $del.Message),
+                    ("Löschen fehlgeschlagen ($($entry.FileName)):`n" + $del.Message),
                     'LucentScreen',
                     [System.Windows.MessageBoxButton]::OK,
                     [System.Windows.MessageBoxImage]::Warning) | Out-Null

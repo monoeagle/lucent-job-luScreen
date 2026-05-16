@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 Set-StrictMode -Version Latest
 
 # ---------------------------------------------------------------
@@ -1228,8 +1228,8 @@ function Show-EditorWindow {
             param($s, $e)
             if ($state.IsDirty -and -not $state.Saved) {
                 $r = [System.Windows.MessageBox]::Show(
-                    'Ungespeicherte Aenderungen verwerfen?',
-                    'LucentScreen -- Editor schliessen',
+                    'Ungespeicherte Änderungen verwerfen?',
+                    'LucentScreen -- Editor schließen',
                     [System.Windows.MessageBoxButton]::YesNo,
                     [System.Windows.MessageBoxImage]::Question)
                 if ($r -ne [System.Windows.MessageBoxResult]::Yes) {

@@ -22,7 +22,8 @@ Set-StrictMode -Version Latest
 function _New-MenuItem {
     param(
         [string]$Text,
-        [scriptblock]$Action
+        [scriptblock]$Action,
+        [string]$ShortcutText
     )
     $item = New-Object System.Windows.Forms.ToolStripMenuItem $Text
     if ($Action) {
@@ -30,6 +31,9 @@ function _New-MenuItem {
     } else {
         $item.Enabled = $false
     }
+    # ShortcutKeyDisplayString rendert rechtsbuendig als zweite Spalte im Menue.
+    # Wir registrieren den Hotkey global via WM_HOTKEY -- nicht ueber Form-Shortcut.
+    if ($ShortcutText) { $item.ShortcutKeyDisplayString = $ShortcutText }
     return $item
 }
 
@@ -69,7 +73,12 @@ function Initialize-Tray {
     param(
         [Parameter(Mandatory)][string]$Icon,
         [Parameter(Mandatory)][string]$Version,
-        [Parameter(Mandatory)][hashtable]$Callbacks
+        [Parameter(Mandatory)][hashtable]$Callbacks,
+        # Optional: Hotkey-Map (Schluessel = Callback-Name, Wert = @{ Modifiers; Key }).
+        # Wenn vorhanden, wird der Display-Text ('Strg+Shift+1' etc.) per
+        # Format-Hotkey berechnet und als ShortcutKeyDisplayString rechts neben
+        # dem Eintrag angezeigt.
+        [hashtable]$HotkeyMap
     )
 
     if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
@@ -98,7 +107,7 @@ function Initialize-Tray {
         @{ Text = 'Verzögerung Reset'; Key = 'DelayReset' },
         @{ Text = 'Verzögerung +5 Sek'; Key = 'DelayPlus5' },
         @{ Separator = $true },
-        @{ Text = 'Verlauf öffnen'; Key = 'History' },
+        @{ Text = 'Verlauf öffnen'; Key = 'HistoryOpen' },
         @{ Separator = $true },
         @{ Text = 'Konfiguration...'; Key = 'Config' },
         @{ Text = 'Über...'; Key = 'About' },
@@ -106,13 +115,18 @@ function Initialize-Tray {
         @{ Text = 'Beenden'; Key = 'Exit' }
     )
 
+    $hasFormatHotkey = [bool](Get-Command Format-Hotkey -ErrorAction SilentlyContinue)
     foreach ($entry in $items) {
         if ($entry.ContainsKey('Separator')) {
             [void]$menu.Items.Add((_New-Separator))
             continue
         }
         $cb = if ($Callbacks.ContainsKey($entry.Key)) { $Callbacks[$entry.Key] } else { $null }
-        [void]$menu.Items.Add((_New-MenuItem -Text $entry.Text -Action $cb))
+        $sc = $null
+        if ($HotkeyMap -and $HotkeyMap.ContainsKey($entry.Key) -and $hasFormatHotkey) {
+            try { $sc = Format-Hotkey $HotkeyMap[$entry.Key] } catch { $sc = $null }
+        }
+        [void]$menu.Items.Add((_New-MenuItem -Text $entry.Text -Action $cb -ShortcutText $sc))
     }
 
     $tray.ContextMenuStrip = $menu

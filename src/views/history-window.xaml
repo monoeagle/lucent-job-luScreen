@@ -60,11 +60,11 @@
             <DockPanel LastChildFill="True">
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                     <Button x:Name="BtnView"      Style="{StaticResource IconButton}" Content="&#xE890;"
-                            ToolTip="Anzeigen -- Bild im Standard-Bildbetrachter oeffnen"/>
+                            ToolTip="Anzeigen -- Bild im Standard-Bildbetrachter öffnen"/>
                     <Button x:Name="BtnEdit"      Style="{StaticResource IconButton}" Content="&#xE70F;"
-                            ToolTip="Bearbeiten -- Bild im LucentScreen-Editor oeffnen (Doppelklick / Enter)"/>
+                            ToolTip="Bearbeiten -- Bild im LucentScreen-Editor öffnen (Doppelklick / Enter)"/>
                     <Button x:Name="BtnDelete"    Style="{StaticResource IconButton}" Content="&#xE74D;"
-                            ToolTip="Loeschen -- markierte Bilder in den Papierkorb verschieben (Entf)"/>
+                            ToolTip="Löschen -- markierte Bilder in den Papierkorb verschieben (Entf)"/>
                     <Button x:Name="BtnReveal"    Style="{StaticResource IconButton}" Content="&#xE838;"
                             ToolTip="Speicherort -- Ordner im Explorer oeffnen, Datei markiert"/>
                     <Button x:Name="BtnCopy"      Style="{StaticResource IconButton}" Content="&#xE8C8;"

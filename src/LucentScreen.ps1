@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     LucentScreen -- Einstiegspunkt der Anwendung.
@@ -277,7 +277,7 @@ $callbacks = @{
     Monitor      = { $invokeCapture.Invoke('Monitor') }.GetNewClosure()
     AllMonitors  = { $invokeCapture.Invoke('AllMonitors') }.GetNewClosure()
 
-    History = {
+    HistoryOpen = {
         Write-LsLog -Level Info -Source 'tray' -Message 'Verlauf geoeffnet'
         try {
             $postfix = if ($script:Config.ContainsKey('EditPostfix') -and $script:Config.EditPostfix) { $script:Config.EditPostfix } else { '_edited' }
@@ -322,7 +322,7 @@ $callbacks = @{
         $r = Save-Config -Config $script:Config
         if ($r.Success) {
             Write-LsLog -Level Info -Source 'tray' -Message 'Verzoegerung -> 0'
-            try { Show-CaptureToast -Title 'Verzoegerung zurueckgesetzt' -Subtitle '0 Sek' -Glyph "$([char]0xE777)" } catch { $null = $_ }
+            try { Show-CaptureToast -Title 'Verzögerung zurückgesetzt' -Subtitle '0 Sek' -Glyph "$([char]0xE777)" } catch { $null = $_ }
         } else {
             Write-LsLog -Level Error -Source 'tray' -Message ("DelayReset Save fehlgeschlagen: " + $r.Message)
         }
@@ -335,7 +335,7 @@ $callbacks = @{
         $r = Save-Config -Config $script:Config
         if ($r.Success) {
             Write-LsLog -Level Info -Source 'tray' -Message ("Verzoegerung {0} -> {1}" -f $cur, $new)
-            try { Show-CaptureToast -Title ("Verzoegerung {0} Sek" -f $new) -Subtitle ("vorher {0}" -f $cur) -Glyph "$([char]0xE916)" } catch { $null = $_ }
+            try { Show-CaptureToast -Title ("Verzögerung {0} Sek" -f $new) -Subtitle ("vorher {0}" -f $cur) -Glyph "$([char]0xE916)" } catch { $null = $_ }
         } else {
             Write-LsLog -Level Error -Source 'tray' -Message ("DelayPlus5 Save fehlgeschlagen: " + $r.Message)
         }
@@ -347,7 +347,7 @@ $callbacks = @{
     }.GetNewClosure()
 }
 
-$trayResult = Initialize-Tray -Icon $iconPath -Version $appVersion -Callbacks $callbacks
+$trayResult = Initialize-Tray -Icon $iconPath -Version $appVersion -Callbacks $callbacks -HotkeyMap $script:Config.Hotkeys
 $script:TrayDispose = $trayResult.Dispose
 Write-LsLog -Level Info -Source 'boot' -Message 'Tray-Icon aktiv'
 

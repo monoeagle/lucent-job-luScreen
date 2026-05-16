@@ -34,7 +34,7 @@
         <StackPanel Grid.Row="0" Margin="0,0,0,14">
             <TextBlock Text="Einstellungen" FontSize="18" FontWeight="SemiBold"/>
             <TextBlock Foreground="#666"
-                       Text="Aenderungen wirken nach Klick auf 'Speichern'. Hotkeys werden bei der naechsten App-Startsequenz neu registriert."
+                       Text="Änderungen wirken nach Klick auf 'Speichern'. Hotkeys werden bei der nächsten App-Startsequenz neu registriert."
                        TextWrapping="Wrap" Margin="0,4,0,0"/>
         </StackPanel>
 
@@ -73,7 +73,7 @@
                     </Grid>
                 </GroupBox>
 
-                <GroupBox Header="Verzoegerung" Padding="10" Margin="0,0,0,12">
+                <GroupBox Header="Verzögerung" Padding="10" Margin="0,0,0,12">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="160"/>
@@ -101,7 +101,7 @@
                     </Grid>
                 </GroupBox>
 
-                <GroupBox Header="Hotkeys (in Feld klicken, dann Tastenkombination druecken)" Padding="10" Margin="0,0,0,4">
+                <GroupBox Header="Hotkeys (in Feld klicken, dann Tastenkombination drücken)" Padding="10" Margin="0,0,0,4">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="180"/>
@@ -116,35 +116,40 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <Label Grid.Row="0" Grid.Column="0" Content="Bereich:"/>
                         <TextBox x:Name="HkRegion" Grid.Row="0" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
-                        <Button x:Name="HkRegionClear" Grid.Row="0" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+                        <Button x:Name="HkRegionClear" Grid.Row="0" Grid.Column="2" Content="Löschen" Margin="6,4,0,4" MinWidth="80"/>
 
                         <Label Grid.Row="1" Grid.Column="0" Content="Aktives Fenster:"/>
                         <TextBox x:Name="HkActiveWindow" Grid.Row="1" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
-                        <Button x:Name="HkActiveWindowClear" Grid.Row="1" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+                        <Button x:Name="HkActiveWindowClear" Grid.Row="1" Grid.Column="2" Content="Löschen" Margin="6,4,0,4" MinWidth="80"/>
 
                         <Label Grid.Row="2" Grid.Column="0" Content="Monitor unter Maus:"/>
                         <TextBox x:Name="HkMonitor" Grid.Row="2" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
-                        <Button x:Name="HkMonitorClear" Grid.Row="2" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+                        <Button x:Name="HkMonitorClear" Grid.Row="2" Grid.Column="2" Content="Löschen" Margin="6,4,0,4" MinWidth="80"/>
 
                         <Label Grid.Row="3" Grid.Column="0" Content="Alle Monitore:"/>
                         <TextBox x:Name="HkAllMonitors" Grid.Row="3" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
-                        <Button x:Name="HkAllMonitorsClear" Grid.Row="3" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+                        <Button x:Name="HkAllMonitorsClear" Grid.Row="3" Grid.Column="2" Content="Löschen" Margin="6,4,0,4" MinWidth="80"/>
 
                         <Label Grid.Row="4" Grid.Column="0" Content="Tray-Menue oeffnen:"/>
                         <TextBox x:Name="HkTrayMenu" Grid.Row="4" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
-                        <Button x:Name="HkTrayMenuClear" Grid.Row="4" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+                        <Button x:Name="HkTrayMenuClear" Grid.Row="4" Grid.Column="2" Content="Löschen" Margin="6,4,0,4" MinWidth="80"/>
 
-                        <Label Grid.Row="5" Grid.Column="0" Content="Verzoegerung Reset:"/>
+                        <Label Grid.Row="5" Grid.Column="0" Content="Verzögerung Reset:"/>
                         <TextBox x:Name="HkDelayReset" Grid.Row="5" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
-                        <Button x:Name="HkDelayResetClear" Grid.Row="5" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+                        <Button x:Name="HkDelayResetClear" Grid.Row="5" Grid.Column="2" Content="Löschen" Margin="6,4,0,4" MinWidth="80"/>
 
-                        <Label Grid.Row="6" Grid.Column="0" Content="Verzoegerung +5 Sek:"/>
+                        <Label Grid.Row="6" Grid.Column="0" Content="Verzögerung +5 Sek:"/>
                         <TextBox x:Name="HkDelayPlus5" Grid.Row="6" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
-                        <Button x:Name="HkDelayPlus5Clear" Grid.Row="6" Grid.Column="2" Content="Loeschen" Margin="6,4,0,4" MinWidth="80"/>
+                        <Button x:Name="HkDelayPlus5Clear" Grid.Row="6" Grid.Column="2" Content="Löschen" Margin="6,4,0,4" MinWidth="80"/>
+
+                        <Label Grid.Row="7" Grid.Column="0" Content="Verlauf öffnen:"/>
+                        <TextBox x:Name="HkHistoryOpen" Grid.Row="7" Grid.Column="1" Margin="0,4" IsReadOnly="True" Cursor="IBeam"/>
+                        <Button x:Name="HkHistoryOpenClear" Grid.Row="7" Grid.Column="2" Content="Löschen" Margin="6,4,0,4" MinWidth="80"/>
                     </Grid>
                 </GroupBox>
             </StackPanel>

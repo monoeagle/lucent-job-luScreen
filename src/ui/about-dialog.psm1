@@ -45,7 +45,7 @@ function _AboutDlg-LoadChangelog {
     try {
         $content = Get-Content -LiteralPath $path -Raw -Encoding UTF8
         if ($content.Length -gt $MaxBytes) {
-            $content = $content.Substring(0, $MaxBytes) + "`n`n... (gekuerzt -- siehe CHANGELOG.md fuer vollstaendigen Text)"
+            $content = $content.Substring(0, $MaxBytes) + "`n`n... (gekürzt -- siehe CHANGELOG.md für vollständigen Text)"
         }
         return $content
     } catch {

@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 Set-StrictMode -Version Latest
 
 # ---------------------------------------------------------------
@@ -198,6 +198,7 @@ function Show-ConfigDialog {
         'HkTrayMenu', 'HkTrayMenuClear',
         'HkDelayReset', 'HkDelayResetClear',
         'HkDelayPlus5', 'HkDelayPlus5Clear',
+        'HkHistoryOpen', 'HkHistoryOpenClear',
         'BtnSave', 'BtnCancel',
         'ValidationBox', 'ValidationText'
     )
@@ -271,6 +272,7 @@ function Show-ConfigDialog {
             TrayMenu     = (& $readHkBox $c.HkTrayMenu)
             DelayReset   = (& $readHkBox $c.HkDelayReset)
             DelayPlus5   = (& $readHkBox $c.HkDelayPlus5)
+            HistoryOpen  = (& $readHkBox $c.HkHistoryOpen)
         }
         # $null-Eintraege rausfiltern -- Test-HotkeyConflict erwartet hashtable
         $cleanHk = @{}
@@ -339,7 +341,8 @@ function Show-ConfigDialog {
         @{ Box = $c.HkAllMonitors; Clear = $c.HkAllMonitorsClear; Key = 'AllMonitors' },
         @{ Box = $c.HkTrayMenu; Clear = $c.HkTrayMenuClear; Key = 'TrayMenu' },
         @{ Box = $c.HkDelayReset; Clear = $c.HkDelayResetClear; Key = 'DelayReset' },
-        @{ Box = $c.HkDelayPlus5; Clear = $c.HkDelayPlus5Clear; Key = 'DelayPlus5' }
+        @{ Box = $c.HkDelayPlus5; Clear = $c.HkDelayPlus5Clear; Key = 'DelayPlus5' },
+        @{ Box = $c.HkHistoryOpen; Clear = $c.HkHistoryOpenClear; Key = 'HistoryOpen' }
     )
     foreach ($p in $hkPairs) {
         $hk = $null
@@ -391,7 +394,7 @@ function Show-ConfigDialog {
                 & $logIt 'Warning' ('validation failed: ' + ($val.Errors -join ' | '))
                 & $setValidation $val.Errors
                 [System.Windows.MessageBox]::Show(
-                    "Konfiguration ist ungueltig:`n`n" + ($val.Errors -join "`n"),
+                    "Konfiguration ist ungültig:`n`n" + ($val.Errors -join "`n"),
                     'LucentScreen -- Konfiguration',
                     [System.Windows.MessageBoxButton]::OK,
                     [System.Windows.MessageBoxImage]::Warning) | Out-Null

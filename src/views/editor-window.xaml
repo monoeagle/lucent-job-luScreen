@@ -67,7 +67,7 @@
                     <Button x:Name="BtnZoomIn"    Content="+"                MinWidth="34"  Margin="0,0,12,0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                    <Button x:Name="BtnClose"     Content="Schliessen (Esc)" MinWidth="140"/>
+                    <Button x:Name="BtnClose"     Content="Schließen (Esc)" MinWidth="140"/>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -105,13 +105,13 @@
                     </WrapPanel>
                     <Border x:Name="CurrentColor" Height="6" Margin="2,6,2,0" Background="#E11D48" CornerRadius="3"/>
 
-                    <TextBlock Text="Strichstaerke" FontWeight="SemiBold" Margin="0,16,0,4"/>
+                    <TextBlock Text="Strichstärke" FontWeight="SemiBold" Margin="0,16,0,4"/>
                     <DockPanel LastChildFill="True">
                         <TextBlock x:Name="TxtStroke" DockPanel.Dock="Right" Text="3 px" Foreground="#666" MinWidth="40" TextAlignment="Right"/>
                         <Slider x:Name="SldStroke" Minimum="1" Maximum="20" Value="3" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,0,6,0"/>
                     </DockPanel>
 
-                    <TextBlock Text="Tipp: Strg+Z/Y, V/R/L/A/B/M/E/C, Enter=Crop anwenden, Entf=loescht selektierte Shape" FontSize="11" Foreground="#888" TextWrapping="Wrap" Margin="0,18,0,0"/>
+                    <TextBlock Text="Tipp: Strg+Z/Y, V/R/L/A/B/M/E/C, Enter=Crop anwenden, Entf=löscht selektierte Shape" FontSize="11" Foreground="#888" TextWrapping="Wrap" Margin="0,18,0,0"/>
                 </StackPanel>
             </Border>
 

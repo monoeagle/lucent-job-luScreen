@@ -316,6 +316,23 @@ function Action-MermaidRender {
     Write-Host "Mermaid-Render fertig." -ForegroundColor Green
 }
 
+function Action-Screenshots {
+    <#
+    .SYNOPSIS
+        Startet das Take-LuScreenshots.ps1-Skript fuer halbautomatische
+        Screenshot-Generation. Iteriert ueber das manifest.json + fragt pro
+        Item nach User-Setup.
+    #>
+    $script = Join-Path $root 'tools/Take-LuScreenshots.ps1'
+    if (-not (Test-Path -LiteralPath $script)) {
+        Write-Host "Take-LuScreenshots.ps1 fehlt." -ForegroundColor Yellow
+        return
+    }
+    Write-Host "Starte Screenshot-Generator (Take-LuScreenshots.ps1) ..." -ForegroundColor Cyan
+    Write-Host "  Hinweis: App muss laufen (./run.ps1 s) damit Tray + Hotkeys verfuegbar sind." -ForegroundColor DarkGray
+    & powershell.exe -NoProfile -STA -File $script
+}
+
 function Action-DocsBuild {
     $docsRun = Join-Path $docsDir 'run.ps1'
     if (-not (Test-Path -LiteralPath $docsRun)) {
@@ -416,6 +433,7 @@ function Show-Menu {
     Write-Host "  d) Zensical-Site bauen + im Standard-Browser oeffnen"
     Write-Host "  D) Doku-Live-Server starten (http://127.0.0.1:8000)"
     Write-Host "  m) Mermaid-Diagramme rendern (.mmd -> .svg, braucht mmdc)"
+    Write-Host "  ss) Doku-Screenshots aufnehmen (Take-LuScreenshots.ps1)"
     Write-Host "  h) HTML-Single-Page Status (LucentScreen.docs.html)"
     Write-Host ""
     Write-Host " --- Werkzeuge ---" -ForegroundColor DarkCyan
@@ -449,6 +467,7 @@ function Invoke-Action {
         'prereqs' { Action-Prereqs }
         'd' { Action-DocsBuild }
         'm' { Action-MermaidRender }
+        'ss' { Action-Screenshots }
         'D' { Action-DocsServe }
         'h' { Action-HtmlDoc }
         'i' { Action-InstallPssa }

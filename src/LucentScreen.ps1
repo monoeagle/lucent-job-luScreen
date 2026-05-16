@@ -282,8 +282,13 @@ $callbacks = @{
         try {
             $postfix = if ($script:Config.ContainsKey('EditPostfix') -and $script:Config.EditPostfix) { $script:Config.EditPostfix } else { '_edited' }
             $iconSize = if ($script:Config.ContainsKey('HistoryIconSize')) { [int]$script:Config.HistoryIconSize } else { 20 }
+            $tmpl = if ($script:Config.ContainsKey('FileNameFormat') -and $script:Config.FileNameFormat) {
+                $script:Config.FileNameFormat
+            } else {
+                'yyyyMMdd_HHmm_{mode}.png'
+            }
             Write-LsLog -Level Info -Source 'tray' -Message ("Verlauf: IconSize={0}" -f $iconSize)
-            Show-HistoryWindow -OutputDir $script:Config.OutputDir -EditPostfix $postfix -IconSize $iconSize
+            Show-HistoryWindow -OutputDir $script:Config.OutputDir -EditPostfix $postfix -IconSize $iconSize -FileNameFormat $tmpl
         } catch {
             Write-LsLog -Level Error -Source 'tray' -Message ("Verlauf fehlgeschlagen: " + $_.Exception.Message)
         }

@@ -130,3 +130,66 @@ Describe 'history: Show-HistoryInFolder / Open-HistoryFile NotFound-Guard' {
         $r.Status  | Should -Be 'NotFound'
     }
 }
+
+Describe 'history: Rename-HistoryItem' {
+    BeforeEach {
+        $script:RenDir = Join-Path $TestDrive ("ren-" + [guid]::NewGuid().ToString('N'))
+        New-Item -ItemType Directory -Path $script:RenDir | Out-Null
+        $script:RenFile = Join-Path $script:RenDir 'shot.png'
+        [System.IO.File]::WriteAllBytes($script:RenFile, [byte[]](1, 2, 3))
+    }
+
+    It 'meldet NotFound bei fehlender Datei' {
+        $r = Rename-HistoryItem -Path (Join-Path $script:RenDir 'gibt-es-nicht.png') -NewName 'neu.png'
+        $r.Success | Should -BeFalse
+        $r.Status  | Should -Be 'NotFound'
+    }
+
+    It 'meldet InvalidName bei leerem Namen' {
+        $r = Rename-HistoryItem -Path $script:RenFile -NewName '   '
+        $r.Success | Should -BeFalse
+        $r.Status  | Should -Be 'InvalidName'
+    }
+
+    It 'meldet InvalidName bei Pfad-Separator im Namen' {
+        $r = Rename-HistoryItem -Path $script:RenFile -NewName 'sub\new.png'
+        $r.Success | Should -BeFalse
+        $r.Status  | Should -Be 'InvalidName'
+    }
+
+    It 'meldet InvalidName wenn neuer Name == alter' {
+        $r = Rename-HistoryItem -Path $script:RenFile -NewName 'shot.png'
+        $r.Success | Should -BeFalse
+        $r.Status  | Should -Be 'InvalidName'
+    }
+
+    It 'meldet TargetExists wenn Ziel schon existiert' {
+        $occupied = Join-Path $script:RenDir 'occupied.png'
+        [System.IO.File]::WriteAllBytes($occupied, [byte[]](9, 9))
+        $r = Rename-HistoryItem -Path $script:RenFile -NewName 'occupied.png'
+        $r.Success | Should -BeFalse
+        $r.Status  | Should -Be 'TargetExists'
+        Test-Path -LiteralPath $script:RenFile | Should -BeTrue   # alte Datei unangetastet
+    }
+
+    It 'benennt erfolgreich um, alte Datei weg, neue da' {
+        $r = Rename-HistoryItem -Path $script:RenFile -NewName 'umbenannt.png'
+        $r.Success | Should -BeTrue
+        $r.Status  | Should -Be 'OK'
+        $r.Path    | Should -Be (Join-Path $script:RenDir 'umbenannt.png')
+        Test-Path -LiteralPath $script:RenFile | Should -BeFalse
+        Test-Path -LiteralPath $r.Path         | Should -BeTrue
+    }
+
+    It '-KeepExtension haengt Original-Extension an, wenn neuer Name keine hat' {
+        $r = Rename-HistoryItem -Path $script:RenFile -NewName 'ohne-ext' -KeepExtension
+        $r.Success | Should -BeTrue
+        $r.Path    | Should -Be (Join-Path $script:RenDir 'ohne-ext.png')
+    }
+
+    It '-KeepExtension ueberschreibt nicht, wenn neuer Name schon eine Ext hat' {
+        $r = Rename-HistoryItem -Path $script:RenFile -NewName 'neu.jpg' -KeepExtension
+        $r.Success | Should -BeTrue
+        $r.Path    | Should -Be (Join-Path $script:RenDir 'neu.jpg')
+    }
+}

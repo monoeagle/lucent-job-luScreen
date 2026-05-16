@@ -1245,6 +1245,18 @@ function Show-EditorWindow {
     $c.TxtStroke.Text = ("{0:N0} px" -f $state.Stroke)
     $c.ShapeLayer.Cursor = [System.Windows.Input.Cursors]::Arrow
 
+    # Anti-Focus-Stealing: Windows verweigert Hintergrund-Prozessen den
+    # Vordergrund-Wechsel bei normalem Show(). Topmost-Toggle in
+    # SourceInitialized erzwingt Z-Top + Aktivierung, danach normales
+    # Z-Order-Verhalten.
+    $win.Add_SourceInitialized({
+            param($s, $e)
+            $win.Topmost = $true
+            [void]$win.Activate()
+            $win.Topmost = $false
+            [void]$win.Focus()
+        }.GetNewClosure())
+
     [void]$win.ShowDialog()
 
     return @{

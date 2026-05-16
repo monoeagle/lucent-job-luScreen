@@ -54,3 +54,26 @@ Describe 'clipboard: Set-ClipboardImage STA-Check' {
         }
     }
 }
+
+Describe 'clipboard: Save-ClipboardImageAsPng STA-Check' {
+    # Wie bei Set-ClipboardImage: STA-Guard ist die einzige Pfadkomponente,
+    # die wir aus MTA testen koennen. ContainsImage/GetImage selbst werfen
+    # ohne STA -- der Guard muss vorher greifen.
+
+    It 'liefert NotSta-Status wenn Apartment != STA' {
+        $apt = [System.Threading.Thread]::CurrentThread.GetApartmentState()
+        if ($apt -eq 'STA') {
+            Set-ItResult -Skipped -Because 'Pester laeuft hier in STA, Guard nicht testbar.'
+            return
+        }
+        $target = Join-Path $TestDrive ('druck-{0}.png' -f ([guid]::NewGuid().ToString('N')))
+        $r = Save-ClipboardImageAsPng -Path $target -MaxAttempts 1
+        $r.Success  | Should -BeFalse
+        $r.Status   | Should -Be 'NotSta'
+        $r.Path     | Should -Be $null
+        $r.Width    | Should -Be 0
+        $r.Height   | Should -Be 0
+        $r.Attempts | Should -Be 0
+        Test-Path -LiteralPath $target | Should -BeFalse
+    }
+}

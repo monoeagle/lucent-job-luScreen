@@ -21,6 +21,8 @@ Set-StrictMode -Version Latest
 #    Remove-HistoryItem -Path <file> [-Permanent]
 #                                              -> Result-Hashtable
 #    Copy-HistoryFileToClipboard -Path <file>  -> Result-Hashtable
+#    Rename-HistoryItem -Path <file> -NewName <name> [-KeepExtension]
+#                                              -> Result-Hashtable @{ ...; Path = neuerPfad }
 #
 #  Voraussetzungen:
 #    System.Drawing geladen (fuer Copy-HistoryFileToClipboard).
@@ -216,4 +218,84 @@ function Copy-HistoryFileToClipboard {
     }
 }
 
-Export-ModuleMember -Function Format-FileSize, New-HistoryItem, Get-HistoryFiles, Get-HistoryItems, Open-HistoryFile, Show-HistoryInFolder, Remove-HistoryItem, Copy-HistoryFileToClipboard
+function Rename-HistoryItem {
+    <#
+    .SYNOPSIS
+        Benennt eine Verlaufsdatei im selben Ordner um.
+    .PARAMETER NewName
+        Neuer Datei-Name (ohne Ordner-Pfad). Wenn -KeepExtension, wird die
+        Original-Extension automatisch angehaengt -- sonst nimmt der Caller
+        die Extension selbst mit (z.B. "screenshot.png").
+    .OUTPUTS
+        hashtable @{ Success; Status; Message; Path; OldPath }
+        Status-Werte: OK | NotFound | InvalidName | TargetExists | RenameFailed
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$NewName,
+        [switch]$KeepExtension
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return @{ Success = $false; Status = 'NotFound'; Message = "Datei nicht gefunden: $Path"; Path = $null; OldPath = $Path }
+    }
+
+    $trimmed = $NewName.Trim()
+    if ([string]::IsNullOrEmpty($trimmed)) {
+        return @{ Success = $false; Status = 'InvalidName'; Message = 'Neuer Name darf nicht leer sein.'; Path = $null; OldPath = $Path }
+    }
+
+    # Verbotene Zeichen via System.IO.Path.GetInvalidFileNameChars
+    $invalid = [System.IO.Path]::GetInvalidFileNameChars()
+    foreach ($ch in $invalid) {
+        if ($trimmed.Contains($ch)) {
+            return @{
+                Success = $false; Status = 'InvalidName'
+                Message = "Ungueltiges Zeichen im Dateinamen: '$ch'"
+                Path = $null; OldPath = $Path
+            }
+        }
+    }
+
+    if ($KeepExtension) {
+        $origExt = [System.IO.Path]::GetExtension($Path)
+        $newExt = [System.IO.Path]::GetExtension($trimmed)
+        if ([string]::IsNullOrEmpty($newExt)) {
+            $trimmed = $trimmed + $origExt
+        }
+    }
+
+    $dir = Split-Path -Parent $Path
+    $newPath = Join-Path $dir $trimmed
+
+    if ([System.IO.Path]::GetFullPath($newPath) -eq [System.IO.Path]::GetFullPath($Path)) {
+        return @{ Success = $false; Status = 'InvalidName'; Message = 'Neuer Name ist identisch mit dem alten.'; Path = $null; OldPath = $Path }
+    }
+
+    if (Test-Path -LiteralPath $newPath) {
+        return @{
+            Success = $false; Status = 'TargetExists'
+            Message = "Eine Datei mit dem Namen '$trimmed' existiert bereits."
+            Path = $null; OldPath = $Path
+        }
+    }
+
+    try {
+        Move-Item -LiteralPath $Path -Destination $newPath -ErrorAction Stop
+        return @{
+            Success = $true; Status = 'OK'
+            Message = "Umbenannt: $trimmed"
+            Path = $newPath; OldPath = $Path
+        }
+    } catch {
+        return @{
+            Success = $false; Status = 'RenameFailed'
+            Message = "Umbenennen fehlgeschlagen: $($_.Exception.Message)"
+            Path = $null; OldPath = $Path
+        }
+    }
+}
+
+Export-ModuleMember -Function Format-FileSize, New-HistoryItem, Get-HistoryFiles, Get-HistoryItems, Open-HistoryFile, Show-HistoryInFolder, Remove-HistoryItem, Copy-HistoryFileToClipboard, Rename-HistoryItem

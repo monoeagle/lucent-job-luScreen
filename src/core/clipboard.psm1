@@ -11,8 +11,11 @@ Set-StrictMode -Version Latest
 #    Set-ClipboardImage -Bitmap <Bitmap> [-MaxAttempts 5] [-InitialDelayMs 50]
 #      -> Result-Hashtable @{ Success; Status; Message; Attempts }
 #
+#    Save-ClipboardImageAsPng -Path <string> [-MaxAttempts 5] [-InitialDelayMs 50]
+#      -> Result-Hashtable @{ Success; Status; Message; Path; Width; Height; Attempts }
+#
 #  Voraussetzungen:
-#    - STA-Apartment (Clipboard.SetImage erfordert STA)
+#    - STA-Apartment (Clipboard.SetImage/GetImage erfordert STA)
 #    - WPF-Assemblies geladen (PresentationCore, WindowsBase)
 # ---------------------------------------------------------------
 
@@ -113,4 +116,123 @@ function Set-ClipboardImage {
     }
 }
 
-Export-ModuleMember -Function Convert-BitmapToBitmapSource, Set-ClipboardImage
+function Save-ClipboardImageAsPng {
+    <#
+    .SYNOPSIS
+        Liest das Bild aus der Zwischenablage und speichert es als PNG.
+    .DESCRIPTION
+        Nutzt Clipboard.GetImage() (BitmapSource) + PngBitmapEncoder --
+        kein System.Drawing.Bitmap-Roundtrip noetig. Mit Retry-Loop fuer
+        den Fall, dass eine andere App das Clipboard gerade haelt.
+
+        Der Zielpfad muss vorher bereits eindeutig sein (Resolve-UniqueFilename);
+        FileMode.CreateNew schlaegt fehl wenn die Datei existiert.
+    .OUTPUTS
+        hashtable @{ Success, Status, Message, Path, Width, Height, Attempts }
+        Status-Werte: OK | NotSta | NoImage | ClipboardLocked | SaveFailed
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [int]$MaxAttempts = 5,
+        [int]$InitialDelayMs = 50
+    )
+
+    if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
+        return @{
+            Success  = $false
+            Status   = 'NotSta'
+            Message  = 'Clipboard.GetImage erfordert STA-Apartment.'
+            Path     = $null
+            Width    = 0
+            Height   = 0
+            Attempts = 0
+        }
+    }
+
+    # ContainsImage ist non-throwing, GetImage kann werfen wenn das
+    # Clipboard gerade von einer anderen App gehalten wird.
+    $src = $null
+    $attempts = 0
+    $delay = $InitialDelayMs
+    for ($i = 1; $i -le $MaxAttempts; $i++) {
+        $attempts = $i
+        try {
+            if (-not [System.Windows.Clipboard]::ContainsImage()) {
+                return @{
+                    Success  = $false
+                    Status   = 'NoImage'
+                    Message  = 'Kein Bild in der Zwischenablage.'
+                    Path     = $null
+                    Width    = 0
+                    Height   = 0
+                    Attempts = $i
+                }
+            }
+            $src = [System.Windows.Clipboard]::GetImage()
+            if ($null -eq $src) {
+                return @{
+                    Success  = $false
+                    Status   = 'NoImage'
+                    Message  = 'Clipboard.GetImage() lieferte null.'
+                    Path     = $null
+                    Width    = 0
+                    Height   = 0
+                    Attempts = $i
+                }
+            }
+            break
+        } catch {
+            if ($i -ge $MaxAttempts) {
+                return @{
+                    Success  = $false
+                    Status   = 'ClipboardLocked'
+                    Message  = "Clipboard nach $i Versuchen nicht lesbar: $($_.Exception.Message)"
+                    Path     = $null
+                    Width    = 0
+                    Height   = 0
+                    Attempts = $i
+                }
+            }
+            Start-Sleep -Milliseconds $delay
+            $delay = [int][Math]::Min($delay * 2, 2000)
+        }
+    }
+
+    try {
+        if (-not $src.IsFrozen) { $src.Freeze() }
+        $encoder = New-Object System.Windows.Media.Imaging.PngBitmapEncoder
+        $frame = [System.Windows.Media.Imaging.BitmapFrame]::Create($src)
+        $encoder.Frames.Add($frame) | Out-Null
+
+        $stream = [System.IO.File]::Open($Path, [System.IO.FileMode]::CreateNew)
+        try {
+            $encoder.Save($stream)
+        } finally {
+            $stream.Dispose()
+        }
+
+        return @{
+            Success  = $true
+            Status   = 'OK'
+            Message  = "Gespeichert: $Path"
+            Path     = $Path
+            Width    = $src.PixelWidth
+            Height   = $src.PixelHeight
+            Attempts = $attempts
+        }
+    } catch {
+        return @{
+            Success  = $false
+            Status   = 'SaveFailed'
+            Message  = "Speichern fehlgeschlagen: $($_.Exception.Message)"
+            Path     = $null
+            Width    = 0
+            Height   = 0
+            Attempts = $attempts
+        }
+    }
+}
+
+Export-ModuleMember -Function Convert-BitmapToBitmapSource, Set-ClipboardImage, Save-ClipboardImageAsPng

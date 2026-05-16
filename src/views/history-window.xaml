@@ -65,6 +65,8 @@
                             ToolTip="Bearbeiten -- Bild im LucentScreen-Editor öffnen (Doppelklick / Enter)"/>
                     <Button x:Name="BtnDelete"    Style="{StaticResource IconButton}" Content="&#xE74D;"
                             ToolTip="Löschen -- markierte Bilder in den Papierkorb verschieben (Entf)"/>
+                    <Button x:Name="BtnRename"    Style="{StaticResource IconButton}" Content="&#xE8AC;"
+                            ToolTip="Umbenennen -- markierte Datei neu benennen (F2)"/>
                     <Button x:Name="BtnReveal"    Style="{StaticResource IconButton}" Content="&#xE838;"
                             ToolTip="Speicherort -- Ordner im Explorer oeffnen, Datei markiert"/>
                     <Button x:Name="BtnCopy"      Style="{StaticResource IconButton}" Content="&#xE8C8;"
@@ -73,6 +75,10 @@
                             ToolTip="Zwischenablage (Liste) -- markierte Dateien als Datei-Liste, Einfuegen in Word/Outlook fuegt alle Bilder ein"/>
                     <Button x:Name="BtnRefresh"   Style="{StaticResource IconButton}" Content="&#xE72C;"
                             ToolTip="Aktualisieren -- Verlauf neu einlesen (F5)"/>
+                    <Border Width="1" Margin="6,2,8,2" Background="#D5D9E0"/>
+                    <Button x:Name="BtnDruck"     Style="{StaticResource IconButton}" Content="&#xE77F;"
+                            IsEnabled="False"
+                            ToolTip="Druck -- Bild aus der Zwischenablage als PNG speichern (Strg+V; aktiv sobald Druck/Snipping/Copy ein Bild abgelegt hat)"/>
                 </StackPanel>
                 <TextBlock x:Name="TxtFolder" DockPanel.Dock="Right" Foreground="#666"
                            VerticalAlignment="Center" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
@@ -102,6 +108,7 @@
                     <MenuItem x:Name="MiReveal" Header="Im Ordner zeigen"/>
                     <MenuItem x:Name="MiCopy"   Header="In Zwischenablage kopieren"/>
                     <Separator/>
+                    <MenuItem x:Name="MiRename" Header="Umbenennen…"/>
                     <MenuItem x:Name="MiDelete" Header="In Papierkorb verschieben"/>
                 </ContextMenu>
             </ListBox.ContextMenu>

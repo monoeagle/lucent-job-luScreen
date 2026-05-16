@@ -68,7 +68,8 @@ function Show-HistoryWindow {
         [Parameter(Mandatory)][string]$OutputDir,
         [System.Windows.Window]$Owner,
         [string]$EditPostfix = '_edited',
-        [int]$IconSize = 20    # Toolbar-Icon-Groesse, 16-32 pt (Config.HistoryIconSize)
+        [int]$IconSize = 20,    # Toolbar-Icon-Groesse, 16-32 pt (Config.HistoryIconSize)
+        [string]$FileNameFormat = 'yyyyMMdd_HHmm_{mode}.png'
     )
 
     if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
@@ -91,8 +92,8 @@ function Show-HistoryWindow {
     $win.Height = [math]::Min($desiredH, [int]($wa.Height - 40))
 
     $names = @('LstItems', 'TxtFolder', 'TxtStatus', 'TxtSelection',
-        'BtnView', 'BtnEdit', 'BtnDelete', 'BtnReveal', 'BtnCopy', 'BtnCopyMulti', 'BtnRefresh',
-        'MiEdit', 'MiOpen', 'MiReveal', 'MiCopy', 'MiDelete')
+        'BtnView', 'BtnEdit', 'BtnDelete', 'BtnRename', 'BtnReveal', 'BtnCopy', 'BtnCopyMulti', 'BtnRefresh', 'BtnDruck',
+        'MiEdit', 'MiOpen', 'MiReveal', 'MiCopy', 'MiRename', 'MiDelete')
     $c = Get-XamlControls -Root $win -Names $names
 
     # Toolbar-Icon-Groesse aus Config (clamped auf 16-32 pt). Buttons sind
@@ -101,7 +102,7 @@ function Show-HistoryWindow {
     if ($is -lt 16) { $is = 16 }
     if ($is -gt 32) { $is = 32 }
     $btnDim = [double]($is + 14)
-    foreach ($btn in @($c.BtnView, $c.BtnEdit, $c.BtnDelete, $c.BtnReveal, $c.BtnCopy, $c.BtnCopyMulti, $c.BtnRefresh)) {
+    foreach ($btn in @($c.BtnView, $c.BtnEdit, $c.BtnDelete, $c.BtnRename, $c.BtnReveal, $c.BtnCopy, $c.BtnCopyMulti, $c.BtnRefresh, $c.BtnDruck)) {
         $btn.FontSize = [double]$is
         $btn.Width = $btnDim
         $btn.Height = $btnDim
@@ -154,11 +155,13 @@ function Show-HistoryWindow {
     # Sammlung + State werden via Hashtable referenziert, damit Closures
     # die gleiche Instanz sehen.
     $state = @{
-        Items         = New-Object System.Collections.ObjectModel.ObservableCollection[LucentScreen.HistoryEntry]
-        DebounceTimer = $null
-        OutputDir     = $OutputDir
-        Closing       = $false
-        LastSig       = ''
+        Items          = New-Object System.Collections.ObjectModel.ObservableCollection[LucentScreen.HistoryEntry]
+        DebounceTimer  = $null
+        OutputDir      = $OutputDir
+        Closing        = $false
+        LastSig        = ''
+        FileNameFormat = $FileNameFormat
+        HasClipImage   = $false
     }
     $c.LstItems.ItemsSource = $state.Items
 
@@ -221,6 +224,15 @@ function Show-HistoryWindow {
         if ($state.LastSig -ne $sig) {
             $state.LastSig = $sig
             & $refresh
+        }
+
+        # Druck-Button: aktiv solange ein Bild in der Zwischenablage liegt.
+        # ContainsImage ist non-throwing und billig genug fuer 2s-Polling.
+        $has = $false
+        try { $has = [System.Windows.Clipboard]::ContainsImage() } catch { $has = $false }
+        if ($state.HasClipImage -ne $has) {
+            $state.HasClipImage = $has
+            $c.BtnDruck.IsEnabled = $has
         }
     }.GetNewClosure()
 
@@ -309,6 +321,75 @@ function Show-HistoryWindow {
 
     $cmdRefresh = { & $refresh }.GetNewClosure()
 
+    # Umbenennen: nimmt das erste Selected-Item, fragt Namen via
+    # Microsoft.VisualBasic.Interaction.InputBox ab (PS 5.1 ohne Zusatz-XAML).
+    # Validierung + Rename selbst kapselt Rename-HistoryItem.
+    $cmdRename = {
+        $sel = @($c.LstItems.SelectedItems)
+        if ($sel.Count -eq 0) { return }
+        if ($sel.Count -gt 1) {
+            [System.Windows.MessageBox]::Show(
+                'Umbenennen funktioniert nur fuer eine einzelne Datei. Bitte nur ein Bild auswaehlen.',
+                'LucentScreen -- Umbenennen',
+                [System.Windows.MessageBoxButton]::OK,
+                [System.Windows.MessageBoxImage]::Information) | Out-Null
+            return
+        }
+
+        $entry = $sel[0]
+        Add-Type -AssemblyName Microsoft.VisualBasic | Out-Null
+        $prompt = "Neuer Dateiname (Extension wird beibehalten):"
+        $title = 'LucentScreen -- Umbenennen'
+        $default = [System.IO.Path]::GetFileNameWithoutExtension($entry.FileName)
+        $new = [Microsoft.VisualBasic.Interaction]::InputBox($prompt, $title, $default)
+
+        if ([string]::IsNullOrWhiteSpace($new)) { return }
+        if ($new.Trim() -eq $default) { return }
+
+        $r = Rename-HistoryItem -Path $entry.FullName -NewName $new -KeepExtension
+        if (-not $r.Success) {
+            [System.Windows.MessageBox]::Show(
+                ("Umbenennen fehlgeschlagen:`n" + $r.Message),
+                'LucentScreen -- Umbenennen',
+                [System.Windows.MessageBoxButton]::OK,
+                [System.Windows.MessageBoxImage]::Warning) | Out-Null
+            return
+        }
+        & $refresh
+    }.GetNewClosure()
+
+    # Druck: Bild aus Zwischenablage als PNG ablegen.
+    # Mode 'DruckTaste' landet im Filename via {mode}-Token.
+    $cmdDruck = {
+        if (-not [System.Windows.Clipboard]::ContainsImage()) {
+            # Button war disabled -- normalerweise unerreichbar. Fail-soft.
+            return
+        }
+        $filename = Format-CaptureFilename -Template $state.FileNameFormat -Mode 'DruckTaste'
+        $candidate = Join-Path $state.OutputDir $filename
+        $finalPath = Resolve-UniqueFilename -Path $candidate
+
+        $r = Save-ClipboardImageAsPng -Path $finalPath
+        if (-not $r.Success) {
+            [System.Windows.MessageBox]::Show(
+                ("Speichern aus Zwischenablage fehlgeschlagen:`n" + $r.Message),
+                'LucentScreen -- Druck',
+                [System.Windows.MessageBoxButton]::OK,
+                [System.Windows.MessageBoxImage]::Warning) | Out-Null
+            return
+        }
+
+        if (Get-Command Show-CaptureToast -ErrorAction SilentlyContinue) {
+            $fname = [System.IO.Path]::GetFileName($r.Path)
+            $sub = "{0}  {1}x{2}" -f $fname, $r.Width, $r.Height
+            $glyph = "$([char]0xE77F)"   # Drucker-Glyph (Segoe MDL2)
+            Show-CaptureToast -Title 'Aus Zwischenablage gespeichert' -Subtitle $sub -Glyph $glyph
+        }
+
+        # Sofort refreshen, statt 2s auf den Poller zu warten.
+        & $refresh
+    }.GetNewClosure()
+
     # Multi-Copy: Datei-Liste als FileDropList ins Clipboard. Word/Outlook/Mail-
     # Programme fuegen so alle Bilder ein, Explorer behandelt es als 'Kopieren'.
     $cmdCopyMulti = {
@@ -336,14 +417,17 @@ function Show-HistoryWindow {
     $c.BtnView.Add_Click($cmdOpen)
     $c.BtnEdit.Add_Click($cmdEdit)
     $c.BtnDelete.Add_Click($cmdDelete)
+    $c.BtnRename.Add_Click($cmdRename)
     $c.BtnReveal.Add_Click($cmdReveal)
     $c.BtnCopy.Add_Click($cmdCopy)
     $c.BtnCopyMulti.Add_Click($cmdCopyMulti)
     $c.BtnRefresh.Add_Click($cmdRefresh)
+    $c.BtnDruck.Add_Click($cmdDruck)
     $c.MiEdit.Add_Click($cmdEdit)
     $c.MiOpen.Add_Click($cmdOpen)
     $c.MiReveal.Add_Click($cmdReveal)
     $c.MiCopy.Add_Click($cmdCopy)
+    $c.MiRename.Add_Click($cmdRename)
     $c.MiDelete.Add_Click($cmdDelete)
 
     # Doppelklick auf ListBoxItem -> Editor (primaere Aktion)
@@ -364,12 +448,20 @@ function Show-HistoryWindow {
             switch ($e.Key) {
                 'Escape' { $win.Close(); $e.Handled = $true; break }
                 'F5' { & $cmdRefresh; $e.Handled = $true; break }
+                'F2' { & $cmdRename; $e.Handled = $true; break }
                 'Delete' { & $cmdDelete; $e.Handled = $true; break }
                 'Enter' { & $cmdEdit; $e.Handled = $true; break }
                 'Return' { & $cmdEdit; $e.Handled = $true; break }
                 default {
                     if ($ctrl -and ($e.Key -eq [System.Windows.Input.Key]::C)) {
                         & $cmdCopy
+                        $e.Handled = $true
+                    } elseif ($ctrl -and ($e.Key -eq [System.Windows.Input.Key]::V)) {
+                        # Nur ausloesen wenn tatsaechlich ein Bild im Clipboard
+                        # liegt -- entspricht dem IsEnabled-Verhalten des Druck-Buttons.
+                        if ($c.BtnDruck.IsEnabled) {
+                            & $cmdDruck
+                        }
                         $e.Handled = $true
                     }
                 }
@@ -385,6 +477,27 @@ function Show-HistoryWindow {
 
     # Erstbefuellung + Poller starten + Show
     & $refresh
+    # Initialen Clipboard-Status setzen, damit der Druck-Button nicht erst nach
+    # dem ersten Poller-Tick (2s) aktiv wird.
+    try {
+        $initHas = [System.Windows.Clipboard]::ContainsImage()
+        $state.HasClipImage = $initHas
+        $c.BtnDruck.IsEnabled = $initHas
+    } catch {
+        $null = $_
+    }
+
+    # Anti-Focus-Stealing: Aufruf via Tray/Hotkey hat keine garantierten
+    # Vordergrund-Rechte. Topmost-Toggle in SourceInitialized erzwingt
+    # Z-Top + Aktivierung, danach normales Z-Order-Verhalten.
+    $win.Add_SourceInitialized({
+            param($s, $e)
+            $win.Topmost = $true
+            [void]$win.Activate()
+            $win.Topmost = $false
+            [void]$win.Focus()
+        }.GetNewClosure())
+
     $poller.Start()
     [void]$win.ShowDialog()
 }

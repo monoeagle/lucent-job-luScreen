@@ -132,7 +132,8 @@
       "PowerShell(& \"C:\\\\_Projects\\\\lucent-job-luScreen\\\\run.ps1\" S 2>&1 | Select-Object -Last 5; & \"C:\\\\_Projects\\\\lucent-job-luScreen\\\\run.ps1\" s 2>&1 | Select-Object -Last 8)",
       "PowerShell(& \"C:\\\\_Projects\\\\lucent-job-luScreen\\\\run.ps1\" S 2>&1 | Select-Object -Last 3; & \"C:\\\\_Projects\\\\lucent-job-luScreen\\\\run.ps1\" s 2>&1 | Select-Object -Last 5)",
       "PowerShell(Get-ChildItem 'C:\\\\_Projects\\\\lucent-job-luScreen\\\\packaging\\\\transfer\\\\LucentScreen_v0.2.1' | Format-Table Name, @{n='Type';e={if\\($_.PSIsContainer\\){'dir'}else{'file'}}}, @{n='Size';e={if\\($_.PSIsContainer\\){''}else{\\('{0:N0} B' -f $_.Length\\)}}}; Write-Host '---src/---'; Get-ChildItem 'C:\\\\_Projects\\\\lucent-job-luScreen\\\\packaging\\\\transfer\\\\LucentScreen_v0.2.1\\\\src' -Recurse -File | Measure-Object | ForEach-Object { \"src/ enthaelt $\\($_.Count\\) Dateien\" })",
-      "PowerShell(& 'C:\\\\_Projects\\\\lucent-job-luScreen\\\\run.ps1' p 2>&1 | Select-Object -Last 3; & 'C:\\\\_Projects\\\\lucent-job-luScreen\\\\run.ps1' L 2>&1 | Select-Object -Last 3; Get-Content 'C:\\\\_Projects\\\\lucent-job-luScreen\\\\reports\\\\pssa\\\\pssa-report.md' | Select-Object -First 6)"
+      "PowerShell(& 'C:\\\\_Projects\\\\lucent-job-luScreen\\\\run.ps1' p 2>&1 | Select-Object -Last 3; & 'C:\\\\_Projects\\\\lucent-job-luScreen\\\\run.ps1' L 2>&1 | Select-Object -Last 3; Get-Content 'C:\\\\_Projects\\\\lucent-job-luScreen\\\\reports\\\\pssa\\\\pssa-report.md' | Select-Object -First 6)",
+      "PowerShell(& 'C:\\\\_Projects\\\\lucent-job-luScreen\\\\run.ps1' S 2>&1 | Select-Object -Last 3; & 'C:\\\\_Projects\\\\lucent-job-luScreen\\\\run.ps1' s 2>&1 | Select-Object -Last 5)"
     ]
   }
 }

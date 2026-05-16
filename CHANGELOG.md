@@ -4,23 +4,80 @@ Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/) · Versionierun
 
 ## [Unreleased]
 
-### Added
-- **AP 0 — Projekt-Setup & Grundgerüst**
-  - `src/LucentScreen.ps1` — Bootstrap mit STA-Self-Relaunch, Single-Instance-Mutex, DPI-Awareness (PER_MONITOR_AWARE_V2), WPF/Drawing/Forms-Assemblies, globale Fehlerhandler (Dispatcher + AppDomain), `Application.Run()` mit `ShutdownMode=OnExplicitShutdown`.
-  - `src/core/native.psm1` — P/Invoke-Block `LucentScreen.Native` mit `SetProcessDpiAwarenessContext`, `RECT`-Struct; `Set-DpiAwareness`-Wrapper mit Result-Hashtable.
-  - `src/core/logging.psm1` — `Initialize-Logging` (Default-Pfad `%LOCALAPPDATA%/LucentScreen/logs/app.log`), `Write-LsLog` mit Level-Filter (Debug/Info/Warn/Error), Mutex-geschütztes Append, 7-Tage-Rotation.
-  - `src/core/xaml-loader.psm1` — `Load-Xaml` (entfernt `x:Class`-Attribut vor `XamlReader::Load`), `Get-XamlControls` (Named-Element-Map via `FindName`).
-  - Pester-Tests: `tests/core.logging.Tests.ps1` (5 Tests), `tests/core.xaml-loader.Tests.ps1` (5 Tests).
-- Projekt-Scaffolding: Ordnerstruktur, PSSA-Setup, Agent-Definitionen, Doku-Gerüst, `run.ps1`-Menü, Reports-Layout, Zensical-Doc-Site, Single-Page-HTML-Doku-Bootstrap.
-- `todo.md` mit Arbeitspaket-Plan (AP 0 – AP n).
+(noch nichts)
+
+## [0.2.0] — 2026-05-16
+
+### Hinzugefügt
+
+**Capture & Hotkeys**
+
+- Capture-Engine mit vier Modi: Region (Maus-Drag-Auswahl), Aktives Fenster, Monitor unter Maus, Alle Monitore (virtueller Gesamt-Bildschirm). GDI+ via `System.Drawing.Graphics::CopyFromScreen`. (AP 4)
+- Globale Hotkeys via `RegisterHotKey` + `WM_HOTKEY`-Hook auf einem unsichtbaren HwndSource. Konflikt-Erkennung beim Registrieren, Re-Registrierung nach Config-Änderung. (AP 3)
+- Default-Hotkeys: `Strg+Shift+1..4` für Capture-Modi, `Strg+Shift+0` Tray-Menü, `Strg+Shift+H` Verlauf öffnen, `Strg+Shift+R` Delay reset, `Strg+Shift+T` Delay +5 s.
+- Countdown-Overlay vor Capture wenn `DelaySeconds > 0` — Topmost, Click-Through, ESC bricht ab. (AP 5)
+- Dateinamen-Schema mit Token-Renderer (`yyyyMMdd_HHmm_{mode}.png` Default; `{postfix}` für Editor-Save), Kollisionsschutz via `-2`, `-3` …, Permission-Probe auf den Output-Ordner. (AP 6)
+- Auto-Clipboard: nach jedem Capture landet das Bild zusätzlich als Image in der Zwischenablage, mit Retry-Backoff bei Clipboard-Locks. (AP 7)
+
+**Verlauf**
+
+- Verlaufsfenster (`Strg+Shift+H` oder Tray → Verlauf öffnen) mit Thumbnail-Grid, Live-Polling (2 s), Multi-Auswahl, 7-Icon-Toolbar (Anzeigen / Bearbeiten / Löschen / Speicherort / Clipboard / Datei-Liste / Refresh), Kontextmenü. (AP 8)
+- Druck-Button: speichert das Bild aus der Zwischenablage als PNG mit Mode `DruckTaste`. Strg+V als Shortcut. `IsEnabled` folgt `Clipboard.ContainsImage()` via Poller. `Save-ClipboardImageAsPng` nutzt `PngBitmapEncoder` direkt — kein GDI+-Roundtrip.
+- Umbenennen via Toolbar-Button, Kontextmenü-Eintrag oder `F2`. Validierung gegen ungültige Zeichen + Ziel-Kollision. Prompt via `Microsoft.VisualBasic.Interaction.InputBox`.
+- Anti-Focus-Stealing: Verlauf + Editor erzwingen den Vordergrund per Topmost-Toggle in `SourceInitialized` — zuverlässig auch bei Tray- und Hotkey-Trigger.
+- Multi-Copy als `FileDropList` — Word/Outlook fügen alle markierten Bilder ein.
+
+**Editor**
+
+- Mini-Editor mit Annotation-Tools (Auswahl, Rahmen, Linie, Pfeil, Balken, Marker, Radierer) + Crop, Zoom (Strg+Mausrad / 100%), 8 Farb-Swatches, Strichstärke-Slider 1–20 px. (AP 9 Etappen 1, 2a, 2b, 3)
+- Crop mit 8 Handles + Dimmer-Overlay, undo-fähig.
+- Selection-Adorner mit Move + Delete (Entf).
+- Undo/Redo (Strg+Z / Strg+Y) für Shape, ShapeRemove, ShapeMove, Crop.
+- Speichern mit `Strg+S` → `*_edited.png` + Clipboard + Save-Toast + Editor schließt automatisch.
+- ESC bei ungespeicherten Änderungen → Confirm-Dialog (Ja/Nein).
+
+**UI rund um die App**
+
+- Tray-Icon mit Kontextmenü inkl. konfigurierter Hotkey-Anzeige rechts neben jedem Eintrag, Linksklick-Doppelklick = Region. (AP 2 + Politur)
+- Konfig-Dialog mit Hotkey-Capture, Zielordner-Browser, Dateinamen-Schema, Delay-Slider, Toolbar-Icon-Größe (16–32 pt), Live-Validation und Schema-Migration. (AP 1 Teil 2 + Politur)
+- Über-Dialog mit Tab `Info` (Version, System, Komponenten) und Tab `Changelog` (rendert diese Datei).
+- Capture-Toast oben rechts (Kamera-Glyph) und Save-Toast (Copy-Glyph) — Click-Through, Fade-in/out, Auto-Close nach 1.4 s.
+
+**Konfiguration & Persistenz**
+
+- Konfig-Backend (`%APPDATA%\LucentScreen\config.json`) mit Schema v1–v6 + Migrations-Kette (Read-Config), atomarem Save (`.tmp`-Rename). (AP 1 Teil 1)
+- Migrationen: HistoryIconSize-Default, neue Hotkey-Slots, Filename-Format-Defaults — User-Anpassungen bleiben unangetastet.
+- Log-Pfad `%LOCALAPPDATA%\LucentScreen\logs\app.log` mit 7-Tage-Rotation + Mutex-geschütztem Append.
+
+**Tools & Doku**
+
+- `tools/Take-LuScreenshots.ps1` — halbautomatischer Screenshot-Generator über `manifest.json`.
+- `tools/Capture-ToastShots.ps1` — rendert die Toast-Varianten headless für die Doku.
+- Vollständige Zensical-Doku unter `luscreen-docs/` mit Grundlagen, Anleitungen, Referenz, Entwicklung. 9 Screenshots integriert. Layer-Modell in zwei Sichten gesplittet (UI-Schicht + Core-Schicht).
+- `LucentScreen.docs.html` als Single-Page-Version für Offline-Übergabe.
+
+### Geändert
+
+- `run.ps1`: `Action-Screenshots` läuft per Dot-Source statt Child-Process — Errors + Output sofort sichtbar.
+- Layer-Modell-Diagramm in zwei kleinere, lesbarere Mermaid-Diagramme aufgeteilt.
+
+### Entfernt
+
+- Packaging-Dokumentationsseite (`referenz/packaging.md`) entfernt — Verteilungs-Format ist noch offen.
+- PS-7-Support entfernt — Windows PowerShell 5.1 ist einziges Target.
 
 ### Quality
-- PSSA: 0 Findings.
-- Pester: 23/23 grün (10 aus AP 0 + 13 aus AP 1 Teil 1).
-- Smoke-Test: App startet -STA, durchläuft alle Bootstrap-Schritte (inkl. Config-Load) und blockiert im `Application.Run()`-Message-Loop.
 
-### Added (AP 1 Teil 1 — Konfigurations-Backend)
-- `src/core/config.psm1` — Default-Schema v1, `Read-Config` mit Defaults-Merge und Schema-Migration, atomares `Save-Config` (via `.tmp`-Rename).
-- 13 Pester-Tests in `tests/core.config.Tests.ps1`.
-- `src/LucentScreen.ps1` lädt die Config nach Logging und legt sie in `$script:Config` ab. Ort: `%APPDATA%\LucentScreen\config.json`.
-- Default-Hotkeys: `Ctrl+Shift+1..4` für Capture-Modi, `Ctrl+Shift+0` für Tray-Menü.
+- PSSA: 0 Findings.
+- Pester: 118/118 grün (2 STA-Guard-Skips, in MTA nicht testbar).
+- Parse-Check: 69/69 clean.
+
+## [0.1.0] — Bootstrap
+
+### Hinzugefügt (AP 0)
+
+- `src/LucentScreen.ps1` — Bootstrap mit STA-Self-Relaunch, Single-Instance-Mutex, DPI-Awareness (PER_MONITOR_AWARE_V2), WPF/Drawing/Forms-Assemblies, globale Fehlerhandler (Dispatcher + AppDomain), `Application.Run()` mit `ShutdownMode=OnExplicitShutdown`.
+- `src/core/native.psm1` — P/Invoke-Block `LucentScreen.Native` mit `SetProcessDpiAwarenessContext`, `RECT`-Struct.
+- `src/core/logging.psm1` — `Initialize-Logging`, `Write-LsLog` mit Level-Filter + Mutex-Append + Rotation.
+- `src/core/xaml-loader.psm1` — `Load-Xaml` (strippt `x:Class`), `Get-XamlControls`.
+- Pester-Tests + PSSA-Setup + Agent-Definitionen + Reports-Layout + Doku-Gerüst.
